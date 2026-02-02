@@ -1,0 +1,333 @@
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ========== Sidebar – light enterprise admin ========== */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--hms-nav-bg);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--hms-nav-border);
+  transition: width 0.2s ease;
+}
+
+.sidebarCollapsed {
+  width: 64px;
+}
+
+.sidebarHeader {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--hms-nav-border);
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--hms-nav-text);
+}
+
+.logo:hover {
+  color: var(--hms-nav-active-text);
+  text-decoration: none;
+}
+
+.logoText {
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.logoSub {
+  font-size: 0.7rem;
+  color: var(--hms-nav-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sidebarNav {
+  flex: 1;
+  padding: 0.5rem 0.5rem 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* ========== Grouped menu ========== */
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.navGroupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hms-nav-text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-align: left;
+}
+
+.navGroupHeader:hover {
+  background: var(--hms-nav-hover);
+  color: var(--hms-nav-text);
+}
+
+.navGroupLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navGroupChevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.navGroupChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Smooth expand/collapse */
+.navGroupItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 1200px;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+
+.navGroupItems[data-expanded="false"] {
+  max-height: 0;
+  opacity: 0;
+}
+
+.navGroupItemsInner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  overflow: hidden;
+  padding: 0.125rem 0;
+}
+
+.navItemParent {
+  cursor: default;
+  pointer-events: none;
+}
+
+.navItemParent.navItemActive {
+  pointer-events: auto;
+}
+
+.navNestedWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 0.5rem;
+  margin-left: 0.5rem;
+  border-left: 1px solid var(--hms-nav-border);
+}
+
+.navItemNested {
+  padding-left: 0.6rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  color: var(--hms-nav-text-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+  border-left: 3px solid transparent;
+}
+
+.navItem:hover {
+  background: var(--hms-nav-hover);
+  color: var(--hms-nav-text);
+  text-decoration: none;
+}
+
+.navItemActive {
+  background: var(--hms-nav-active-bg);
+  color: var(--hms-nav-active-text);
+  border-left-color: var(--hms-nav-active-border);
+}
+
+.navIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.navLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Collapsed state */
+.sidebarCollapsed .navItem {
+  justify-content: center;
+  padding: 0.55rem;
+}
+
+.sidebarCollapsed .navLabel {
+  display: none;
+}
+
+.sidebarCollapsed .navGroupHeader {
+  justify-content: center;
+  padding: 0.4rem;
+}
+
+.sidebarCollapsed .navGroupLabel {
+  display: none;
+}
+
+.sidebarCollapsed .navGroupChevron {
+  display: none;
+}
+
+.sidebarCollapsed .navGroupItems[data-expanded="false"] {
+  display: none;
+}
+
+.sidebarCollapsed .navNestedWrap {
+  padding-left: 0;
+  margin-left: 0;
+  border-left: none;
+}
+
+.sidebarCollapsed .navItemNested {
+  padding-left: 0.55rem;
+}
+
+/* ========== Main area ========== */
+.mainWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  height: 60px;
+  padding: 0 1.5rem;
+  background: var(--hms-card);
+  border-bottom: 1px solid var(--hms-card-border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.sidebarToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--hms-text-secondary);
+  border-radius: var(--hms-radius);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebarToggle:hover {
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--hms-text);
+}
+
+.topbarRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  color: var(--hms-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.themeToggle:hover {
+  background: var(--hms-border);
+  border-color: var(--hms-accent);
+  color: var(--hms-accent);
+}
+
+.themeLabel {
+  font-size: 0.8rem;
+}
+
+.userBadge {
+  padding: 0.4rem 0.9rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  font-size: 0.9rem;
+  color: var(--hms-text-secondary);
+}
+
+.userName {
+  font-weight: 500;
+}
+
+.content {
+  flex: 1;
+  padding: 1.75rem 2rem;
+  background: var(--hms-bg);
+  overflow: auto;
+}

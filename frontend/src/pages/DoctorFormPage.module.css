@@ -1,0 +1,229 @@
+.page {
+  width: 100%;
+  max-width: 100%;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--hms-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.breadcrumb a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbSep {
+  margin: 0 0.15rem;
+  color: var(--hms-text-muted);
+}
+
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btnPrimary {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--hms-cta-hover);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-card);
+  color: var(--hms-text-secondary);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+}
+
+.btnTertiary {
+  padding: var(--hms-btn-padding);
+  background: transparent;
+  color: var(--hms-text-secondary);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btnTertiary:hover {
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+}
+
+.success {
+  padding: 0.75rem 1rem;
+  background: var(--hms-success-bg);
+  color: var(--hms-success);
+  border-radius: var(--hms-radius);
+  font-size: 0.9rem;
+  border: 1px solid var(--hms-success-border);
+  margin-bottom: 1rem;
+}
+
+.form {
+  background: var(--hms-card);
+  padding: 2rem 2.5rem;
+  border-radius: var(--hms-radius-card);
+  border: 1px solid var(--hms-card-border);
+  box-shadow: var(--hms-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--hms-text-secondary);
+}
+
+.required {
+  color: var(--hms-error);
+}
+
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  padding: var(--hms-input-padding);
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-form-input-border);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 1rem;
+}
+
+.form input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.checkWrap {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkWrap input {
+  width: auto;
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  font-size: 0.9rem;
+  border: 1px solid var(--hms-error-border);
+}
+
+.loading {
+  padding: 1rem;
+  color: var(--hms-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.submit {
+  flex: 1;
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--hms-cta-hover);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-card);
+  color: var(--hms-text-secondary);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cancel:hover {
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+}
+
+@media (max-width: 640px) {
+  .form {
+    padding: 1.5rem 1.25rem;
+  }
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

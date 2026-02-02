@@ -1,0 +1,112 @@
+/* Doctor Registration form – card sections, two-column layout */
+
+.form {
+  background: var(--hms-card);
+  padding: 0;
+  border-radius: var(--hms-radius-card);
+  border: 1px solid var(--hms-card-border);
+  box-shadow: var(--hms-shadow-card);
+  overflow: hidden;
+}
+
+.section {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--hms-card-border);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hms-text);
+  letter-spacing: -0.01em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 1.5rem;
+}
+
+.gridFull {
+  grid-column: 1 / -1;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--hms-text-secondary);
+}
+
+.required {
+  color: var(--hms-error);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: var(--hms-input-padding);
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-form-input-border);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 1rem;
+}
+
+.input:disabled,
+.select:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+  background: var(--hms-bg-elevated);
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.toggleRow .label {
+  flex-direction: row;
+  align-items: center;
+}
+
+.toggleRow input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.helper {
+  font-size: 0.8125rem;
+  color: var(--hms-text-muted);
+  margin-top: 0.2rem;
+}
+
+.fieldError {
+  font-size: 0.8125rem;
+  color: var(--hms-error);
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 1.25rem 1.5rem;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

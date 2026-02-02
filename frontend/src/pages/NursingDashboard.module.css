@@ -1,0 +1,66 @@
+.page {
+  max-width: 960px;
+}
+
+.welcomeCard {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.welcomeTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--hms-text);
+}
+
+.welcomeText {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  display: block;
+  padding: 1.5rem;
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius);
+  box-shadow: var(--hms-shadow);
+  text-decoration: none;
+  color: var(--hms-text);
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--hms-accent);
+  box-shadow: var(--hms-shadow-card);
+  text-decoration: none;
+  color: var(--hms-text);
+  transform: translateY(-2px);
+}
+
+.cardTitle {
+  display: block;
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+  color: var(--hms-text);
+}
+
+.cardDesc {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--hms-text-muted);
+  line-height: 1.4;
+}

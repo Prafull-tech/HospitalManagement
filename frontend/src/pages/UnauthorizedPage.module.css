@@ -1,0 +1,33 @@
+.page {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.page h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--hms-text);
+}
+
+.page p {
+  margin: 0 0 1rem;
+  color: var(--hms-text-muted);
+}
+
+.link {
+  display: inline-block;
+  padding: var(--hms-btn-padding);
+  background: var(--hms-accent);
+  color: var(--hms-text-inverse);
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.link:hover {
+  background: var(--hms-accent-hover);
+  text-decoration: none;
+  color: var(--hms-text-inverse);
+}

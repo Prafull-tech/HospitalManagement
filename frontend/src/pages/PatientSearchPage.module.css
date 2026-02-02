@@ -1,0 +1,194 @@
+.page {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form {
+  background: var(--hms-card);
+  padding: 2rem 2.5rem;
+  border-radius: var(--hms-radius-card);
+  border: 1px solid var(--hms-card-border);
+  box-shadow: var(--hms-shadow-card);
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--hms-text-secondary);
+}
+
+.form input {
+  width: 100%;
+  padding: var(--hms-input-padding);
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-form-input-border);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form input::placeholder {
+  color: var(--hms-form-placeholder);
+}
+
+.form input:focus {
+  outline: none;
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 2px var(--hms-focus-ring);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .form {
+    padding: 1.5rem 1.25rem;
+  }
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  font-size: 0.9rem;
+  border: 1px solid var(--hms-error-border);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.submit {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--hms-cta-hover);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submitIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancel {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-card);
+  color: var(--hms-text-secondary);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.cancel:hover {
+  background: var(--hms-form-input-bg);
+  border-color: var(--hms-border-focus);
+  color: var(--hms-text);
+}
+
+.results {
+  background: var(--hms-card);
+  border-radius: var(--hms-radius-card);
+  border: 1px solid var(--hms-card-border);
+  box-shadow: var(--hms-shadow-card);
+  overflow: hidden;
+  width: 100%;
+}
+
+.resultsTitle {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--hms-text-inverse);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--hms-primary);
+}
+
+.resultsListWrap {
+  padding: 1.5rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-form-input-bg);
+}
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.uhid {
+  font-weight: 600;
+  color: var(--hms-accent);
+  font-size: 0.95rem;
+}
+
+.fullName {
+  font-weight: 500;
+  color: var(--hms-text);
+}
+
+.cardMeta {
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.address {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}

@@ -1,0 +1,147 @@
+.page {
+  width: 100%;
+  max-width: 900px;
+}
+
+.card {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  color: var(--hms-text);
+}
+
+.addBtn {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background: var(--hms-cta-hover);
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-error-border);
+}
+
+.success {
+  padding: 0.75rem 1rem;
+  background: var(--hms-success-bg);
+  color: var(--hms-success);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-success-border);
+}
+
+.form {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--hms-border);
+}
+
+.row {
+  margin-bottom: 0.75rem;
+}
+
+.row label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--hms-text);
+  font-size: 0.9rem;
+}
+
+.required {
+  color: var(--hms-error);
+}
+
+.input,
+.select {
+  width: 100%;
+  max-width: 320px;
+  padding: var(--hms-input-padding);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 0.95rem;
+}
+
+.submitBtn {
+  margin-top: 0.5rem;
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--hms-cta-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading {
+  padding: 1rem;
+  color: var(--hms-text-muted);
+}
+
+.empty {
+  text-align: center;
+  color: var(--hms-text-muted);
+  padding: 2rem;
+  margin: 0;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: var(--hms-input-padding);
+  text-align: left;
+  border-bottom: 1px solid var(--hms-border);
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--hms-text-inverse);
+  background: var(--hms-primary);
+}

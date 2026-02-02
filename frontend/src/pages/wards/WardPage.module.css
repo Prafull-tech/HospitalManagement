@@ -1,0 +1,141 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.link {
+  font-size: 0.9rem;
+  color: var(--hms-accent);
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-card);
+}
+
+.link:hover {
+  background: var(--hms-bg-elevated);
+  text-decoration: none;
+  color: var(--hms-accent);
+}
+
+.errorBanner {
+  padding: 0.75rem 1rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-error-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.errorActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.retryBtn {
+  font-size: 0.875rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-error);
+  background: transparent;
+  color: var(--hms-error);
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.dismissBtn {
+  font-size: 0.875rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-border);
+  background: var(--hms-card);
+  color: var(--hms-text);
+  cursor: pointer;
+}
+
+.dismissBtn:hover {
+  background: var(--hms-bg-elevated);
+}
+
+.card {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 1rem;
+  color: var(--hms-text);
+}
+
+.empty {
+  text-align: center;
+  color: var(--hms-text-muted);
+  padding: 2rem;
+  margin: 0;
+}
+
+/* Skeleton */
+.skeletonWrap {
+  margin-bottom: 1.5rem;
+}
+
+.skeletonValue {
+  display: block;
+  height: 1.5rem;
+  width: 3rem;
+  background: var(--hms-bg-elevated);
+  border-radius: var(--hms-radius);
+  animation: placeholder-glow 1.5s ease-in-out infinite;
+}
+
+.skeletonLabel {
+  display: block;
+  height: 0.875rem;
+  width: 4rem;
+  margin-top: 0.35rem;
+  background: var(--hms-bg-elevated);
+  border-radius: var(--hms-radius);
+  animation: placeholder-glow 1.5s ease-in-out infinite;
+}
+
+.skeletonTable {
+  margin-top: 1rem;
+}
+
+.skeletonRow {
+  height: 2.5rem;
+  margin-bottom: 0.5rem;
+  background: var(--hms-bg-elevated);
+  border-radius: var(--hms-radius);
+  animation: placeholder-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}

@@ -1,0 +1,128 @@
+.wrap {
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.count {
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.printAllBtn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-card);
+  color: var(--hms-text);
+  cursor: pointer;
+}
+
+.printAllBtn:hover {
+  background: var(--hms-bg-elevated);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--hms-border);
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--hms-text);
+  background: var(--hms-bg-elevated);
+}
+
+.table td {
+  color: var(--hms-text);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rowIcu {
+  background: rgba(220, 38, 38, 0.05);
+  border-left: 3px solid var(--hms-error);
+}
+
+.cellName {
+  font-weight: 500;
+}
+
+.cellUhid {
+  font-family: var(--hms-font-mono, ui-monospace, monospace);
+  font-size: 0.85rem;
+}
+
+.cellDate {
+  white-space: nowrap;
+}
+
+.emptyCell {
+  text-align: center;
+  color: var(--hms-text-muted);
+  padding: 2rem !important;
+}
+
+.shiftBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: var(--hms-accent);
+  color: var(--hms-text-inverse);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.statusLocked {
+  color: var(--hms-text-muted);
+  font-size: 0.85rem;
+}
+
+.statusDraft {
+  color: var(--hms-accent);
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-card);
+  color: var(--hms-text);
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: var(--hms-bg-elevated);
+}

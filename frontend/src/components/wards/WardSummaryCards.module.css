@@ -1,0 +1,14 @@
+.statIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.danger {
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+}
+
+.muted {
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text-muted);
+}

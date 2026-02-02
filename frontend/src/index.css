@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+/* ========== HMS Design System – use these tokens everywhere ========== */
+/* Primary actions: --hms-cta. Links/focus: --hms-accent. Cards: --hms-radius-card. */
+
+/* ========== Day (Light) theme ========== */
+:root,
+[data-theme="light"] {
+  --hms-primary: #2A428C;
+  --hms-primary-dark: #1e3070;
+  --hms-accent: #3D6AF0;
+  --hms-accent-hover: #2d5ae0;
+  --hms-bg: #F0F4F8;
+  --hms-bg-elevated: #E8ECF1;
+  --hms-card: #FFFFFF;
+  --hms-card-border: #E5E7EB;
+  --hms-light-blue: #AFC0D6;
+  --hms-text: #1a1a2e;
+  --hms-text-secondary: #374151;
+  --hms-text-muted: #6b7280;
+  --hms-text-inverse: #ffffff;
+  --hms-accent-magenta: #DD4EDD;
+  --hms-accent-pink: #F2B6B6;
+  --hms-accent-purple: #DBC0E0;
+  --hms-accent-orange: #F2C994;
+  --hms-success: #059669;
+  --hms-error: #dc2626;
+  --hms-border: #E5E7EB;
+  --hms-border-focus: #3D6AF0;
+  --hms-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --hms-shadow-card: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --hms-radius: 10px;
+  --hms-radius-card: 12px;
+  --hms-radius-badge: 6px;
+  --hms-input-bg: #FFFFFF;
+  --hms-input-padding: 0.75rem 1rem;
+  --hms-btn-padding: 0.75rem 1.5rem;
+  --hms-focus-ring: rgba(61, 106, 240, 0.15);
+  --hms-error-bg: #fef2f2;
+  --hms-error-border: #fecaca;
+  --hms-success-bg: #f0fdf4;
+  --hms-success-border: #bbf7d0;
+  --hms-sidebar-bg: #1e3a5f;
+  --hms-sidebar-text: rgba(255, 255, 255, 0.9);
+  --hms-sidebar-text-muted: rgba(255, 255, 255, 0.7);
+  --hms-sidebar-active: rgba(255, 255, 255, 0.15);
+  --hms-form-input-bg: #f3f4f6;
+  --hms-form-input-border: #e5e7eb;
+  --hms-form-placeholder: #9ca3af;
+  --hms-cta: #0d9488;
+  --hms-cta-hover: #0f766e;
+  /* Enterprise light sidebar (admin nav) */
+  --hms-nav-bg: #f8fafc;
+  --hms-nav-border: #e2e8f0;
+  --hms-nav-text: #334155;
+  --hms-nav-text-muted: #64748b;
+  --hms-nav-hover: #f1f5f9;
+  --hms-nav-active-bg: #e0f2fe;
+  --hms-nav-active-text: #0369a1;
+  --hms-nav-active-border: #0ea5e9;
+}
+
+/* ========== Night (Dark) theme ========== */
+[data-theme="dark"] {
+  --hms-primary: #1e3a5f;
+  --hms-primary-dark: #0f172a;
+  --hms-accent: #60a5fa;
+  --hms-accent-hover: #3b82f6;
+  --hms-bg: #0f172a;
+  --hms-bg-elevated: #1e293b;
+  --hms-card: #1e293b;
+  --hms-card-border: #334155;
+  --hms-light-blue: #475569;
+  --hms-text: #f1f5f9;
+  --hms-text-secondary: #cbd5e1;
+  --hms-text-muted: #94a3b8;
+  --hms-text-inverse: #ffffff;
+  --hms-accent-magenta: #e879f9;
+  --hms-accent-pink: #f9a8d4;
+  --hms-accent-purple: #c4b5fd;
+  --hms-accent-orange: #fdba74;
+  --hms-success: #34d399;
+  --hms-error: #f87171;
+  --hms-border: #334155;
+  --hms-border-focus: #60a5fa;
+  --hms-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --hms-shadow-card: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --hms-radius: 10px;
+  --hms-radius-card: 12px;
+  --hms-radius-badge: 6px;
+  --hms-input-bg: #0f172a;
+  --hms-input-padding: 0.75rem 1rem;
+  --hms-btn-padding: 0.75rem 1.5rem;
+  --hms-focus-ring: rgba(96, 165, 250, 0.2);
+  --hms-error-bg: rgba(248, 113, 113, 0.12);
+  --hms-error-border: rgba(248, 113, 113, 0.35);
+  --hms-success-bg: rgba(52, 211, 153, 0.12);
+  --hms-success-border: rgba(52, 211, 153, 0.35);
+  --hms-sidebar-bg: #0f172a;
+  --hms-sidebar-text: rgba(255, 255, 255, 0.95);
+  --hms-sidebar-text-muted: rgba(255, 255, 255, 0.65);
+  --hms-sidebar-active: rgba(96, 165, 250, 0.2);
+  --hms-form-input-bg: #1e293b;
+  --hms-form-input-border: #334155;
+  --hms-form-placeholder: #64748b;
+  --hms-cta: #14b8a6;
+  --hms-cta-hover: #0d9488;
+  /* Sidebar stays light in both themes (enterprise pattern) */
+  --hms-nav-bg: #f8fafc;
+  --hms-nav-border: #e2e8f0;
+  --hms-nav-text: #334155;
+  --hms-nav-text-muted: #64748b;
+  --hms-nav-hover: #f1f5f9;
+  --hms-nav-active-bg: #e0f2fe;
+  --hms-nav-active-text: #0369a1;
+  --hms-nav-active-border: #0ea5e9;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--hms-bg);
+  color: var(--hms-text);
+  line-height: 1.5;
+  min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.2s ease;
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--hms-accent-hover);
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+input,
+select,
+textarea {
+  background: var(--hms-input-bg);
+  color: var(--hms-text);
+  border: 1px solid var(--hms-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--hms-text-muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 2px var(--hms-focus-ring);
+}
+
+/* Initial app loader (shown until React mounts) */
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1rem;
+  background: var(--hms-bg);
+  color: var(--hms-text);
+}
+.app-loader__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--hms-border);
+  border-top-color: var(--hms-accent);
+  border-radius: 50%;
+  animation: app-loader-spin 0.8s linear infinite;
+}
+.app-loader__text {
+  font-size: 0.9375rem;
+  color: var(--hms-text-secondary);
+}
+@keyframes app-loader-spin {
+  to { transform: rotate(360deg); }
+}

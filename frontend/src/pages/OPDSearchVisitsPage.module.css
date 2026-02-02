@@ -1,0 +1,261 @@
+.page {
+  width: 100%;
+}
+
+.filters {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.filterRow:last-of-type {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  color: var(--hms-text);
+  font-size: 0.9rem;
+}
+
+.input,
+.select {
+  padding: var(--hms-input-padding);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 0.95rem;
+  min-width: 140px;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 2px var(--hms-focus-ring);
+}
+
+.searchBtn {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.searchBtn:hover {
+  background: var(--hms-cta-hover);
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-error-border);
+}
+
+.loading {
+  padding: 1rem;
+  color: var(--hms-text-muted);
+}
+
+.card {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--hms-border);
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  color: var(--hms-text);
+}
+
+.printBtn {
+  padding: 0.4rem 0.9rem;
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.printBtn:hover {
+  background: var(--hms-card);
+  border-color: var(--hms-accent);
+}
+
+.count {
+  font-weight: 500;
+  color: var(--hms-text-muted);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--hms-border);
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--hms-text-muted);
+  background: var(--hms-bg-elevated);
+}
+
+.table td {
+  color: var(--hms-text);
+}
+
+.visitNum {
+  font-weight: 500;
+}
+
+.tokenBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--hms-primary);
+  color: var(--hms-text-inverse);
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: var(--hms-radius-badge);
+}
+
+.patientName {
+  font-weight: 500;
+  color: var(--hms-text);
+}
+
+.uhid {
+  font-size: 0.8rem;
+  color: var(--hms-text-muted);
+}
+
+.statusBadge {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--hms-radius-badge);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.statusRegistered {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--hms-accent);
+}
+
+.statusInConsultation {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--hms-accent-orange);
+}
+
+.statusCompleted {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--hms-success);
+}
+
+.statusReferred {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--hms-accent-purple);
+}
+
+.statusCancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--hms-error);
+}
+
+.link {
+  color: var(--hms-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  text-align: center;
+  color: var(--hms-text-muted);
+  padding: 2rem;
+  margin: 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pageBtn {
+  padding: 0.4rem 0.9rem;
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--hms-card);
+  border-color: var(--hms-accent);
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}

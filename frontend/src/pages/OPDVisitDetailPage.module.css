@@ -1,0 +1,224 @@
+.page {
+  max-width: 900px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  color: var(--hms-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.error {
+  padding: 0.75rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-error-border);
+}
+
+.success {
+  padding: 0.75rem;
+  background: var(--hms-success-bg);
+  color: var(--hms-success);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-success-border);
+}
+
+.loading {
+  padding: 1rem;
+  color: var(--hms-text-muted);
+}
+
+.card {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--hms-border);
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  color: var(--hms-text);
+}
+
+.printBtn {
+  padding: 0.4rem 0.9rem;
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.printBtn:hover {
+  background: var(--hms-card);
+  border-color: var(--hms-accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.field {
+  font-size: 0.9rem;
+}
+
+.fieldLabel {
+  color: var(--hms-text-muted);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.fieldValue {
+  font-weight: 500;
+  color: var(--hms-text);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--hms-radius-badge);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.statusRegistered { background: rgba(59, 130, 246, 0.15); color: var(--hms-accent); }
+.statusInConsultation { background: rgba(245, 158, 11, 0.15); color: var(--hms-accent-orange); }
+.statusCompleted { background: rgba(34, 197, 94, 0.15); color: var(--hms-success); }
+.statusReferred { background: rgba(139, 92, 246, 0.15); color: var(--hms-accent-purple); }
+.statusCancelled { background: rgba(239, 68, 68, 0.15); color: var(--hms-error); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btnPrimary {
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border-color: var(--hms-cta);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--hms-cta-hover);
+  border-color: var(--hms-cta-hover);
+}
+
+.btnSecondary {
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text);
+  border-color: var(--hms-border);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: var(--hms-card);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.formRow {
+  margin-bottom: 1rem;
+}
+
+.formRow label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  color: var(--hms-text);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 0.95rem;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 3px var(--hms-focus-ring);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkboxRow input {
+  width: auto;
+}
+
+.referSection {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hms-border);
+}
+
+.noteText {
+  font-size: 0.9rem;
+  color: var(--hms-text);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.noteEmpty {
+  color: var(--hms-text-muted);
+  font-style: italic;
+}
