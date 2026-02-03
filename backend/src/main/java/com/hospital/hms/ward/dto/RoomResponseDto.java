@@ -11,6 +11,9 @@ public class RoomResponseDto {
     private Long wardId;
     private String wardName;
     private String roomNumber;
+    private Integer capacity;
+    private com.hospital.hms.ward.entity.RoomType roomType;
+    private com.hospital.hms.ward.entity.RoomStatus status;
     private Boolean isActive;
     private Instant createdAt;
     private Instant updatedAt;
@@ -48,6 +51,30 @@ public class RoomResponseDto {
 
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public com.hospital.hms.ward.entity.RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(com.hospital.hms.ward.entity.RoomType roomType) {
+        this.roomType = roomType;
+    }
+
+    public com.hospital.hms.ward.entity.RoomStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(com.hospital.hms.ward.entity.RoomStatus status) {
+        this.status = status;
     }
 
     public Boolean getIsActive() {

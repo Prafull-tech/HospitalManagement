@@ -13,9 +13,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.slf4j.MDC;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Global exception handling for REST APIs. Returns consistent JSON error bodies.
@@ -120,6 +127,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorBody> handleGeneric(Exception ex, HttpServletRequest request) {
         logError(request, "Unhandled exception", ex);
+        // #region agent log
+        try {
+            String stackTrace = ex.getStackTrace() != null
+                ? Stream.of(ex.getStackTrace()).limit(8).map(StackTraceElement::toString).collect(Collectors.joining(" | "))
+                : "";
+            String cls = ex.getClass().getName() != null ? ex.getClass().getName().replace("\\", "/").replace("\"", "'") : "";
+            String msg = ex.getMessage() != null ? ex.getMessage().replace("\\", "\\\\").replace("\"", "'").replace("\n", " ") : "";
+            String st = stackTrace.replace("\\", "\\\\").replace("\"", "'").replace("\n", " ");
+            String ndjson = "{\"location\":\"GlobalExceptionHandler.handleGeneric\",\"message\":\"Unhandled exception\",\"data\":{\"exceptionClass\":\"" + cls + "\",\"exceptionMessage\":\"" + msg + "\",\"stackTrace\":\"" + st + "\"},\"timestamp\":" + System.currentTimeMillis() + ",\"sessionId\":\"debug-session\",\"hypothesisId\":\"H5\"}\n";
+            Path logPath = Paths.get("p:\\genius36\\HospitalManagement\\.cursor\\debug.log");
+            Files.createDirectories(logPath.getParent());
+            Files.write(logPath, ndjson.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (Throwable t) { /* ignore */ }
+        // #endregion
         ErrorBody body = new ErrorBody(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "An unexpected error occurred",

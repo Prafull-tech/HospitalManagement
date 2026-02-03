@@ -36,6 +36,7 @@ public class IPDAdmissionService {
 
     private static final List<AdmissionStatus> ACTIVE_STATUSES = Arrays.asList(
             AdmissionStatus.ADMITTED,
+            AdmissionStatus.ACTIVE,
             AdmissionStatus.TRANSFERRED,
             AdmissionStatus.DISCHARGE_INITIATED
     );
@@ -50,6 +51,7 @@ public class IPDAdmissionService {
     private final AdmissionPriorityEvaluationService priorityEvaluationService;
     private final AdmissionPriorityOverrideAuthorityResolver overrideAuthorityResolver;
     private final AdmissionPriorityAuditService priorityAuditService;
+    private final AdmissionStatusMasterService admissionStatusMasterService;
 
     public IPDAdmissionService(IPDAdmissionRepository admissionRepository,
                                BedRepository bedRepository,
@@ -60,7 +62,8 @@ public class IPDAdmissionService {
                                BedService bedService,
                                AdmissionPriorityEvaluationService priorityEvaluationService,
                                AdmissionPriorityOverrideAuthorityResolver overrideAuthorityResolver,
-                               AdmissionPriorityAuditService priorityAuditService) {
+                               AdmissionPriorityAuditService priorityAuditService,
+                               AdmissionStatusMasterService admissionStatusMasterService) {
         this.admissionRepository = admissionRepository;
         this.bedRepository = bedRepository;
         this.bedAllocationRepository = bedAllocationRepository;
@@ -71,6 +74,7 @@ public class IPDAdmissionService {
         this.priorityEvaluationService = priorityEvaluationService;
         this.overrideAuthorityResolver = overrideAuthorityResolver;
         this.priorityAuditService = priorityAuditService;
+        this.admissionStatusMasterService = admissionStatusMasterService;
     }
 
     @Transactional
@@ -92,14 +96,17 @@ public class IPDAdmissionService {
             throw new IllegalArgumentException("Bed is already occupied. Choose another bed.");
         }
         if (bed.getBedStatus() != BedStatus.AVAILABLE) {
-            throw new IllegalArgumentException("Bed is not available. Current status: " + bed.getBedStatus());
+            throw new IllegalArgumentException("Bed must be VACANT at submit time. Current status: " + bed.getBedStatus());
         }
         if (!Boolean.TRUE.equals(bed.getIsActive())) {
             throw new IllegalArgumentException("Bed is not active.");
         }
 
         String admissionNumber = admissionNumberGenerator.generate();
-        LocalDateTime admissionDateTime = LocalDateTime.now();
+        LocalDateTime admissionDateTime = request.getAdmissionDateTime() != null
+                ? request.getAdmissionDateTime() : LocalDateTime.now();
+        String diagnosis = (request.getDiagnosis() != null && !request.getDiagnosis().isBlank())
+                ? request.getDiagnosis().trim() : "To be documented";
 
         AdmissionPriorityRequest priorityInput = buildPriorityRequest(request, bed);
         AdmissionPriorityResult priorityResult = priorityEvaluationService.evaluateWithReason(priorityInput);
@@ -111,6 +118,12 @@ public class IPDAdmissionService {
         adm.setAdmissionType(request.getAdmissionType());
         adm.setAdmissionStatus(AdmissionStatus.ADMITTED);
         adm.setAdmissionDateTime(admissionDateTime);
+        adm.setDiagnosis(diagnosis);
+        adm.setDepositAmount(request.getDepositAmount());
+        adm.setInsuranceTpa(request.getInsuranceTpa() != null ? request.getInsuranceTpa().trim() : null);
+        adm.setAdmissionFormDocumentRef(request.getAdmissionFormDocumentRef() != null ? request.getAdmissionFormDocumentRef().trim() : null);
+        adm.setConsentFormDocumentRef(request.getConsentFormDocumentRef() != null ? request.getConsentFormDocumentRef().trim() : null);
+        adm.setIdProofDocumentRef(request.getIdProofDocumentRef() != null ? request.getIdProofDocumentRef().trim() : null);
         adm.setOpdVisitId(request.getOpdVisitId());
         adm.setRemarks(request.getRemarks());
         adm.setAdmissionPriority(priorityResult.getPriority());
@@ -129,7 +142,10 @@ public class IPDAdmissionService {
         allocation.setAdmission(admission);
         allocation.setAllocatedAt(Instant.now());
         bedAllocationRepository.save(allocation);
-        bedService.setBedStatusOccupied(bed.getId());
+        bedService.setBedStatusReserved(bed.getId());
+
+        admissionStatusMasterService.recordStatusChange(
+                admission.getId(), null, AdmissionStatus.ADMITTED, null, "Admission created");
 
         return toResponse(admission, true);
     }
@@ -137,6 +153,33 @@ public class IPDAdmissionService {
     public IPDAdmissionResponseDto getById(Long id) {
         IPDAdmission admission = admissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + id));
+        return toResponse(admission, true);
+    }
+
+    /**
+     * Nursing staff performs shift-to-ward. Bed status → OCCUPIED, admission status → ACTIVE.
+     * Only admission in status ADMITTED can be shifted. Shift timestamp mandatory.
+     */
+    @Transactional
+    public IPDAdmissionResponseDto shiftToWard(Long admissionId, ShiftToWardRequestDto request, Authentication authentication) {
+        IPDAdmission admission = admissionRepository.findById(admissionId)
+                .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + admissionId));
+        if (admission.getAdmissionStatus() != AdmissionStatus.ADMITTED) {
+            throw new IllegalArgumentException("Only admission with status ADMITTED can be shifted to ward. Current: " + admission.getAdmissionStatus());
+        }
+        admission.setShiftedToWardAt(request.getShiftTimestamp());
+        admission.setShiftedToWardBy(authentication != null ? authentication.getName() : null);
+        admission.setAdmissionStatus(AdmissionStatus.ACTIVE);
+        admission = admissionRepository.save(admission);
+
+        bedAllocationRepository.findActiveByAdmissionId(admission.getId()).ifPresent(alloc -> {
+            bedService.setBedStatusOccupied(alloc.getBed().getId());
+        });
+
+        admissionStatusMasterService.recordStatusChange(
+                admission.getId(), AdmissionStatus.ADMITTED, AdmissionStatus.ACTIVE,
+                authentication != null ? authentication.getName() : null, "Shifted to ward");
+
         return toResponse(admission, true);
     }
 
@@ -173,23 +216,33 @@ public class IPDAdmissionService {
             throw new IllegalArgumentException("Target bed is not active.");
         }
 
+        // Release current allocation: old bed → VACANT (AVAILABLE)
         bedAllocationRepository.findActiveByAdmissionId(admission.getId()).ifPresent(current -> {
+            bedService.setBedStatusAvailable(current.getBed().getId());
             current.setReleasedAt(Instant.now());
             bedAllocationRepository.save(current);
         });
 
+        // New allocation: new bed → OCCUPIED
         BedAllocation newAllocation = new BedAllocation();
         newAllocation.setBed(targetBed);
         newAllocation.setAdmission(admission);
         newAllocation.setAllocatedAt(Instant.now());
         bedAllocationRepository.save(newAllocation);
+        bedService.setBedStatusOccupied(targetBed.getId());
 
+        AdmissionStatus fromStatus = admission.getAdmissionStatus();
+        // Admission status → SHIFTED (stored as TRANSFERRED)
         admission.setAdmissionStatus(AdmissionStatus.TRANSFERRED);
         if (request.getRemarks() != null && !request.getRemarks().isBlank()) {
             admission.setRemarks(
                     (admission.getRemarks() != null ? admission.getRemarks() + "\n" : "") + "Transfer: " + request.getRemarks());
         }
         admission = admissionRepository.save(admission);
+
+        admissionStatusMasterService.recordStatusChange(
+                admission.getId(), fromStatus, AdmissionStatus.TRANSFERRED, null,
+                request.getRemarks() != null ? request.getRemarks() : "Transfer executed");
 
         return toResponse(admission, true);
     }
@@ -202,17 +255,24 @@ public class IPDAdmissionService {
             throw new IllegalArgumentException("Admission is not active or already discharged.");
         }
 
+        AdmissionStatus fromStatus = admission.getAdmissionStatus();
         if (admission.getAdmissionStatus() == AdmissionStatus.DISCHARGE_INITIATED) {
             admission.setAdmissionStatus(AdmissionStatus.DISCHARGED);
             admission.setDischargeDateTime(LocalDateTime.now());
             if (request.getDischargeRemarks() != null && !request.getDischargeRemarks().isBlank()) {
                 admission.setDischargeRemarks(request.getDischargeRemarks());
             }
+            admissionStatusMasterService.recordStatusChange(
+                    admission.getId(), AdmissionStatus.DISCHARGE_INITIATED, AdmissionStatus.DISCHARGED, null,
+                    request.getDischargeRemarks());
         } else {
             admission.setAdmissionStatus(AdmissionStatus.DISCHARGE_INITIATED);
             if (request.getDischargeRemarks() != null && !request.getDischargeRemarks().isBlank()) {
                 admission.setDischargeRemarks(request.getDischargeRemarks());
             }
+            admissionStatusMasterService.recordStatusChange(
+                    admission.getId(), fromStatus, AdmissionStatus.DISCHARGE_INITIATED, null,
+                    request.getDischargeRemarks());
         }
         admission = admissionRepository.save(admission);
 
@@ -308,12 +368,20 @@ public class IPDAdmissionService {
         dto.setDischargeDateTime(a.getDischargeDateTime());
         dto.setOpdVisitId(a.getOpdVisitId());
         dto.setRemarks(a.getRemarks());
+        dto.setDiagnosis(a.getDiagnosis());
+        dto.setDepositAmount(a.getDepositAmount());
+        dto.setInsuranceTpa(a.getInsuranceTpa());
+        dto.setAdmissionFormDocumentRef(a.getAdmissionFormDocumentRef());
+        dto.setConsentFormDocumentRef(a.getConsentFormDocumentRef());
+        dto.setIdProofDocumentRef(a.getIdProofDocumentRef());
         dto.setDischargeRemarks(a.getDischargeRemarks());
         dto.setAdmissionPriority(a.getAdmissionPriority());
         dto.setPriorityAssignmentReason(a.getPriorityAssignmentReason());
         dto.setPriorityOverridden(a.getPriorityOverridden());
         dto.setPriorityOverrideBy(a.getPriorityOverrideBy());
         dto.setPriorityOverrideAt(a.getPriorityOverrideAt());
+        dto.setShiftedToWardAt(a.getShiftedToWardAt());
+        dto.setShiftedToWardBy(a.getShiftedToWardBy());
         dto.setCreatedAt(a.getCreatedAt());
         dto.setUpdatedAt(a.getUpdatedAt());
 

@@ -45,8 +45,12 @@ public class SecurityConfig {
                         // Hospital Bed Availability: read allowed without login; write/update/delete protected by @PreAuthorize
                         .requestMatchers("/api/hospitals/**").permitAll()
                         .requestMatchers("/api/admission-priority/**", "/api/ipd/transfers/**").authenticated()
+                        // Shift-to-ward: only nursing roles; requires auth then @PreAuthorize NURSE/ADMIN
+                        .requestMatchers("/ipd/*/shift-to-ward").authenticated()
+                        // Only doctor can recommend admission; endpoint requires auth then @PreAuthorize DOCTOR
+                        .requestMatchers("/visit/**").authenticated()
                         // Other modules: permit all until ready
-                        .requestMatchers("/reception/**", "/doctors/**", "/departments/**", "/opd/**", "/ipd/**", "/nursing/**", "/wards/**", "/beds/**", "/system/**").permitAll()
+                        .requestMatchers("/patients/**", "/reception/**", "/doctors/**", "/departments/**", "/opd/**", "/emergency/**", "/ipd/**", "/nursing/**", "/wards/**", "/beds/**", "/system/**").permitAll()
                         .anyRequest().permitAll()
                 )
                 .httpBasic(basic -> {});

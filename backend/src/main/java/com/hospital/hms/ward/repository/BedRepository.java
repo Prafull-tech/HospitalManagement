@@ -29,4 +29,10 @@ public interface BedRepository extends JpaRepository<Bed, Long> {
     List<Bed> findByWardIdAndBedStatusAndIsActiveTrue(Long wardId, BedStatus bedStatus);
 
     Optional<Bed> findByWardIdAndBedNumber(Long wardId, String bedNumber);
+
+    /** Business rule: prevent disabling ward when active beds exist. */
+    boolean existsByWardIdAndIsActiveTrue(Long wardId);
+
+    /** Business rule: prevent disabling room while occupied beds exist. */
+    boolean existsByRoom_IdAndBedStatusAndIsActiveTrue(Long roomId, BedStatus bedStatus);
 }

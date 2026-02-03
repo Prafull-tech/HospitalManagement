@@ -36,9 +36,9 @@ export function BedFilters({ filters, onChange, wardNames = [] }: BedFiltersProp
   }
 
   return (
-    <div className="card border shadow-sm mb-3">
+    <div className="card border shadow-sm">
       <div className="card-body">
-        <h6 className="card-title text-muted mb-3">Filters</h6>
+        <h6 className="card-title mb-3">Filter by details</h6>
         <div className="row g-2 g-md-3">
           <div className="col-12 col-md-6 col-lg-2">
             <label className="form-label small">Ward Type</label>

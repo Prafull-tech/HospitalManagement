@@ -1,11 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+/* macOS-style system font: San Francisco on Apple, Segoe UI on Windows, native elsewhere */
 * {
   box-sizing: border-box;
 }
 
 /* ========== HMS Design System – use these tokens everywhere ========== */
 /* Primary actions: --hms-cta. Links/focus: --hms-accent. Cards: --hms-radius-card. */
+
+/* ========== macOS-style typography ========== */
+:root,
+[data-theme="light"],
+[data-theme="dark"] {
+  /* San Francisco on macOS/iOS, Segoe UI on Windows, system UI elsewhere */
+  --hms-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
 /* ========== Day (Light) theme ========== */
 :root,
@@ -122,12 +129,72 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--hms-font-family);
   background: var(--hms-bg);
   color: var(--hms-text);
   line-height: 1.5;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.25s ease, color 0.2s ease;
+}
+
+/* Table data: same macOS-style font as body */
+table,
+.table,
+table th,
+table td,
+.table th,
+.table td,
+thead,
+tbody th,
+tbody td {
+  font-family: var(--hms-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Table styles: match OPD visits (http://localhost:3000/opd/visits) */
+table,
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+table th,
+table td,
+.table th,
+.table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--hms-border);
+}
+
+table thead th,
+.table thead th,
+thead.table-light th,
+.table thead.table-light th {
+  font-weight: 600;
+  color: var(--hms-text-muted);
+  background: var(--hms-bg-elevated);
+}
+
+table tbody td,
+.table tbody td {
+  color: var(--hms-text);
+}
+
+/* Remove Bootstrap full border so we only use row bottom border (OPD visits look) */
+.table.table-bordered th,
+.table.table-bordered td {
+  border: 0;
+  border-bottom: 1px solid var(--hms-border);
 }
 
 #root {

@@ -228,7 +228,7 @@ export function NursingNotesSearchPage() {
           ) : (
             <>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <table className={`table table-striped ${styles.table}`}>
                   <thead>
                     <tr>
                       <th>Date / Time</th>

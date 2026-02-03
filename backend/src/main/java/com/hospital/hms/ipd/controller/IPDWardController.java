@@ -46,18 +46,23 @@ public class IPDWardController {
     }
 
     /**
-     * Hospital beds: single source of truth for ward pages.
-     * GET /api/ipd/hospital-beds?hospitalId=1&wardType=GENERAL
-     * hospitalId is accepted for API consistency (multi-hospital future); wards are not yet hospital-scoped.
+     * Hospital bed availability for IPD admission (read-only). Selection only; no allocation here.
+     * GET /api/ipd/hospital-beds?hospitalId=1&wardType=GENERAL&vacantOnly=true
+     * Ward types: GENERAL, SEMI_PRIVATE, PRIVATE, ICU, EMERGENCY. Bed statuses: VACANT, OCCUPIED, RESERVED, CLEANING.
+     * Only beds with status VACANT (AVAILABLE) are selectable for admission; use selectableForAdmission or vacantOnly.
      */
     @GetMapping("/hospital-beds")
     public ResponseEntity<List<BedAvailabilityResponseDto>> getHospitalBeds(
             @RequestParam(required = false) Long hospitalId,
-            @RequestParam(required = false) WardType wardType) {
+            @RequestParam(required = false) WardType wardType,
+            @RequestParam(required = false, defaultValue = "false") boolean vacantOnly) {
         List<BedResponseDto> list = bedService.getAvailability(null);
         Stream<BedResponseDto> stream = list.stream();
         if (wardType != null) {
             stream = stream.filter(b -> wardType.equals(b.getWardType()));
+        }
+        if (vacantOnly) {
+            stream = stream.filter(b -> Boolean.TRUE.equals(b.getAvailable()));
         }
         List<BedAvailabilityResponseDto> ipdList = stream
                 .map(this::toIpdBedDto)
@@ -150,8 +155,17 @@ public class IPDWardController {
         dto.setRoomId(b.getRoomId());
         dto.setRoomNumber(b.getRoomNumber());
         dto.setBedStatus(b.getBedStatus());
+        dto.setBedStatusDisplay(toBedStatusDisplay(b.getBedStatus()));
         dto.setAvailable(Boolean.TRUE.equals(b.getAvailable()));
+        dto.setSelectableForAdmission(Boolean.TRUE.equals(b.getAvailable()));
         dto.setUpdatedAt(b.getUpdatedAt());
         return dto;
+    }
+
+    /** Maps BedStatus to display label (VACANT for AVAILABLE). */
+    private static String toBedStatusDisplay(BedStatus status) {
+        if (status == null) return null;
+        if (status == BedStatus.AVAILABLE) return "VACANT";
+        return status.name();
     }
 }

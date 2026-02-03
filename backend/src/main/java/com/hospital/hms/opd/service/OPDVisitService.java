@@ -7,7 +7,9 @@ import com.hospital.hms.doctor.repository.DoctorRepository;
 import com.hospital.hms.opd.dto.*;
 import com.hospital.hms.opd.entity.OPDClinicalNote;
 import com.hospital.hms.opd.entity.OPDToken;
+import com.hospital.hms.opd.entity.ConsultationOutcome;
 import com.hospital.hms.opd.entity.OPDVisit;
+import com.hospital.hms.opd.entity.VisitType;
 import com.hospital.hms.opd.entity.VisitStatus;
 import com.hospital.hms.opd.repository.OPDClinicalNoteRepository;
 import com.hospital.hms.opd.repository.OPDTokenRepository;
@@ -19,9 +21,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,6 +59,11 @@ public class OPDVisitService {
 
     @Transactional
     public OPDVisitResponseDto registerVisit(OPDVisitRequestDto request) {
+        return registerVisit(request, VisitType.OPD);
+    }
+
+    @Transactional
+    public OPDVisitResponseDto registerVisit(OPDVisitRequestDto request, VisitType visitType) {
         Patient patient = patientRepository.findByUhid(request.getPatientUhid().trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + request.getPatientUhid()));
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
@@ -74,6 +83,7 @@ public class OPDVisitService {
         visit.setDoctor(doctor);
         visit.setDepartment(doctor.getDepartment());
         visit.setVisitDate(visitDate);
+        visit.setVisitType(visitType != null ? visitType : VisitType.OPD);
         visit.setVisitStatus(VisitStatus.REGISTERED);
         visit.setTokenNumber(nextToken);
         visit = visitRepository.save(visit);
@@ -127,6 +137,29 @@ public class OPDVisitService {
         OPDVisit visit = visitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OPD visit not found: " + id));
         visit.setVisitStatus(request.getStatus());
+        if (request.getConsultationOutcome() != null) {
+            visit.setConsultationOutcome(request.getConsultationOutcome());
+        }
+        visit = visitRepository.save(visit);
+        return toResponse(visit, true);
+    }
+
+    /**
+     * Doctor explicitly marks "Admission Recommended" for the visit. Only DOCTOR role may call.
+     * Admission recommendation is stored with the visit for IPD admission integration.
+     */
+    @Transactional
+    public OPDVisitResponseDto recommendAdmission(Long visitId, RecommendAdmissionRequestDto request, Authentication authentication) {
+        OPDVisit visit = visitRepository.findByIdWithAssociations(visitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Visit not found: " + visitId));
+        visit.setAdmissionRecommended(true);
+        visit.setAdmissionRecommendedAt(Instant.now());
+        visit.setAdmissionRecommendedBy(authentication != null ? authentication.getName() : null);
+        if (request != null && request.getConsultationOutcome() != null) {
+            visit.setConsultationOutcome(request.getConsultationOutcome());
+        } else {
+            visit.setConsultationOutcome(ConsultationOutcome.IPD_ADMISSION_ADVISED);
+        }
         visit = visitRepository.save(visit);
         return toResponse(visit, true);
     }
@@ -179,6 +212,11 @@ public class OPDVisitService {
         dto.setReferredToDoctorId(v.getReferredToDoctorId());
         dto.setReferToIpd(v.getReferToIpd());
         dto.setReferralRemarks(v.getReferralRemarks());
+        dto.setVisitType(v.getVisitType() != null ? v.getVisitType() : VisitType.OPD);
+        dto.setConsultationOutcome(v.getConsultationOutcome());
+        dto.setAdmissionRecommended(Boolean.TRUE.equals(v.getAdmissionRecommended()));
+        dto.setAdmissionRecommendedAt(v.getAdmissionRecommendedAt());
+        dto.setAdmissionRecommendedBy(v.getAdmissionRecommendedBy());
         dto.setCreatedAt(v.getCreatedAt());
         dto.setUpdatedAt(v.getUpdatedAt());
         if (loadNote) {

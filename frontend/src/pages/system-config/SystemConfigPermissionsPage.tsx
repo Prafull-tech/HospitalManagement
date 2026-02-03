@@ -206,7 +206,7 @@ export function SystemConfigPermissionsPage() {
       {!loading && !loadError && selectedRoleId !== '' && matrix.length > 0 && (
         <>
           <div className={styles.matrixScroll}>
-            <table className={styles.matrixTable}>
+            <table className={`table table-striped ${styles.matrixTable}`}>
               <thead>
                 <tr>
                   <th>Module</th>

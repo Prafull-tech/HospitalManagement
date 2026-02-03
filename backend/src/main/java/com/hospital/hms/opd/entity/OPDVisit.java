@@ -17,6 +17,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 /**
@@ -29,7 +30,9 @@ import java.time.LocalDate;
         @Index(name = "idx_opd_visit_date", columnList = "visit_date"),
         @Index(name = "idx_opd_visit_doctor", columnList = "doctor_id"),
         @Index(name = "idx_opd_visit_status", columnList = "visit_status"),
-        @Index(name = "idx_opd_visit_number", columnList = "visit_number", unique = true)
+        @Index(name = "idx_opd_visit_number", columnList = "visit_number", unique = true),
+        @Index(name = "idx_opd_visit_type", columnList = "visit_type"),
+        @Index(name = "idx_opd_visit_admission_rec", columnList = "admission_recommended")
     }
 )
 public class OPDVisit extends BaseIdEntity {
@@ -60,8 +63,29 @@ public class OPDVisit extends BaseIdEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
+    @Column(name = "visit_type", nullable = false, length = 20)
+    private VisitType visitType = VisitType.OPD;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(name = "visit_status", nullable = false, length = 30)
     private VisitStatus visitStatus = VisitStatus.REGISTERED;
+
+    /** Doctor consultation result: OPD treatment only, Lab test advised, or IPD admission advised. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "consultation_outcome", length = 30)
+    private ConsultationOutcome consultationOutcome;
+
+    /** True when doctor explicitly marks "Admission Recommended" via PUT /api/visit/{id}/recommend-admission. */
+    @Column(name = "admission_recommended", nullable = false)
+    private Boolean admissionRecommended = false;
+
+    @Column(name = "admission_recommended_at")
+    private Instant admissionRecommendedAt;
+
+    @Size(max = 255)
+    @Column(name = "admission_recommended_by", length = 255)
+    private String admissionRecommendedBy;
 
     @Column(name = "token_number")
     private Integer tokenNumber;
@@ -168,5 +192,45 @@ public class OPDVisit extends BaseIdEntity {
 
     public void setReferralRemarks(String referralRemarks) {
         this.referralRemarks = referralRemarks;
+    }
+
+    public VisitType getVisitType() {
+        return visitType;
+    }
+
+    public void setVisitType(VisitType visitType) {
+        this.visitType = visitType;
+    }
+
+    public ConsultationOutcome getConsultationOutcome() {
+        return consultationOutcome;
+    }
+
+    public void setConsultationOutcome(ConsultationOutcome consultationOutcome) {
+        this.consultationOutcome = consultationOutcome;
+    }
+
+    public Boolean getAdmissionRecommended() {
+        return admissionRecommended;
+    }
+
+    public void setAdmissionRecommended(Boolean admissionRecommended) {
+        this.admissionRecommended = admissionRecommended;
+    }
+
+    public Instant getAdmissionRecommendedAt() {
+        return admissionRecommendedAt;
+    }
+
+    public void setAdmissionRecommendedAt(Instant admissionRecommendedAt) {
+        this.admissionRecommendedAt = admissionRecommendedAt;
+    }
+
+    public String getAdmissionRecommendedBy() {
+        return admissionRecommendedBy;
+    }
+
+    public void setAdmissionRecommendedBy(String admissionRecommendedBy) {
+        this.admissionRecommendedBy = admissionRecommendedBy;
     }
 }

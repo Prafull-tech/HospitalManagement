@@ -1,6 +1,8 @@
 package com.hospital.hms.opd.dto;
 
+import com.hospital.hms.opd.entity.ConsultationOutcome;
 import com.hospital.hms.opd.entity.VisitStatus;
+import com.hospital.hms.opd.entity.VisitType;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,6 +29,11 @@ public class OPDVisitResponseDto {
     private Long referredToDoctorId;
     private Boolean referToIpd;
     private String referralRemarks;
+    private VisitType visitType;
+    private ConsultationOutcome consultationOutcome;
+    private Boolean admissionRecommended;
+    private Instant admissionRecommendedAt;
+    private String admissionRecommendedBy;
     private OPDClinicalNoteResponseDto clinicalNote;
     private Instant createdAt;
     private Instant updatedAt;
@@ -168,6 +175,46 @@ public class OPDVisitResponseDto {
 
     public void setReferralRemarks(String referralRemarks) {
         this.referralRemarks = referralRemarks;
+    }
+
+    public VisitType getVisitType() {
+        return visitType;
+    }
+
+    public void setVisitType(VisitType visitType) {
+        this.visitType = visitType;
+    }
+
+    public ConsultationOutcome getConsultationOutcome() {
+        return consultationOutcome;
+    }
+
+    public void setConsultationOutcome(ConsultationOutcome consultationOutcome) {
+        this.consultationOutcome = consultationOutcome;
+    }
+
+    public Boolean getAdmissionRecommended() {
+        return admissionRecommended;
+    }
+
+    public void setAdmissionRecommended(Boolean admissionRecommended) {
+        this.admissionRecommended = admissionRecommended;
+    }
+
+    public Instant getAdmissionRecommendedAt() {
+        return admissionRecommendedAt;
+    }
+
+    public void setAdmissionRecommendedAt(Instant admissionRecommendedAt) {
+        this.admissionRecommendedAt = admissionRecommendedAt;
+    }
+
+    public String getAdmissionRecommendedBy() {
+        return admissionRecommendedBy;
+    }
+
+    public void setAdmissionRecommendedBy(String admissionRecommendedBy) {
+        this.admissionRecommendedBy = admissionRecommendedBy;
     }
 
     public OPDClinicalNoteResponseDto getClinicalNote() {

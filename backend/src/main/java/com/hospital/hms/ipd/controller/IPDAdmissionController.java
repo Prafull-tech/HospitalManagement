@@ -4,6 +4,7 @@ import com.hospital.hms.ipd.config.AdmissionPriorityOverrideRoles;
 import com.hospital.hms.ipd.dto.*;
 import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.service.IPDAdmissionService;
+import com.hospital.hms.ipd.service.IPDAdmissionTimelineService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.time.LocalDateTime;
 
 /**
@@ -24,9 +26,11 @@ import java.time.LocalDateTime;
 public class IPDAdmissionController {
 
     private final IPDAdmissionService admissionService;
+    private final IPDAdmissionTimelineService timelineService;
 
-    public IPDAdmissionController(IPDAdmissionService admissionService) {
+    public IPDAdmissionController(IPDAdmissionService admissionService, IPDAdmissionTimelineService timelineService) {
         this.admissionService = admissionService;
+        this.timelineService = timelineService;
     }
 
     @PostMapping
@@ -41,8 +45,36 @@ public class IPDAdmissionController {
         return ResponseEntity.ok(admission);
     }
 
+    /**
+     * Timeline view per patient: all activities linked with this IPD admission (admission, nursing notes, vitals, MAR, charges).
+     */
+    @GetMapping("/{id}/timeline")
+    public ResponseEntity<List<TimelineEventDto>> getTimeline(@PathVariable Long id) {
+        List<TimelineEventDto> events = timelineService.getTimeline(id);
+        return ResponseEntity.ok(events);
+    }
+
     @GetMapping
     public ResponseEntity<Page<IPDAdmissionResponseDto>> search(
+            @RequestParam(required = false) String admissionNumber,
+            @RequestParam(required = false) String patientUhid,
+            @RequestParam(required = false) String patientName,
+            @RequestParam(required = false) AdmissionStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<IPDAdmissionResponseDto> result = admissionService.search(
+                admissionNumber, patientUhid, patientName, status, fromDate, toDate, page, size);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET /api/ipd/admissions/search — same as GET /api/ipd/admissions with query params.
+     * Search by admission number, UHID, patient name, status. Paginated.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<IPDAdmissionResponseDto>> searchAdmissions(
             @RequestParam(required = false) String admissionNumber,
             @RequestParam(required = false) String patientUhid,
             @RequestParam(required = false) String patientName,

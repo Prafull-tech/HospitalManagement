@@ -75,6 +75,29 @@ public class IPDAdmission extends BaseIdEntity {
     @Column(name = "remarks", length = 500)
     private String remarks;
 
+    @Size(max = 1000)
+    @Column(name = "diagnosis", length = 1000)
+    private String diagnosis;
+
+    @Column(name = "deposit_amount", precision = 15, scale = 2)
+    private java.math.BigDecimal depositAmount;
+
+    @Size(max = 255)
+    @Column(name = "insurance_tpa", length = 255)
+    private String insuranceTpa;
+
+    @Size(max = 500)
+    @Column(name = "admission_form_document_ref", length = 500)
+    private String admissionFormDocumentRef;
+
+    @Size(max = 500)
+    @Column(name = "consent_form_document_ref", length = 500)
+    private String consentFormDocumentRef;
+
+    @Size(max = 500)
+    @Column(name = "id_proof_document_ref", length = 500)
+    private String idProofDocumentRef;
+
     @Size(max = 500)
     @Column(name = "discharge_remarks", length = 500)
     private String dischargeRemarks;
@@ -99,6 +122,14 @@ public class IPDAdmission extends BaseIdEntity {
 
     @Column(name = "priority_override_at")
     private Instant priorityOverrideAt;
+
+    /** When nursing staff performed shift-to-ward (mandatory for shift workflow). */
+    @Column(name = "shifted_to_ward_at")
+    private Instant shiftedToWardAt;
+
+    @Size(max = 255)
+    @Column(name = "shifted_to_ward_by", length = 255)
+    private String shiftedToWardBy;
 
     public IPDAdmission() {
     }
@@ -175,6 +206,54 @@ public class IPDAdmission extends BaseIdEntity {
         this.remarks = remarks;
     }
 
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
+
+    public java.math.BigDecimal getDepositAmount() {
+        return depositAmount;
+    }
+
+    public void setDepositAmount(java.math.BigDecimal depositAmount) {
+        this.depositAmount = depositAmount;
+    }
+
+    public String getInsuranceTpa() {
+        return insuranceTpa;
+    }
+
+    public void setInsuranceTpa(String insuranceTpa) {
+        this.insuranceTpa = insuranceTpa;
+    }
+
+    public String getAdmissionFormDocumentRef() {
+        return admissionFormDocumentRef;
+    }
+
+    public void setAdmissionFormDocumentRef(String admissionFormDocumentRef) {
+        this.admissionFormDocumentRef = admissionFormDocumentRef;
+    }
+
+    public String getConsentFormDocumentRef() {
+        return consentFormDocumentRef;
+    }
+
+    public void setConsentFormDocumentRef(String consentFormDocumentRef) {
+        this.consentFormDocumentRef = consentFormDocumentRef;
+    }
+
+    public String getIdProofDocumentRef() {
+        return idProofDocumentRef;
+    }
+
+    public void setIdProofDocumentRef(String idProofDocumentRef) {
+        this.idProofDocumentRef = idProofDocumentRef;
+    }
+
     public String getDischargeRemarks() {
         return dischargeRemarks;
     }
@@ -221,5 +300,21 @@ public class IPDAdmission extends BaseIdEntity {
 
     public void setPriorityOverrideAt(Instant priorityOverrideAt) {
         this.priorityOverrideAt = priorityOverrideAt;
+    }
+
+    public Instant getShiftedToWardAt() {
+        return shiftedToWardAt;
+    }
+
+    public void setShiftedToWardAt(Instant shiftedToWardAt) {
+        this.shiftedToWardAt = shiftedToWardAt;
+    }
+
+    public String getShiftedToWardBy() {
+        return shiftedToWardBy;
+    }
+
+    public void setShiftedToWardBy(String shiftedToWardBy) {
+        this.shiftedToWardBy = shiftedToWardBy;
     }
 }

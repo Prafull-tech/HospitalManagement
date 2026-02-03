@@ -25,6 +25,7 @@ public class AdmissionQueueService {
 
     private static final List<AdmissionStatus> ACTIVE_STATUSES = List.of(
             AdmissionStatus.ADMITTED,
+            AdmissionStatus.ACTIVE,
             AdmissionStatus.TRANSFERRED,
             AdmissionStatus.DISCHARGE_INITIATED
     );

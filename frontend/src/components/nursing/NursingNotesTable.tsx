@@ -40,7 +40,7 @@ export function NursingNotesTable({
         )}
       </div>
       <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="Nursing notes search results">
+        <table className={`table table-striped ${styles.table}`} role="grid" aria-label="Nursing notes search results">
           <thead>
             <tr>
               <th scope="col">Patient name</th>

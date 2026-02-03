@@ -12,7 +12,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Ward (physical care unit). DB-agnostic (H2 & MySQL).
+ * Ward (physical care unit). Single source for ward structure.
+ * DB-agnostic (H2 & MySQL).
  */
 @Entity
 @Table(
@@ -39,12 +40,20 @@ public class Ward extends BaseIdEntity {
     @Column(name = "ward_type", nullable = false, length = 30)
     private WardType wardType;
 
+    @Size(max = 50)
+    @Column(name = "floor", length = 50)
+    private String floor;
+
     @Column(name = "capacity")
     private Integer capacity;
 
     @Size(max = 50)
     @Column(name = "charge_category", length = 50)
     private String chargeCategory;
+
+    @Size(max = 500)
+    @Column(name = "remarks", length = 500)
+    private String remarks;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -76,6 +85,14 @@ public class Ward extends BaseIdEntity {
         this.wardType = wardType;
     }
 
+    public String getFloor() {
+        return floor;
+    }
+
+    public void setFloor(String floor) {
+        this.floor = floor;
+    }
+
     public Integer getCapacity() {
         return capacity;
     }
@@ -90,6 +107,14 @@ public class Ward extends BaseIdEntity {
 
     public void setChargeCategory(String chargeCategory) {
         this.chargeCategory = chargeCategory;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
     public Boolean getIsActive() {

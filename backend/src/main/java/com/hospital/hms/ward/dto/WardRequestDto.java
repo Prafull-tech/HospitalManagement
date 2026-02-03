@@ -21,10 +21,16 @@ public class WardRequestDto {
     @NotNull(message = "Ward type is required")
     private WardType wardType;
 
+    @Size(max = 50)
+    private String floor;
+
     private Integer capacity;
 
     @Size(max = 50)
     private String chargeCategory;
+
+    @Size(max = 500)
+    private String remarks;
 
     private Boolean isActive = true;
 
@@ -55,6 +61,14 @@ public class WardRequestDto {
         this.wardType = wardType;
     }
 
+    public String getFloor() {
+        return floor;
+    }
+
+    public void setFloor(String floor) {
+        this.floor = floor;
+    }
+
     public Integer getCapacity() {
         return capacity;
     }
@@ -69,6 +83,14 @@ public class WardRequestDto {
 
     public void setChargeCategory(String chargeCategory) {
         this.chargeCategory = chargeCategory;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
     public Boolean getIsActive() {

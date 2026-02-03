@@ -1,10 +1,14 @@
 /** IPD admission status (matches backend enum). */
 export type AdmissionStatus =
   | 'ADMITTED'
+  | 'ACTIVE'
   | 'TRANSFERRED'
   | 'DISCHARGE_INITIATED'
   | 'DISCHARGED'
   | 'CANCELLED'
+  | 'REFERRED'
+  | 'LAMA'
+  | 'EXPIRED'
 
 /** IPD admission type (source). */
 export type AdmissionType = 'OPD_REFERRAL' | 'EMERGENCY' | 'DIRECT'
@@ -12,11 +16,13 @@ export type AdmissionType = 'OPD_REFERRAL' | 'EMERGENCY' | 'DIRECT'
 /** Ward type (matches ward module enum). */
 export type WardType =
   | 'GENERAL'
+  | 'SEMI_PRIVATE'
   | 'PRIVATE'
   | 'ICU'
   | 'CCU'
   | 'NICU'
   | 'HDU'
+  | 'EMERGENCY'
 
 export interface WardResponse {
   id: number
@@ -33,7 +39,10 @@ export interface BedAvailabilityResponse {
   wardId: number
   wardName: string
   wardCode: string
+  wardType?: WardType
   available: boolean
+  selectableForAdmission?: boolean
+  bedStatusDisplay?: string
 }
 
 export interface IPDAdmissionResponse {
@@ -48,6 +57,12 @@ export interface IPDAdmissionResponse {
   admissionType: AdmissionType
   admissionStatus: AdmissionStatus
   admissionDateTime: string
+  diagnosis?: string
+  depositAmount?: number
+  insuranceTpa?: string
+  admissionFormDocumentRef?: string
+  consentFormDocumentRef?: string
+  idProofDocumentRef?: string
   dischargeDateTime?: string
   opdVisitId?: number
   remarks?: string
@@ -65,8 +80,16 @@ export interface IPDAdmissionRequest {
   primaryDoctorId: number
   admissionType: AdmissionType
   bedId: number
+  admissionDateTime: string
+  diagnosis: string
+  wardType?: WardType
   opdVisitId?: number
   remarks?: string
+  depositAmount?: number
+  insuranceTpa?: string
+  admissionFormDocumentRef?: string
+  consentFormDocumentRef?: string
+  idProofDocumentRef?: string
 }
 
 export interface IPDTransferRequest {

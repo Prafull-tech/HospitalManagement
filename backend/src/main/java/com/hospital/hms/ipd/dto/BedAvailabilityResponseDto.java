@@ -7,6 +7,7 @@ import java.time.Instant;
 
 /**
  * Response DTO for bed availability (ward + bed + status + optional allocation info).
+ * Read-only for IPD admission bed selection. Only beds with status VACANT (AVAILABLE) are selectable.
  */
 public class BedAvailabilityResponseDto {
 
@@ -19,7 +20,11 @@ public class BedAvailabilityResponseDto {
     private Long roomId;
     private String roomNumber;
     private BedStatus bedStatus;
+    /** Display label for UI: VACANT, OCCUPIED, RESERVED, CLEANING, etc. (VACANT = AVAILABLE). */
+    private String bedStatusDisplay;
     private Boolean available;
+    /** True when bed is VACANT (AVAILABLE) and active; only such beds may be selected for IPD admission. */
+    private Boolean selectableForAdmission;
     private Instant updatedAt;
     private Long patientId;
     private String patientName;
@@ -108,6 +113,22 @@ public class BedAvailabilityResponseDto {
 
     public void setAvailable(Boolean available) {
         this.available = available;
+    }
+
+    public String getBedStatusDisplay() {
+        return bedStatusDisplay;
+    }
+
+    public void setBedStatusDisplay(String bedStatusDisplay) {
+        this.bedStatusDisplay = bedStatusDisplay;
+    }
+
+    public Boolean getSelectableForAdmission() {
+        return selectableForAdmission;
+    }
+
+    public void setSelectableForAdmission(Boolean selectableForAdmission) {
+        this.selectableForAdmission = selectableForAdmission;
     }
 
     public Instant getUpdatedAt() {

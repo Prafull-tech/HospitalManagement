@@ -3,6 +3,8 @@ package com.hospital.hms.ward.entity;
 import com.hospital.hms.common.entity.BaseIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -13,7 +15,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Room within a ward. Optional for ICU (ward can have beds directly). DB-agnostic (H2 & MySQL).
+ * Room within a ward. Optional for ICU (ward can have beds directly).
+ * Single source for room structure; DB-agnostic (H2 & MySQL).
  */
 @Entity
 @Table(
@@ -35,6 +38,17 @@ public class Room extends BaseIdEntity {
     @Column(name = "room_number", nullable = false, length = 30)
     private String roomNumber;
 
+    @Column(name = "capacity")
+    private Integer capacity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "room_type", length = 20)
+    private RoomType roomType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private RoomStatus status = RoomStatus.ACTIVE;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -55,6 +69,30 @@ public class Room extends BaseIdEntity {
 
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
+
+    public RoomStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RoomStatus status) {
+        this.status = status;
     }
 
     public Boolean getIsActive() {

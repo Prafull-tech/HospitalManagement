@@ -10,7 +10,7 @@ export function NursingNotesTableSkeleton() {
         <span className={styles.btnLine} />
       </div>
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={`table table-striped ${styles.table}`}>
           <thead>
             <tr>
               <th><span className={styles.thLine} /></th>

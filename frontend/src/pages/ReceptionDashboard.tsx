@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { dashboardApi } from '../api/dashboard'
 import type { DashboardStatsDto } from '../types/dashboard'
-import shared from '../styles/Dashboard.module.css'
-import styles from './ReceptionDashboard.module.css'
 
 function UserPlusIcon() {
   return (
@@ -83,7 +81,7 @@ export function ReceptionDashboard() {
       </head><body>
       <h1>Hospital Statistics Report</h1>
       <p>From: ${stats.fromDate} &nbsp; To: ${stats.toDate}</p>
-      <table>
+      <table class="table table-striped">
         <tr><th>Metric</th><th>Count</th></tr>
         <tr><td>Patients Registered</td><td>${stats.totalPatientsRegistered}</td></tr>
         <tr><td>Total OPD Visits</td><td>${stats.totalOPDVisits}</td></tr>
@@ -123,125 +121,168 @@ export function ReceptionDashboard() {
   }
 
   return (
-    <div className={shared.dashboardPage}>
-      <div className={shared.pageHeader}>
-        <h2 className={shared.pageTitle}>Reception</h2>
-        <p className={shared.pageSubtitle}>Patient registration and lookup</p>
+    <div className="d-flex flex-column gap-3">
+      <div>
+        <h2 className="h5 mb-1 fw-bold">Reception</h2>
+        <p className="text-muted small mb-0">Patient registration and lookup</p>
       </div>
 
-      <div className={styles.dateFilter}>
-        <label>
-          <span className={styles.dateLabel}>From</span>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className={styles.dateInput}
-          />
-        </label>
-        <label>
-          <span className={styles.dateLabel}>To</span>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className={styles.dateInput}
-          />
-        </label>
-        <button type="button" onClick={handlePrint} className={styles.printBtn} disabled={!stats}>
-          Print
-        </button>
-        <button type="button" onClick={handleDownload} className={styles.downloadBtn} disabled={!stats}>
-          Download
-        </button>
-      </div>
-
-      {error && <div className={styles.error}>{error}</div>}
-      {loading && <div className={styles.loading}>Loading…</div>}
-
-      <div className={shared.statsRow}>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.primary}`}>
-            <UsersIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>{stats != null ? stats.totalPatientsRegistered : '—'}</span>
-            <span className={shared.statLabel}>Patients Registered (date range)</span>
-          </div>
+      <div className="card shadow-sm">
+        <div className="card-header">
+          <h3 className="h6 mb-0 fw-bold">Date range &amp; report</h3>
         </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.success}`}>
-            <ClipboardIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>{stats != null ? stats.totalOPDVisits : '—'}</span>
-            <span className={shared.statLabel}>Total OPD Visits</span>
-          </div>
-        </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.info}`}>
-            <UsersIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>{stats != null ? stats.totalAdmitted : '—'}</span>
-            <span className={shared.statLabel}>Total Admitted</span>
-          </div>
-        </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.warning}`}>
-            <ClipboardIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>{stats != null ? stats.totalDischarged : '—'}</span>
-            <span className={shared.statLabel}>Total Discharged</span>
-          </div>
-        </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.primary}`}>
-            <UsersIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>{stats != null ? stats.totalCurrentlyAdmitted : '—'}</span>
-            <span className={shared.statLabel}>Currently Admitted (IPD)</span>
-          </div>
-        </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.success}`}>
-            <ClipboardIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>{stats != null ? `₹${stats.totalCollection.toFixed(2)}` : '—'}</span>
-            <span className={shared.statLabel}>Total Collection</span>
+        <div className="card-body">
+          <div className="row g-2 align-items-end flex-wrap">
+            <div className="col-auto">
+              <label className="form-label small mb-0">From</label>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </div>
+            <div className="col-auto">
+              <label className="form-label small mb-0">To</label>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </div>
+            <div className="col-auto">
+              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={handlePrint} disabled={!stats}>
+                Print
+              </button>
+              <button type="button" className="btn btn-outline-primary btn-sm" onClick={handleDownload} disabled={!stats}>
+                Download CSV
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className={shared.welcomeCard}>
-        <p className={shared.welcomeTitle}>Welcome back</p>
-        <p className={shared.welcomeText}>Signed in as {user?.username ?? 'Guest'}. Choose an action below.</p>
+      {error && <div className="alert alert-danger py-2 mb-0" role="alert">{error}</div>}
+      {loading && <p className="text-muted mb-0">Loading…</p>}
+
+      <div className="row g-3">
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <UsersIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">{stats != null ? stats.totalPatientsRegistered : '—'}</div>
+                <div className="small text-muted">Patients Registered (date range)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-success bg-opacity-10 p-2 text-success">
+                <ClipboardIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">{stats != null ? stats.totalOPDVisits : '—'}</div>
+                <div className="small text-muted">Total OPD Visits</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-info bg-opacity-10 p-2 text-info">
+                <UsersIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">{stats != null ? stats.totalAdmitted : '—'}</div>
+                <div className="small text-muted">Total Admitted</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-warning bg-opacity-10 p-2 text-warning">
+                <ClipboardIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">{stats != null ? stats.totalDischarged : '—'}</div>
+                <div className="small text-muted">Total Discharged</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <UsersIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">{stats != null ? stats.totalCurrentlyAdmitted : '—'}</div>
+                <div className="small text-muted">Currently Admitted (IPD)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-success bg-opacity-10 p-2 text-success">
+                <ClipboardIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">{stats != null ? `₹${stats.totalCollection.toFixed(2)}` : '—'}</div>
+                <div className="small text-muted">Total Collection</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className={shared.cardsGrid}>
+      <div className="card shadow-sm bg-light">
+        <div className="card-body py-3">
+          <p className="fw-semibold mb-1">Welcome back</p>
+          <p className="text-muted small mb-0">Signed in as {user?.username ?? 'Guest'}. Choose an action below.</p>
+        </div>
+      </div>
+
+      <div className="row g-3">
         {canRegister && (
-          <Link to="/reception/register" className={shared.actionCard}>
-            <span className={shared.actionCardIcon}>
-              <UserPlusIcon />
-            </span>
-            <div className={shared.actionCardBody}>
-              <span className={shared.actionCardTitle}>Register Patient</span>
-              <span className={shared.actionCardDesc}>Create new patient and get UHID</span>
+          <div className="col-12 col-md-6">
+            <Link to="/reception/register" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+              <div className="card-body d-flex align-items-center gap-3">
+                <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                  <UserPlusIcon />
+                </span>
+                <div>
+                  <span className="fw-bold d-block">Register Patient</span>
+                  <span className="small text-muted">Create new patient and get UHID</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+        <div className="col-12 col-md-6">
+          <Link to="/reception/search" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <SearchIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Search Patient</span>
+                <span className="small text-muted">Find by UHID, phone, or name</span>
+              </div>
             </div>
           </Link>
-        )}
-        <Link to="/reception/search" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <SearchIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Search Patient</span>
-            <span className={shared.actionCardDesc}>Find by UHID, phone, or name</span>
-          </div>
-        </Link>
+        </div>
       </div>
     </div>
   )

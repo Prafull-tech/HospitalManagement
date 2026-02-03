@@ -169,7 +169,7 @@ export function OPDVisitDetailPage() {
       <style>body{font-family:sans-serif;padding:1.5rem;} table{border-collapse:collapse;width:100%;max-width:600px;} th,td{border:1px solid #ccc;padding:0.5rem 1rem;text-align:left;} th{background:#f5f5f5;width:180px;}</style>
       </head><body>
       <h1>OPD Visit Details</h1>
-      <table>
+      <table class="table table-striped">
         <tr><th>Visit number</th><td>${visit.visitNumber}</td></tr>
         <tr><th>Token</th><td>${visit.tokenNumber ?? '—'}</td></tr>
         <tr><th>Status</th><td>${visit.visitStatus}</td></tr>

@@ -1,43 +1,26 @@
 /**
- * Hospital-wise Bed Availability Management.
- * Hospital selector (for SUPER_ADMIN), table, Add/Edit modal, role-based actions, confirmation dialogs.
+ * Hospital-wise Bed Availability – live census from actual beds.
+ * Uses same data source as /ipd/beds so General, Private, ICU/CCU/NICU/HDU show consistent numbers.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { bedAvailabilityService } from '../../services/bedAvailabilityService'
-import { useAuth } from '../../contexts/AuthContext'
-import type {
-  HospitalItem,
-  BedAvailabilityItem,
-  BedAvailabilityFormValues,
-} from '../../types/bedAvailability.types'
-import { canEdit, canDelete, WARD_TYPE_LABELS } from '../../types/bedAvailability.types'
-import { BedAvailabilityTable } from '../../components/ipd/BedAvailabilityTable'
-import { BedAvailabilityForm } from '../../components/ipd/BedAvailabilityForm'
+import { ipdBedService } from '../../services/ipdBedService'
+import type { HospitalItem } from '../../types/bedAvailability.types'
+import type { BedAvailabilityItem } from '../../types/ipdBed.types'
+import { computeWardCensus } from '../../utils/bedCensus'
 
 export default function HospitalBedAvailability() {
-  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const hospitalIdParam = searchParams.get('hospitalId')
 
   const [hospitals, setHospitals] = useState<HospitalItem[]>([])
   const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null)
-  const [items, setItems] = useState<BedAvailabilityItem[]>([])
+  const [liveBeds, setLiveBeds] = useState<BedAvailabilityItem[]>([])
   const [loadingHospitals, setLoadingHospitals] = useState(true)
   const [loadingBeds, setLoadingBeds] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const [formOpen, setFormOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<BedAvailabilityItem | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  const [deleteTarget, setDeleteTarget] = useState<BedAvailabilityItem | null>(null)
-  const [deleting, setDeleting] = useState(false)
-
-  const primaryRole = user?.roles?.[0] ?? 'ADMIN'
-  const userCanEdit = canEdit(primaryRole)
-  const userCanDelete = canDelete(primaryRole)
 
   const fetchHospitals = useCallback(async () => {
     setLoadingHospitals(true)
@@ -45,7 +28,7 @@ export default function HospitalBedAvailability() {
     try {
       const list = await bedAvailabilityService.listHospitals(true)
       setHospitals(list)
-      if (list.length > 0 && !selectedHospitalId) {
+      if (list.length > 0 && selectedHospitalId == null) {
         const idFromUrl = hospitalIdParam ? parseInt(hospitalIdParam, 10) : null
         const validId = idFromUrl && list.some((h) => h.id === idFromUrl) ? idFromUrl : list[0].id
         setSelectedHospitalId(validId)
@@ -60,22 +43,20 @@ export default function HospitalBedAvailability() {
     }
   }, [hospitalIdParam, selectedHospitalId, setSearchParams])
 
-  const fetchBeds = useCallback(async () => {
-    if (selectedHospitalId == null) {
-      setItems([])
-      return
-    }
+  /** Same API as /ipd/beds – single source of truth for bed availability. */
+  const fetchLiveBeds = useCallback(async () => {
     setLoadingBeds(true)
     setError(null)
     try {
-      const list = await bedAvailabilityService.listBeds(selectedHospitalId)
-      setItems(list)
+      const list = await ipdBedService.getAvailability()
+      setLiveBeds(list)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load bed availability')
+      setLiveBeds([])
     } finally {
       setLoadingBeds(false)
     }
-  }, [selectedHospitalId])
+  }, [])
 
   useEffect(() => {
     fetchHospitals()
@@ -84,204 +65,153 @@ export default function HospitalBedAvailability() {
   useEffect(() => {
     if (selectedHospitalId != null) {
       setSearchParams({ hospitalId: String(selectedHospitalId) }, { replace: true })
-      fetchBeds()
+      fetchLiveBeds()
     } else {
-      setItems([])
+      setLiveBeds([])
     }
-  }, [selectedHospitalId, fetchBeds, setSearchParams])
+  }, [selectedHospitalId, fetchLiveBeds, setSearchParams])
 
   const handleHospitalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? parseInt(e.target.value, 10) : null
     setSelectedHospitalId(id)
   }
 
-  const handleAdd = () => {
-    setEditingItem(null)
-    setFormOpen(true)
-  }
-
-  const handleEdit = (item: BedAvailabilityItem) => {
-    setEditingItem(item)
-    setFormOpen(true)
-  }
-
-  const handleFormSubmit = async (values: BedAvailabilityFormValues) => {
-    if (selectedHospitalId == null) return
-    setSubmitting(true)
-    setError(null)
-    try {
-      if (editingItem) {
-        const updated = await bedAvailabilityService.update(selectedHospitalId, editingItem.id, values)
-        setItems((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
-      } else {
-        const created = await bedAvailabilityService.create(selectedHospitalId, values)
-        setItems((prev) => [...prev, created].sort((a, b) => a.wardType.localeCompare(b.wardType)))
-      }
-      setFormOpen(false)
-      setEditingItem(null)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to save')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleDeleteClick = (item: BedAvailabilityItem) => {
-    setDeleteTarget(item)
-  }
-
-  const handleDeleteConfirm = async () => {
-    if (selectedHospitalId == null || !deleteTarget) return
-    setDeleting(true)
-    setError(null)
-    try {
-      await bedAvailabilityService.delete(selectedHospitalId, deleteTarget.id)
-      setItems((prev) => prev.filter((r) => r.id !== deleteTarget.id))
-      setDeleteTarget(null)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to delete')
-    } finally {
-      setDeleting(false)
-    }
-  }
-
+  const wardCensus = computeWardCensus(liveBeds)
   const selectedHospital = hospitals.find((h) => h.id === selectedHospitalId)
 
   return (
-    <>
-      <div className="d-flex flex-column gap-3">
-        <nav aria-label="Breadcrumb">
-          <ol className="breadcrumb mb-0">
-            <li className="breadcrumb-item">
-              <Link to="/ipd">IPD</Link>
-            </li>
-            <li className="breadcrumb-item active" aria-current="page">
-              Hospital Bed Availability
-            </li>
-          </ol>
-        </nav>
+    <div className="d-flex flex-column gap-3">
+      <nav aria-label="Breadcrumb">
+        <ol className="breadcrumb mb-0">
+          <li className="breadcrumb-item">
+            <Link to="/ipd">IPD</Link>
+          </li>
+          <li className="breadcrumb-item active" aria-current="page">
+            Hospital Bed Availability
+          </li>
+        </ol>
+      </nav>
 
-        <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-          <h1 className="h4 mb-0">Hospital-wise Bed Availability</h1>
-          {userCanEdit && selectedHospitalId != null && (
-            <button type="button" className="btn btn-primary" onClick={handleAdd}>
-              Add Record
-            </button>
-          )}
-        </div>
-
-        {loadingHospitals ? (
-          <div className="card border shadow-sm">
-            <div className="card-body">
-              <div className="placeholder-glow">
-                <span className="placeholder col-6" /> Loading hospitals…
-              </div>
-            </div>
-          </div>
-        ) : hospitals.length === 0 ? (
-          <div className="alert alert-info">No hospitals found.</div>
-        ) : (
-          <>
-            <div className="card border shadow-sm">
-              <div className="card-body">
-                <label htmlFor="hospital-select" className="form-label mb-2">
-                  Select Hospital
-                </label>
-                <select
-                  id="hospital-select"
-                  className="form-select"
-                  value={selectedHospitalId ?? ''}
-                  onChange={handleHospitalChange}
-                  aria-label="Select hospital"
-                >
-                  {hospitals.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.hospitalName}
-                      {h.location ? ` – ${h.location}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {error && (
-              <div className="alert alert-danger d-flex align-items-center justify-content-between">
-                <span>{error}</span>
-                <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setError(null)}>
-                  Dismiss
-                </button>
-              </div>
-            )}
-
-            {selectedHospital && (
-              <p className="text-muted small mb-0">
-                Showing bed availability for: <strong>{selectedHospital.hospitalName}</strong>
-              </p>
-            )}
-
-            <BedAvailabilityTable
-              items={items}
-              canEdit={userCanEdit}
-              canDelete={userCanDelete}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-              loading={loadingBeds}
-            />
-          </>
-        )}
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h1 className="h4 mb-0">Hospital-wise Bed Availability</h1>
+        <Link to="/ipd/beds" className="btn btn-outline-primary btn-sm">
+          View all beds
+        </Link>
       </div>
 
-      <BedAvailabilityForm
-        open={formOpen}
-        initial={editingItem}
-        onClose={() => {
-          setFormOpen(false)
-          setEditingItem(null)
-        }}
-        onSubmit={handleFormSubmit}
-        submitting={submitting}
-      />
-
-      {deleteTarget && (
-        <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Confirm Delete</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setDeleteTarget(null)}
-                  aria-label="Close"
-                  disabled={deleting}
-                />
-              </div>
-              <div className="modal-body">
-                Delete bed availability record for <strong>{WARD_TYPE_LABELS[deleteTarget.wardType as keyof typeof WARD_TYPE_LABELS] ?? deleteTarget.wardType}</strong>? This action cannot be
-                undone.
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={deleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={handleDeleteConfirm}
-                  disabled={deleting}
-                >
-                  {deleting ? 'Deleting…' : 'Delete'}
-                </button>
-              </div>
+      {loadingHospitals ? (
+        <div className="card border shadow-sm">
+          <div className="card-body">
+            <div className="placeholder-glow">
+              <span className="placeholder col-6" /> Loading hospitals…
             </div>
           </div>
         </div>
+      ) : hospitals.length === 0 ? (
+        <div className="alert alert-info">No hospitals found.</div>
+      ) : (
+        <>
+          <div className="card border shadow-sm">
+            <div className="card-body">
+              <label htmlFor="hospital-select" className="form-label mb-2">
+                Select Hospital
+              </label>
+              <select
+                id="hospital-select"
+                className="form-select"
+                value={selectedHospitalId ?? ''}
+                onChange={handleHospitalChange}
+                aria-label="Select hospital"
+              >
+                {hospitals.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.hospitalName}
+                    {h.location ? ` – ${h.location}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {error && (
+            <div className="alert alert-danger d-flex align-items-center justify-content-between">
+              <span>{error}</span>
+              <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setError(null)}>
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {selectedHospital && (
+            <p className="text-muted small mb-0">
+              Live bed census for: <strong>{selectedHospital.hospitalName}</strong> (same data as{' '}
+              <Link to="/ipd/beds">Bed Availability</Link>)
+            </p>
+          )}
+
+          <div className="card border shadow-sm">
+            <div className="card-header bg-light py-2 d-flex align-items-center justify-content-between">
+              <h6 className="mb-0">Daily Bed Census by Ward Type</h6>
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={fetchLiveBeds}
+                disabled={loadingBeds}
+              >
+                {loadingBeds ? 'Loading…' : 'Refresh'}
+              </button>
+            </div>
+            {loadingBeds ? (
+              <div className="card-body">
+                <div className="placeholder-glow">
+                  <span className="placeholder col-12" />
+                  <span className="placeholder col-12" />
+                  <span className="placeholder col-12" />
+                </div>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-striped mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Ward Type</th>
+                      <th className="text-end">Total Beds</th>
+                      <th className="text-end">Occupied</th>
+                      <th className="text-end">Vacant</th>
+                      <th className="text-end">Reserved</th>
+                      <th className="text-end">Under Cleaning</th>
+                      <th className="text-end">Maintenance</th>
+                      <th className="text-end">Isolation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {wardCensus.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="text-center text-muted py-4">
+                          No beds found. Data is shared with <Link to="/ipd/beds">Bed Availability</Link>.
+                        </td>
+                      </tr>
+                    ) : (
+                      wardCensus.map((row) => (
+                        <tr key={row.wardType}>
+                          <td>{row.wardTypeLabel}</td>
+                          <td className="text-end">{row.total}</td>
+                          <td className="text-end">{row.occupied}</td>
+                          <td className="text-end">{row.vacant}</td>
+                          <td className="text-end">{row.reserved}</td>
+                          <td className="text-end">{row.cleaning}</td>
+                          <td className="text-end">{row.maintenance}</td>
+                          <td className="text-end">{row.isolation}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
       )}
-    </>
+    </div>
   )
 }

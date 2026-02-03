@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import shared from '../styles/Dashboard.module.css'
 
 function UserPlusIcon() {
   return (
@@ -59,86 +58,116 @@ export function NursingDashboard() {
   const { user } = useAuth()
 
   return (
-    <div className={shared.dashboardPage}>
-      <div className={shared.pageHeader}>
-        <h2 className={shared.pageTitle}>Nursing</h2>
-        <p className={shared.pageSubtitle}>Staff, assignments, vitals, MAR, and notes</p>
+    <div className="d-flex flex-column gap-3">
+      <div>
+        <h2 className="h5 mb-1 fw-bold">Nursing</h2>
+        <p className="text-muted small mb-0">Staff, assignments, vitals, MAR, and notes</p>
       </div>
 
-      <div className={shared.statsRow}>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.primary}`}>
-            <UserPlusIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>—</span>
-            <span className={shared.statLabel}>Nursing Staff</span>
+      <div className="row g-3">
+        <div className="col-12 col-md-6">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <UserPlusIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">—</div>
+                <div className="small text-muted">Nursing Staff</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.info}`}>
-            <ActivityIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>—</span>
-            <span className={shared.statLabel}>Vitals Today</span>
+        <div className="col-12 col-md-6">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-info bg-opacity-10 p-2 text-info">
+                <ActivityIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">—</div>
+                <div className="small text-muted">Vitals Today</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className={shared.welcomeCard}>
-        <p className={shared.welcomeTitle}>Nursing Department</p>
-        <p className={shared.welcomeText}>
-          Signed in as {user?.username ?? 'Guest'}. Manage staff, assign nurses, record vitals, MAR, and nursing notes.
-        </p>
+      <div className="card shadow-sm bg-light">
+        <div className="card-body py-3">
+          <p className="fw-semibold mb-1">Nursing Department</p>
+          <p className="text-muted small mb-0">
+            Signed in as {user?.username ?? 'Guest'}. Manage staff, assign nurses, record vitals, MAR, and nursing notes.
+          </p>
+        </div>
       </div>
 
-      <div className={shared.cardsGrid}>
-        <Link to="/nursing/staff" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <UserPlusIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Nursing Staff</span>
-            <span className={shared.actionCardDesc}>Create and manage nursing staff</span>
-          </div>
-        </Link>
-        <Link to="/nursing/assign" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <ClipboardListIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Assign Nurse</span>
-            <span className={shared.actionCardDesc}>Assign nurse to IPD admission (ward/shift)</span>
-          </div>
-        </Link>
-        <Link to="/nursing/vitals" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <ActivityIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Vital Signs</span>
-            <span className={shared.actionCardDesc}>Record vitals and view history</span>
-          </div>
-        </Link>
-        <Link to="/nursing/medications" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <PillIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Medication (MAR)</span>
-            <span className={shared.actionCardDesc}>Record medication administration</span>
-          </div>
-        </Link>
-        <Link to="/nursing/notes" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <FileTextIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Nursing Notes</span>
-            <span className={shared.actionCardDesc}>Shift notes and care plan</span>
-          </div>
-        </Link>
+      <div className="row g-3">
+        <div className="col-12 col-sm-6 col-lg-4">
+          <Link to="/nursing/staff" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <UserPlusIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Nursing Staff</span>
+                <span className="small text-muted">Create and manage nursing staff</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-4">
+          <Link to="/nursing/assign" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <ClipboardListIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Assign Nurse</span>
+                <span className="small text-muted">Assign nurse to IPD admission (ward/shift)</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-4">
+          <Link to="/nursing/vitals" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <ActivityIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Vital Signs</span>
+                <span className="small text-muted">Record vitals and view history</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-4">
+          <Link to="/nursing/medications" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <PillIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Medication (MAR)</span>
+                <span className="small text-muted">Record medication administration</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-4">
+          <Link to="/nursing/notes" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <FileTextIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Nursing Notes</span>
+                <span className="small text-muted">Shift notes and care plan</span>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   )

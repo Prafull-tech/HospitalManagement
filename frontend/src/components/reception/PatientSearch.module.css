@@ -1,0 +1,126 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  color: var(--hms-text);
+}
+
+.required {
+  color: var(--hms-error);
+}
+
+.input {
+  width: 100%;
+  padding: var(--hms-input-padding);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 0.95rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 2px var(--hms-focus-ring);
+}
+
+.loading {
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius);
+  box-shadow: var(--hms-shadow);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.resultItem {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--hms-card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem:hover,
+.resultItem:focus {
+  background: var(--hms-bg-hover, rgba(0, 0, 0, 0.04));
+  outline: none;
+}
+
+.resultName {
+  font-weight: 500;
+  color: var(--hms-text);
+}
+
+.resultMeta {
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}
+
+.noResults {
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+  padding: 0.5rem 0;
+}
+
+.selectedCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--hms-success-bg, #e8f5e9);
+  border: 1px solid var(--hms-success-border, #c8e6c9);
+  border-radius: var(--hms-radius);
+}
+
+.selectedName {
+  font-weight: 500;
+  color: var(--hms-text);
+}
+
+.selectedUhid {
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.changeBtn {
+  margin-left: auto;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+  background: transparent;
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  color: var(--hms-text);
+  cursor: pointer;
+}
+
+.changeBtn:hover {
+  background: var(--hms-bg-hover, rgba(0, 0, 0, 0.06));
+}

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import shared from '../styles/Dashboard.module.css'
 
 function BedIcon() {
   return (
@@ -41,68 +40,90 @@ export function IPDDashboard() {
   const { user } = useAuth()
 
   return (
-    <div className={shared.dashboardPage}>
-      <div className={shared.pageHeader}>
-        <h2 className={shared.pageTitle}>IPD — Inpatient</h2>
-        <p className={shared.pageSubtitle}>Admit patients, allocate beds, transfer, and discharge</p>
+    <div className="d-flex flex-column gap-3">
+      <div>
+        <h2 className="h5 mb-1 fw-bold">IPD — Inpatient</h2>
+        <p className="text-muted small mb-0">Admit patients, allocate beds, transfer, and discharge</p>
       </div>
 
-      <div className={shared.statsRow}>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.primary}`}>
-            <BedIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>—</span>
-            <span className={shared.statLabel}>Occupied Beds</span>
+      <div className="row g-3">
+        <div className="col-12 col-md-6">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <BedIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">—</div>
+                <div className="small text-muted">Occupied Beds</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className={shared.statCard}>
-          <div className={`${shared.statIconWrap} ${shared.success}`}>
-            <ClipboardListIcon />
-          </div>
-          <div className={shared.statContent}>
-            <span className={shared.statValue}>—</span>
-            <span className={shared.statLabel}>Active Admissions</span>
+        <div className="col-12 col-md-6">
+          <div className="card shadow-sm h-100">
+            <div className="card-body d-flex align-items-start gap-3">
+              <div className="rounded-3 bg-success bg-opacity-10 p-2 text-success">
+                <ClipboardListIcon />
+              </div>
+              <div>
+                <div className="fs-4 fw-bold">—</div>
+                <div className="small text-muted">Active Admissions</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className={shared.welcomeCard}>
-        <p className={shared.welcomeTitle}>Inpatient Department</p>
-        <p className={shared.welcomeText}>
-          Signed in as {user?.username ?? 'Guest'}. Admit patients, allocate beds, transfer, and discharge.
-        </p>
+      <div className="card shadow-sm bg-light">
+        <div className="card-body py-3">
+          <p className="fw-semibold mb-1">Inpatient Department</p>
+          <p className="text-muted small mb-0">
+            Signed in as {user?.username ?? 'Guest'}. Admit patients, allocate beds, transfer, and discharge.
+          </p>
+        </div>
       </div>
 
-      <div className={shared.cardsGrid}>
-        <Link to="/ipd/admit" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <UserPlusIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Admit Patient</span>
-            <span className={shared.actionCardDesc}>OPD referral, Emergency, or Direct admission with bed allocation</span>
-          </div>
-        </Link>
-        <Link to="/ipd/beds" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <BedIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>Bed Availability</span>
-            <span className={shared.actionCardDesc}>View wards and available beds</span>
-          </div>
-        </Link>
-        <Link to="/ipd/admissions" className={shared.actionCard}>
-          <span className={shared.actionCardIcon}>
-            <ClipboardListIcon />
-          </span>
-          <div className={shared.actionCardBody}>
-            <span className={shared.actionCardTitle}>IPD Patient List</span>
-            <span className={shared.actionCardDesc}>Search admissions, transfer or discharge</span>
-          </div>
-        </Link>
+      <div className="row g-3">
+        <div className="col-12 col-md-4">
+          <Link to="/ipd/admit" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <UserPlusIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Admit Patient</span>
+                <span className="small text-muted">OPD referral, Emergency, or Direct admission with bed allocation</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="col-12 col-md-4">
+          <Link to="/ipd/beds" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <BedIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">Bed Availability</span>
+                <span className="small text-muted">View wards and available beds</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="col-12 col-md-4">
+          <Link to="/ipd/admissions" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
+            <div className="card-body d-flex align-items-center gap-3">
+              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
+                <ClipboardListIcon />
+              </span>
+              <div>
+                <span className="fw-bold d-block">IPD Patient List</span>
+                <span className="small text-muted">Search admissions, transfer or discharge</span>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   )

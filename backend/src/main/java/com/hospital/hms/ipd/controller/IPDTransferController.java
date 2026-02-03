@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * <p>
  * Base path: /api (context) + /ipd/transfers (mapping). Full paths:
  * <ul>
+ *   <li>POST /api/ipd/transfers — full workflow (recommend + consent + bed + shift)</li>
  *   <li>POST /api/ipd/transfers/recommend</li>
  *   <li>POST /api/ipd/transfers/consent</li>
  *   <li>POST /api/ipd/transfers/confirm-bed</li>
@@ -90,6 +91,11 @@ import org.springframework.web.bind.annotation.*;
  *   "executions": [ { "id": 1, "transferStatus": "COMPLETED", ... } ]
  * }
  * </pre>
+ * <p>
+ * POST /api/ipd/transfers — Full workflow in one call: recommend → consent → confirm-bed → execute.
+ * Request body includes doctor recommendation, family consent, newBedId, and optional execution details.
+ * System updates: old bed → VACANT, new bed → OCCUPIED, admission status → SHIFTED (TRANSFERRED).
+ * </p>
  */
 @RestController
 @RequestMapping("/ipd/transfers")
@@ -99,6 +105,14 @@ public class IPDTransferController {
 
     public IPDTransferController(TransferWorkflowService transferWorkflowService) {
         this.transferWorkflowService = transferWorkflowService;
+    }
+
+    /** Full transfer: doctor recommendation + family consent + bed selection + patient shift. Any role that can execute can call. */
+    @PreAuthorize(TransferRoles.CAN_EXECUTE)
+    @PostMapping
+    public ResponseEntity<IPDTransferFullResponseDto> createTransfer(@Valid @RequestBody IPDTransferFullRequestDto request) {
+        IPDTransferFullResponseDto result = transferWorkflowService.executeFullTransfer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PreAuthorize(TransferRoles.CAN_RECOMMEND)

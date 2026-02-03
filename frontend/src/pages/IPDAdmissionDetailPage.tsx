@@ -115,7 +115,7 @@ export function IPDAdmissionDetailPage() {
       <style>body{font-family:sans-serif;padding:1.5rem;} table{border-collapse:collapse;width:100%;max-width:600px;} th,td{border:1px solid #ccc;padding:0.5rem 1rem;text-align:left;} th{background:#f5f5f5;width:180px;}</style>
       </head><body>
       <h1>IPD Admission Details</h1>
-      <table>
+      <table class="table table-striped">
         <tr><th>Admission #</th><td>${admission.admissionNumber}</td></tr>
         <tr><th>Status</th><td>${admission.admissionStatus}</td></tr>
         <tr><th>Patient</th><td>${admission.patientName} (${admission.patientUhid})</td></tr>

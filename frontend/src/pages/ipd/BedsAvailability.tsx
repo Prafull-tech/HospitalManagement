@@ -9,6 +9,7 @@ import { ipdBedService } from '../../services/ipdBedService'
 import { useAuth } from '../../contexts/AuthContext'
 import type { BedAvailabilityItem, BedFiltersParams, BedStatus, SummaryCounts, WardCensusRow } from '../../types/ipdBed.types'
 import { BED_STATUS_LABELS } from '../../types/ipdBed.types'
+import { computeWardCensus as computeWardCensusUtil } from '../../utils/bedCensus'
 import { BedFilters } from '../../components/ipd/BedFilters'
 import { BedTable } from '../../components/ipd/BedTable'
 import { BedDetailsModal } from '../../components/ipd/BedDetailsModal'
@@ -33,17 +34,6 @@ function filtersToSearchParams(f: BedFiltersParams): URLSearchParams {
   return p
 }
 
-const WARD_TYPE_LABELS: Record<string, string> = {
-  GENERAL: 'General',
-  SEMI_PRIVATE: 'Semi Pvt',
-  PRIVATE: 'Private',
-  ICU: 'ICU',
-  CCU: 'CCU',
-  NICU: 'NICU',
-  HDU: 'HDU',
-  EMERGENCY: 'Emergency',
-}
-
 function computeSummary(beds: BedAvailabilityItem[]): SummaryCounts {
   const s: SummaryCounts = {
     total: beds.length,
@@ -66,34 +56,7 @@ function computeSummary(beds: BedAvailabilityItem[]): SummaryCounts {
 }
 
 function computeWardCensus(beds: BedAvailabilityItem[]): WardCensusRow[] {
-  const byWardType = new Map<string, BedAvailabilityItem[]>()
-  beds.forEach((b) => {
-    const key = b.wardType ?? 'GENERAL'
-    if (!byWardType.has(key)) byWardType.set(key, [])
-    byWardType.get(key)!.push(b)
-  })
-  return Array.from(byWardType.entries()).map(([wardType, list]) => {
-    const row: WardCensusRow = {
-      wardType: wardType as WardCensusRow['wardType'],
-      wardTypeLabel: WARD_TYPE_LABELS[wardType] ?? wardType,
-      total: list.length,
-      occupied: 0,
-      vacant: 0,
-      reserved: 0,
-      cleaning: 0,
-      maintenance: 0,
-      isolation: 0,
-    }
-    list.forEach((b) => {
-      if (b.bedStatus === 'AVAILABLE') row.vacant++
-      else if (b.bedStatus === 'OCCUPIED') row.occupied++
-      else if (b.bedStatus === 'RESERVED') row.reserved++
-      else if (b.bedStatus === 'CLEANING') row.cleaning++
-      else if (b.bedStatus === 'MAINTENANCE') row.maintenance++
-      else if (b.bedStatus === 'ISOLATION') row.isolation++
-    })
-    return row
-  }).sort((a, b) => a.wardTypeLabel.localeCompare(b.wardTypeLabel))
+  return computeWardCensusUtil(beds)
 }
 
 function filterBedsClient(beds: BedAvailabilityItem[], filters: BedFiltersParams): BedAvailabilityItem[] {
@@ -209,20 +172,24 @@ export function BedsAvailability() {
   }
 
   return (
-    <div className="container-fluid py-3">
-      {/* Page Header */}
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div>
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-1">
-              <li className="breadcrumb-item"><Link to="/">Home</Link></li>
-              <li className="breadcrumb-item"><Link to="/ipd">IPD</Link></li>
-              <li className="breadcrumb-item active" aria-current="page">Beds</li>
-            </ol>
-          </nav>
-          <h1 className="h4 mb-0">IPD Beds Availability</h1>
-        </div>
+    <div className="d-flex flex-column gap-3">
+      <nav aria-label="Breadcrumb">
+        <ol className="breadcrumb mb-0">
+          <li className="breadcrumb-item">
+            <Link to="/ipd">IPD</Link>
+          </li>
+          <li className="breadcrumb-item active" aria-current="page">
+            Beds
+          </li>
+        </ol>
+      </nav>
+
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h1 className="h4 mb-0">IPD Beds Availability</h1>
         <div className="d-flex gap-2">
+          <Link to="/ipd/hospital-beds" className="btn btn-outline-primary btn-sm">
+            Hospital-wise view
+          </Link>
           <button type="button" className="btn btn-outline-primary btn-sm" onClick={handleRefresh} disabled={loading}>
             Refresh
           </button>
@@ -233,7 +200,7 @@ export function BedsAvailability() {
       </div>
 
       {error && (
-        <div className="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between flex-wrap gap-2" role="alert">
+        <div className="alert alert-danger d-flex align-items-center justify-content-between flex-wrap gap-2" role="alert">
           <span>{loading ? 'Retrying…' : error}</span>
           <div className="d-flex align-items-center gap-2">
             <button type="button" className="btn btn-sm btn-outline-danger" onClick={fetchBeds} disabled={loading}>
@@ -245,7 +212,7 @@ export function BedsAvailability() {
       )}
 
       {/* Summary Cards */}
-      <div className="row g-2 g-md-3 mb-3">
+      <div className="row g-2 g-md-3">
         <div className="col-6 col-md">
           <div className="card border shadow-sm h-100">
             <div className="card-body py-2">
@@ -306,12 +273,12 @@ export function BedsAvailability() {
 
       {/* Daily Bed Census by Ward Type (NABH: daily bed census) */}
       {wardCensus.length > 0 && (
-        <div className="card border shadow-sm mb-3">
-          <div className="card-header bg-light py-2">
+        <div className="card border shadow-sm">
+          <div className="card-header bg-light py-2 d-flex align-items-center justify-content-between">
             <h6 className="mb-0">Daily Bed Census by Ward Type</h6>
           </div>
           <div className="table-responsive">
-            <table className="table table-sm table-bordered mb-0">
+            <table className="table table-striped mb-0">
               <thead className="table-light">
                 <tr>
                   <th>Ward Type</th>

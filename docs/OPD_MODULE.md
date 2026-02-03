@@ -29,6 +29,23 @@ Token number is auto-generated per doctor per day (resets daily). Visit number f
 
 ---
 
+## OPD / Emergency consultation outcome → IPD admission
+
+- **Visit type:** OPD or EMERGENCY (stored on visit).
+- **Consultation outcome:** Doctor result must be one of: **OPD_TREATMENT_ONLY**, **LAB_TEST_ADVISED**, **IPD_ADMISSION_ADVISED**.
+- **Admission recommended:** Doctor must explicitly mark "Admission Recommended" via **PUT /api/visit/{id}/recommend-admission**. Only DOCTOR role can call; recommendation is stored with the visit for IPD integration.
+- **IPD admission:** When admitting from OPD/Emergency, pass `opdVisitId` in IPD admission request to link admission to the consultation visit.
+
+| Method | Endpoint | Description | Roles |
+|--------|----------|-------------|-------|
+| POST   | `/api/opd/visit` | Register OPD visit (visitType=OPD) | — |
+| POST   | `/api/emergency/visit` | Register Emergency visit (visitType=EMERGENCY) | — |
+| PUT    | `/api/visit/{id}/recommend-admission` | Mark "Admission Recommended" (stored with visit) | DOCTOR only |
+
+Payload for POST /api/opd/visit and POST /api/emergency/visit: same as POST /api/opd/visits (`patientUhid`, `doctorId`, optional `visitDate`). Optional body for recommend-admission: `{ "consultationOutcome": "IPD_ADMISSION_ADVISED" }`.
+
+---
+
 ## API Contract
 
 Base path: `/api` (context) + `/opd/visits` (controller mapping). All endpoints return JSON.
@@ -36,10 +53,13 @@ Base path: `/api` (context) + `/opd/visits` (controller mapping). All endpoints 
 | Method | Endpoint | Description | Status codes |
 |--------|----------|-------------|--------------|
 | POST   | `/api/opd/visits` | Register OPD visit | 201 Created, 400 Bad Request |
+| POST   | `/api/opd/visit` | Register OPD visit (alias; visitType=OPD) | 201 Created, 400 Bad Request |
+| POST   | `/api/emergency/visit` | Register Emergency visit | 201 Created, 400 Bad Request |
 | GET    | `/api/opd/visits/{id}` | Get OPD visit by ID | 200 OK, 404 Not Found |
 | GET    | `/api/opd/visits` | Search OPD visits (paginated) | 200 OK |
 | GET    | `/api/opd/visits/queue` | Get consultation queue for a doctor/date | 200 OK |
-| PUT    | `/api/opd/visits/{id}/status` | Update visit status | 200 OK, 400, 404 |
+| PUT    | `/api/opd/visits/{id}/status` | Update visit status (optional consultationOutcome) | 200 OK, 400, 404 |
+| PUT    | `/api/visit/{id}/recommend-admission` | Doctor marks "Admission Recommended" | 200 OK, 403, 404 |
 | POST   | `/api/opd/visits/{id}/notes` | Add/update clinical notes | 201 Created, 400, 404 |
 | POST   | `/api/opd/visits/{id}/refer` | Refer visit (department/doctor/IPD) | 200 OK, 400, 404 |
 

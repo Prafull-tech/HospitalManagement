@@ -81,7 +81,7 @@ export function WardBedTable({
 
   return (
     <div className={styles.tableWrap}>
-      <table className={styles.table}>
+      <table className={`table table-striped ${styles.table}`}>
         <thead>
           <tr>
             <th>Bed No</th>

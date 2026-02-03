@@ -52,7 +52,7 @@ export function BedTable({
       <div className="card border shadow-sm">
         <div className="card-body">
           <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
+            <table className="table table-striped align-middle mb-0">
               <thead>
                 <tr>
                   <th>Bed No</th>
@@ -98,7 +98,7 @@ export function BedTable({
   return (
     <div className="card border shadow-sm">
       <div className="table-responsive">
-        <table className="table table-hover align-middle mb-0">
+        <table className="table table-striped align-middle mb-0">
           <thead className="table-light">
             <tr>
               <th>Bed No</th>

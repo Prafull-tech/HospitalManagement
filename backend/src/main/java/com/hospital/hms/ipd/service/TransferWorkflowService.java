@@ -214,6 +214,67 @@ public class TransferWorkflowService {
         }
     }
 
+    /**
+     * Full transfer workflow in one call: recommend → consent → confirm-bed → execute.
+     * System updates: old bed → VACANT (AVAILABLE), new bed → OCCUPIED, admission status → SHIFTED (TRANSFERRED).
+     */
+    @Transactional
+    public IPDTransferFullResponseDto executeFullTransfer(IPDTransferFullRequestDto request) {
+        TransferRecommendRequestDto recReq = new TransferRecommendRequestDto();
+        recReq.setIpdAdmissionId(request.getIpdAdmissionId());
+        recReq.setRecommendedByDoctorId(request.getRecommendedByDoctorId());
+        recReq.setFromWardType(request.getFromWardType());
+        recReq.setToWardType(request.getToWardType());
+        recReq.setRecommendationNotes(request.getRecommendationNotes());
+        recReq.setEmergencyFlag(request.getEmergencyFlag());
+        TransferRecommendResponseDto recResp = recommend(recReq);
+
+        TransferConsentRequestDto consentReq = new TransferConsentRequestDto();
+        consentReq.setTransferRecommendationId(recResp.getId());
+        consentReq.setConsentGiven(request.getConsentGiven());
+        consentReq.setConsentByName(request.getConsentByName());
+        consentReq.setRelationToPatient(request.getRelationToPatient());
+        consentReq.setConsentMode(request.getConsentMode());
+        TransferConsentResponseDto consentResp = recordConsent(consentReq);
+
+        ConfirmBedRequestDto bedReq = new ConfirmBedRequestDto();
+        bedReq.setTransferRecommendationId(recResp.getId());
+        bedReq.setNewBedId(request.getNewBedId());
+        ConfirmBedResponseDto bedResp = confirmBed(bedReq);
+
+        ExecuteTransferRequestDto execReq = new ExecuteTransferRequestDto();
+        execReq.setTransferRecommendationId(recResp.getId());
+        execReq.setNurseId(request.getNurseId());
+        execReq.setAttendantId(request.getAttendantId());
+        execReq.setEquipmentUsed(request.getEquipmentUsed());
+        execReq.setTransferStatus(request.getTransferStatus());
+        ExecuteTransferResponseDto execResp = execute(execReq);
+
+        IPDAdmission admission = admissionRepository.findById(request.getIpdAdmissionId())
+                .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found after transfer: " + request.getIpdAdmissionId()));
+
+        IPDTransferFullResponseDto response = new IPDTransferFullResponseDto();
+        response.setIpdAdmissionId(admission.getId());
+        response.setAdmissionNumber(admission.getAdmissionNumber());
+        response.setAdmissionStatus(admission.getAdmissionStatus());
+        response.setRecommendationId(recResp.getId());
+        response.setConsentId(consentResp.getId());
+        response.setBedReservationId(bedResp.getId());
+        response.setPatientTransferId(execResp.getId());
+        response.setOldBedStatus("VACANT");
+        response.setNewBedStatus("OCCUPIED");
+        response.setSystemUpdateSummary("Old bed → VACANT; New bed → OCCUPIED; Admission status → SHIFTED (TRANSFERRED).");
+        response.setTransferredAt(execResp.getTransferTime());
+
+        IPDAdmissionResponseDto admissionDto = admissionService.getById(admission.getId());
+        response.setCurrentBedId(admissionDto.getCurrentBedId());
+        response.setCurrentBedNumber(admissionDto.getCurrentBedNumber());
+        response.setCurrentWardId(admissionDto.getCurrentWardId());
+        response.setCurrentWardName(admissionDto.getCurrentWardName());
+
+        return response;
+    }
+
     private static TransferStatus parseTransferStatus(String value) {
         if (value == null || value.isBlank()) {
             return TransferStatus.COMPLETED;

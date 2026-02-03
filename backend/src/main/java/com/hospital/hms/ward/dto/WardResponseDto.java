@@ -13,8 +13,10 @@ public class WardResponseDto {
     private String code;
     private String name;
     private WardType wardType;
+    private String floor;
     private Integer capacity;
     private String chargeCategory;
+    private String remarks;
     private Boolean isActive;
     private Instant createdAt;
     private Instant updatedAt;
@@ -54,6 +56,14 @@ public class WardResponseDto {
         this.wardType = wardType;
     }
 
+    public String getFloor() {
+        return floor;
+    }
+
+    public void setFloor(String floor) {
+        this.floor = floor;
+    }
+
     public Integer getCapacity() {
         return capacity;
     }
@@ -68,6 +78,14 @@ public class WardResponseDto {
 
     public void setChargeCategory(String chargeCategory) {
         this.chargeCategory = chargeCategory;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
     public Boolean getIsActive() {

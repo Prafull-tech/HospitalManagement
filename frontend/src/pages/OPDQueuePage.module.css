@@ -56,6 +56,102 @@
   color: var(--hms-text);
 }
 
+.subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.filterToggle {
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  color: var(--hms-accent);
+  cursor: pointer;
+}
+
+.filterToggle:hover {
+  background: var(--hms-form-input-bg);
+  border-color: var(--hms-border-focus);
+}
+
+.filterCount {
+  margin-left: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}
+
+.filterForm {
+  padding: 1rem 0;
+  margin-bottom: 0.5rem;
+  border-top: 1px solid var(--hms-border);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.filterRow:last-of-type {
+  margin-bottom: 0;
+}
+
+.filterLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--hms-text-secondary);
+  min-width: 140px;
+}
+
+.filterActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.applyBtn {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.applyBtn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.applyBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clearBtn {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-card);
+  color: var(--hms-text-secondary);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.clearBtn:hover {
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+}
+
 .queueList {
   display: flex;
   flex-direction: column;
@@ -103,6 +199,16 @@
 
 .visitNumber {
   font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}
+
+.visitDate {
+  font-size: 0.8rem;
+  color: var(--hms-text-muted);
+}
+
+.doctorName {
+  font-size: 0.8rem;
   color: var(--hms-text-muted);
 }
 

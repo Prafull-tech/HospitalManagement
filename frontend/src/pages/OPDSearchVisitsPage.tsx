@@ -128,7 +128,7 @@ export function OPDSearchVisitsPage() {
       </head><body>
       <h1>OPD Visits</h1>
       <p>Date: ${applied.visitDate} | Total: ${result.totalElements}</p>
-      <table><thead><tr><th>Visit #</th><th>Token</th><th>Patient</th><th>UHID</th><th>Doctor</th><th>Date</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
+      <table class="table table-striped"><thead><tr><th>Visit #</th><th>Token</th><th>Patient</th><th>UHID</th><th>Doctor</th><th>Date</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
       </body></html>
     `)
     win.document.close()
@@ -234,7 +234,7 @@ export function OPDSearchVisitsPage() {
           ) : (
             <>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <table className={`table table-striped ${styles.table}`}>
                   <thead>
                     <tr>
                       <th>Visit #</th>

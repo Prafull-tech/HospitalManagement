@@ -8,9 +8,11 @@ import type {
   BedResponse,
   BedRequest,
   BedStatusRequest,
+  WardRoomAuditLog,
 } from '../types/ward'
 
 const WARDS = '/wards'
+const ROOMS = '/rooms'
 const BEDS = '/beds'
 
 export const wardApi = {
@@ -29,6 +31,14 @@ export const wardApi = {
     return apiClient.get(`${WARDS}/${id}`).then((res) => res.data)
   },
 
+  updateWard(id: number, data: WardRequest): Promise<WardResponse> {
+    return apiClient.put(`${WARDS}/${id}`, data).then((res) => res.data)
+  },
+
+  disableWard(id: number): Promise<void> {
+    return apiClient.delete(`${WARDS}/${id}`).then(() => {})
+  },
+
   // Rooms
   createRoom(wardId: number, data: RoomRequest): Promise<RoomResponse> {
     return apiClient.post(`${WARDS}/${wardId}/rooms`, data).then((res) => res.data)
@@ -36,6 +46,14 @@ export const wardApi = {
 
   listRoomsByWard(wardId: number): Promise<RoomResponse[]> {
     return apiClient.get(`${WARDS}/${wardId}/rooms`).then((res) => res.data)
+  },
+
+  updateRoom(id: number, data: RoomRequest): Promise<RoomResponse> {
+    return apiClient.put(`${ROOMS}/${id}`, data).then((res) => res.data)
+  },
+
+  disableRoom(id: number): Promise<void> {
+    return apiClient.delete(`${ROOMS}/${id}`).then(() => {})
   },
 
   // Beds
@@ -55,5 +73,13 @@ export const wardApi = {
 
   updateBedStatus(bedId: number, data: BedStatusRequest): Promise<BedResponse> {
     return apiClient.put(`${BEDS}/${bedId}/status`, data).then((res) => res.data)
+  },
+}
+
+export const wardRoomAuditApi = {
+  list(entityType?: 'WARD' | 'ROOM', entityId?: number): Promise<WardRoomAuditLog[]> {
+    return apiClient
+      .get('/audit/ward-room', { params: { entityType, entityId } })
+      .then((res) => res.data)
   },
 }

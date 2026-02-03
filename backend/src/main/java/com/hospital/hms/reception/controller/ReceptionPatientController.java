@@ -37,6 +37,12 @@ public class ReceptionPatientController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @GetMapping("/by-id/{id}")
+    public ResponseEntity<PatientResponseDto> getById(@PathVariable Long id) {
+        PatientResponseDto patient = patientService.getById(id);
+        return ResponseEntity.ok(patient);
+    }
+
     @GetMapping("/{uhid}")
     // @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'HELP_DESK')")
     public ResponseEntity<PatientResponseDto> getByUhid(@PathVariable String uhid) {
@@ -44,12 +50,24 @@ public class ReceptionPatientController {
         return ResponseEntity.ok(patient);
     }
 
+    /** List all patients (paginated). Default page=0, size=500. For reception search "all patients below". */
+    @GetMapping
+    public ResponseEntity<List<PatientResponseDto>> list(
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "500") int size) {
+        return ResponseEntity.ok(patientService.list(page, size));
+    }
+
     @GetMapping("/search")
     // @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'HELP_DESK')")
     public ResponseEntity<List<PatientResponseDto>> search(
             @RequestParam(required = false) String uhid,
             @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String name) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String q) {
+        if (q != null && !q.isBlank()) {
+            return ResponseEntity.ok(patientService.searchByQuery(q));
+        }
         List<PatientResponseDto> results = patientService.search(uhid, phone, name);
         return ResponseEntity.ok(results);
     }

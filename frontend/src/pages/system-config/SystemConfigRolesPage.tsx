@@ -135,7 +135,7 @@ export function SystemConfigRolesPage() {
 
       {!loading && !error && (
         <div className={styles.card}>
-          <table className={styles.table}>
+          <table className={`table table-striped ${styles.table}`}>
             <thead>
               <tr>
                 <th>Code</th>

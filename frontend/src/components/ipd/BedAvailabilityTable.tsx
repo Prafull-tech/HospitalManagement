@@ -28,7 +28,7 @@ export function BedAvailabilityTable({
       <div className="card border shadow-sm">
         <div className="card-body">
           <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
+            <table className="table table-striped align-middle mb-0">
               <thead>
                 <tr>
                   <th>Ward Type</th>
@@ -71,7 +71,7 @@ export function BedAvailabilityTable({
   return (
     <div className="card border shadow-sm">
       <div className="table-responsive">
-        <table className="table table-hover align-middle mb-0">
+        <table className="table table-striped align-middle mb-0">
           <thead className="table-light">
             <tr>
               <th>Ward Type</th>

@@ -137,7 +137,7 @@ export function NursingStaffPage() {
         {!loading && list.length === 0 && <p className={styles.empty}>No nursing staff. Add staff above.</p>}
         {!loading && list.length > 0 && (
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <table className={`table table-striped ${styles.table}`}>
               <thead>
                 <tr>
                   <th>Code</th>

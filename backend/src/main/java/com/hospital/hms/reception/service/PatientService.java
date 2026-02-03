@@ -1,10 +1,13 @@
 package com.hospital.hms.reception.service;
 
 import com.hospital.hms.common.exception.ResourceNotFoundException;
+import com.hospital.hms.reception.dto.PatientCardDto;
 import com.hospital.hms.reception.dto.PatientRequestDto;
 import com.hospital.hms.reception.dto.PatientResponseDto;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,10 +67,103 @@ public class PatientService {
         return toResponse(patient);
     }
 
+    public PatientResponseDto getById(Long id) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
+        return toResponse(patient);
+    }
+
     public PatientResponseDto getByUhid(String uhid) {
         Patient patient = patientRepository.findByUhid(uhid)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + uhid));
         return toResponse(patient);
+    }
+
+    /**
+     * Returns print-ready patient card data for GET /api/patients/{uhid}/card.
+     */
+    public PatientCardDto getCardByUhid(String uhid) {
+        Patient patient = patientRepository.findByUhid(uhid)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + uhid));
+        return toCard(patient);
+    }
+
+    private PatientCardDto toCard(Patient p) {
+        PatientCardDto card = new PatientCardDto();
+        card.setUhid(p.getUhid());
+        card.setRegistrationNumber(p.getRegistrationNumber());
+        card.setRegistrationDate(p.getRegistrationDate());
+        card.setFullName(p.getFullName());
+        card.setAge(p.getAge());
+        card.setAgeDisplay(buildAgeDisplay(p));
+        card.setGender(p.getGender());
+        card.setDateOfBirth(p.getDateOfBirth());
+        card.setPhone(p.getPhone());
+        card.setAddress(p.getAddress());
+        card.setCity(p.getCity());
+        card.setState(p.getState());
+        card.setDistrict(p.getDistrict());
+        card.setIdProofType(p.getIdProofType());
+        card.setIdProofNumber(p.getIdProofNumber());
+        card.setFatherHusbandName(p.getFatherHusbandName());
+        return card;
+    }
+
+    private static String buildAgeDisplay(Patient p) {
+        if (p.getAgeYears() != null && p.getAgeYears() > 0) {
+            if (p.getAgeMonths() != null && p.getAgeMonths() > 0) {
+                return p.getAgeYears() + " Y " + p.getAgeMonths() + " M";
+            }
+            if (p.getAgeDays() != null && p.getAgeDays() > 0) {
+                return p.getAgeYears() + " Y " + p.getAgeDays() + " D";
+            }
+            return p.getAgeYears() + " Y";
+        }
+        if (p.getAgeMonths() != null && p.getAgeMonths() > 0) {
+            return p.getAgeMonths() + " M";
+        }
+        if (p.getAgeDays() != null && p.getAgeDays() > 0) {
+            return p.getAgeDays() + " D";
+        }
+        return p.getAge() != null ? p.getAge() + " Y" : "";
+    }
+
+    /**
+     * Single-query search: by ID (numeric), phone, UHID (exact), or name (contains).
+     * Tries ID and phone if q is numeric; else UHID exact and name contains.
+     */
+    public List<PatientResponseDto> searchByQuery(String q) {
+        if (q == null || q.isBlank()) {
+            return List.of();
+        }
+        String trimmed = q.trim();
+        if (trimmed.matches("\\d+")) {
+            long id = Long.parseLong(trimmed);
+            List<PatientResponseDto> byId = patientRepository.findById(id)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+            List<PatientResponseDto> byPhone = patientRepository.findByPhone(trimmed)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+            return java.util.stream.Stream.concat(byId.stream(), byPhone.stream())
+                    .collect(Collectors.toMap(PatientResponseDto::getId, p -> p, (a, b) -> a))
+                    .values().stream()
+                    .collect(Collectors.toList());
+        }
+        if (trimmed.matches("^[0-9+\\-\\s]+$")) {
+            return patientRepository.findByPhone(trimmed)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
+        List<Patient> byUhid = patientRepository.findByUhid(trimmed).stream().toList();
+        List<Patient> byName = patientRepository.findByFullNameContainingIgnoreCase(trimmed);
+        return java.util.stream.Stream.concat(byUhid.stream(), byName.stream())
+                .distinct()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     public List<PatientResponseDto> search(String uhid, String phone, String name) {
@@ -90,6 +186,19 @@ public class PatientService {
                     .collect(Collectors.toList());
         }
         return List.of();
+    }
+
+    /**
+     * List all patients with pagination (for reception search page "all patients below").
+     * Default size 500 if not specified.
+     */
+    @Transactional(readOnly = true)
+    public List<PatientResponseDto> list(int page, int size) {
+        int safeSize = size <= 0 ? 500 : Math.min(size, 2000);
+        Pageable pageable = PageRequest.of(Math.max(0, page), safeSize);
+        return patientRepository.findAll(pageable).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     private PatientResponseDto toResponse(Patient p) {

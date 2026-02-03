@@ -20,6 +20,18 @@ First and foundational module of the HMS. OPD, IPD, Billing, Emergency, and Clin
 
 ## API Contract
 
+### Patient Registration (`/api/patients`)
+
+| Method | Endpoint                         | Description              | Status codes        |
+|--------|----------------------------------|--------------------------|---------------------|
+| POST   | `/api/patients`                  | Register new patient     | 201 Created, 400 Bad Request |
+| GET    | `/api/patients/{uhid}`           | Get patient by UHID      | 200 OK, 404 Not Found |
+| GET    | `/api/patients/{uhid}/card`      | Print-ready patient card | 200 OK, 404 Not Found |
+
+See `backend/docs/patient-registration-api.md` for details.
+
+### Reception Patients (search, by-id)
+
 | Method | Endpoint                         | Description           | Roles                    | Status codes        |
 |--------|----------------------------------|-----------------------|--------------------------|---------------------|
 | POST   | `/api/reception/patients`        | Register new patient  | ADMIN, RECEPTIONIST      | 201 Created, 400 Bad Request |
@@ -145,7 +157,7 @@ Tables are created/updated by Hibernate (`ddl-auto: update`). DB-agnostic types 
 ## Integration with OPD / IPD Later
 
 - **OPD:** OPD visit/consultation will reference `Patient` by `uhid` (or `patient_id`). Reception ensures the patient exists and has a UHID before OPD registration.
-- **IPD:** Admission will link to `Patient` (UHID). Same flow: patient must be registered at reception first.
+- **IPD:** Admission will link to `Patient` (UHID). **Without UHID → IPD admission not allowed.** Patient must be registered first; admission API requires `patientUhid` and returns 404 if patient not found.
 - **Billing:** All billing will use UHID/patient id from this module; no billing logic in Reception.
 - **Emergency:** Emergency can create a “quick registration” that reuses the same `Patient` entity and UHID generator; or emergency module calls Reception API to register and then proceeds.
 

@@ -158,7 +158,7 @@ export function NursingMARPage() {
           {!loadingList && marList.length === 0 && <p className={styles.empty}>No medications recorded yet.</p>}
           {!loadingList && marList.length > 0 && (
             <div className={styles.tableWrap}>
-              <table className={styles.table}>
+              <table className={`table table-striped ${styles.table}`}>
                 <thead>
                   <tr>
                     <th>Time</th>

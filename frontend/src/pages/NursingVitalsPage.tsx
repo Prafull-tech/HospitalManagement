@@ -212,7 +212,7 @@ export function NursingVitalsPage() {
                 </div>
               </div>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <table className={`table table-striped ${styles.table}`}>
                   <thead>
                     <tr>
                       <th>Time</th>

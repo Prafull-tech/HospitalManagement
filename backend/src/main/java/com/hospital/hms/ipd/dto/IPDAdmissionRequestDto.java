@@ -4,8 +4,11 @@ import com.hospital.hms.ipd.entity.AdmissionType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 /**
- * Request DTO for admitting a patient to IPD.
+ * Request DTO for admitting a patient to IPD (POST /api/ipd/admit or /api/ipd/admissions).
  */
 public class IPDAdmissionRequestDto {
 
@@ -22,10 +25,31 @@ public class IPDAdmissionRequestDto {
     @NotNull(message = "Bed ID is required")
     private Long bedId;
 
+    /** Required for IPD Admit form; defaults to now if null (e.g. legacy POST /admissions). */
+    private LocalDateTime admissionDateTime;
+
+    /** Required for IPD Admit form; max 1000 chars. */
+    @Size(max = 1000)
+    private String diagnosis;
+
     private Long opdVisitId;
 
     @Size(max = 500)
     private String remarks;
+
+    private BigDecimal depositAmount;
+
+    @Size(max = 255)
+    private String insuranceTpa;
+
+    @Size(max = 500)
+    private String admissionFormDocumentRef;
+
+    @Size(max = 500)
+    private String consentFormDocumentRef;
+
+    @Size(max = 500)
+    private String idProofDocumentRef;
 
     /** Optional: admission source for priority (e.g. OPD, EMERGENCY, REFERRAL). Ward type is derived from bed if not set. */
     @Size(max = 50)
@@ -149,5 +173,61 @@ public class IPDAdmissionRequestDto {
 
     public void setDisabledPatient(Boolean disabledPatient) {
         this.disabledPatient = disabledPatient;
+    }
+
+    public LocalDateTime getAdmissionDateTime() {
+        return admissionDateTime;
+    }
+
+    public void setAdmissionDateTime(LocalDateTime admissionDateTime) {
+        this.admissionDateTime = admissionDateTime;
+    }
+
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
+
+    public BigDecimal getDepositAmount() {
+        return depositAmount;
+    }
+
+    public void setDepositAmount(BigDecimal depositAmount) {
+        this.depositAmount = depositAmount;
+    }
+
+    public String getInsuranceTpa() {
+        return insuranceTpa;
+    }
+
+    public void setInsuranceTpa(String insuranceTpa) {
+        this.insuranceTpa = insuranceTpa;
+    }
+
+    public String getAdmissionFormDocumentRef() {
+        return admissionFormDocumentRef;
+    }
+
+    public void setAdmissionFormDocumentRef(String admissionFormDocumentRef) {
+        this.admissionFormDocumentRef = admissionFormDocumentRef;
+    }
+
+    public String getConsentFormDocumentRef() {
+        return consentFormDocumentRef;
+    }
+
+    public void setConsentFormDocumentRef(String consentFormDocumentRef) {
+        this.consentFormDocumentRef = consentFormDocumentRef;
+    }
+
+    public String getIdProofDocumentRef() {
+        return idProofDocumentRef;
+    }
+
+    public void setIdProofDocumentRef(String idProofDocumentRef) {
+        this.idProofDocumentRef = idProofDocumentRef;
     }
 }

@@ -2,6 +2,19 @@
   max-width: 640px;
 }
 
+.title {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  color: var(--hms-text);
+}
+
+.sectionLabel {
+  font-weight: 600;
+  color: var(--hms-text);
+  margin: 1rem 0 0.5rem 0;
+  font-size: 0.95rem;
+}
+
 .form {
   background: var(--hms-card);
   border: 1px solid var(--hms-card-border);

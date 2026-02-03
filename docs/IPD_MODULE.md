@@ -21,11 +21,15 @@ IPD manages admitted patients from OPD referral, Emergency, or direct admission.
 
 ### Admission status lifecycle
 
-1. **ADMITTED** — Patient admitted; bed allocated.
-2. **TRANSFERRED** — Patient moved to another ward/bed.
-3. **DISCHARGE_INITIATED** — Discharge process started (medical clearance etc.).
-4. **DISCHARGED** — Patient discharged; bed released.
-5. **CANCELLED** — Admission cancelled.
+1. **ADMITTED** — Patient admitted (paperwork); bed RESERVED.
+2. **ACTIVE** — Nursing staff performed shift-to-ward; bed OCCUPIED. Initial assessment and vitals can be recorded.
+3. **TRANSFERRED** — Patient moved to another ward/bed (Shifted).
+4. **DISCHARGE_INITIATED** — Discharge process started (medical clearance etc.).
+5. **DISCHARGED** — Patient discharged; bed released.
+6. **CANCELLED** — Admission cancelled.
+7. **REFERRED** — Patient referred elsewhere.
+8. **LAMA** — Left against medical advice.
+9. **EXPIRED** — Deceased.
 
 ### Admission types
 
@@ -40,6 +44,18 @@ IPD manages admitted patients from OPD referral, Emergency, or direct admission.
 
 ---
 
+## Hospital Bed Availability (IPD admission)
+
+**Read-only.** Used for bed selection during IPD admission; no allocation or status update in this API.
+
+- **Endpoint:** `GET /api/ipd/hospital-beds?hospitalId={id}`
+- **Ward types:** General, Semi-Private, Private, ICU, Emergency (and CCU, NICU, HDU if configured).
+- **Bed statuses:** VACANT, OCCUPIED, RESERVED, CLEANING (and MAINTENANCE, ISOLATION). Response includes `bedStatus` (enum) and `bedStatusDisplay` (e.g. "VACANT" for AVAILABLE).
+- **Selection rule:** Only beds with status **VACANT** (AVAILABLE) may be selected for admission. Response includes `selectableForAdmission: true` for such beds.
+- **Query params:** `hospitalId` (optional, for API consistency), `wardType` (optional: GENERAL, SEMI_PRIVATE, PRIVATE, ICU, EMERGENCY), `vacantOnly` (optional, default false — when true, returns only VACANT beds for selection).
+
+---
+
 ## API Contract
 
 Base path: `/api`. All endpoints return JSON.
@@ -49,9 +65,13 @@ Base path: `/api`. All endpoints return JSON.
 | POST   | `/api/ipd/admissions` | Admit patient | 201 Created, 400, 404 |
 | GET    | `/api/ipd/admissions/{id}` | Get admission by ID | 200 OK, 404 Not Found |
 | GET    | `/api/ipd/admissions` | Search admissions (paginated) | 200 OK |
+| GET    | `/api/ipd/admissions/search` | Search by admission #, UHID, patient name, status (paginated) | 200 OK |
 | POST   | `/api/ipd/admissions/{id}/transfer` | Transfer to another bed | 200 OK, 400, 404 |
 | POST   | `/api/ipd/admissions/{id}/discharge` | Initiate or complete discharge | 200 OK, 400, 404 |
 | GET    | `/api/ipd/wards` | List wards (optional filter by wardType) | 200 OK |
+| GET    | `/api/ipd/hospital-beds` | Bed availability by ward (read-only; selection only) | 200 OK |
+| POST   | `/api/ipd/admit` | IPD Admit Patient (mandatory: UHID, doctor, ward type, bed, admission date/time, diagnosis). Bed set to RESERVED on submit; IPD number generated (e.g. IPD-2025-000001). | 201 Created, 400, 404 |
+| POST   | `/api/ipd/{admissionId}/shift-to-ward` | Nursing staff performs shift: bed → OCCUPIED, admission status → ACTIVE. Shift timestamp mandatory. **Nursing roles only.** | 200 OK, 400, 403, 404 |
 | GET    | `/api/ipd/beds/availability` | List beds with availability flag | 200 OK |
 
 ### Query parameters

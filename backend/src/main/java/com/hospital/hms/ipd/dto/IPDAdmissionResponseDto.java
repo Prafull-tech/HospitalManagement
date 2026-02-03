@@ -4,6 +4,7 @@ import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.entity.AdmissionType;
 import com.hospital.hms.ipd.entity.PriorityCode;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
@@ -26,6 +27,12 @@ public class IPDAdmissionResponseDto {
     private LocalDateTime dischargeDateTime;
     private Long opdVisitId;
     private String remarks;
+    private String diagnosis;
+    private BigDecimal depositAmount;
+    private String insuranceTpa;
+    private String admissionFormDocumentRef;
+    private String consentFormDocumentRef;
+    private String idProofDocumentRef;
     private String dischargeRemarks;
     private Long currentWardId;
     private String currentWardName;
@@ -44,6 +51,10 @@ public class IPDAdmissionResponseDto {
     private String priorityOverrideBy;
     /** When priority was overridden. */
     private Instant priorityOverrideAt;
+    /** When nursing staff performed shift-to-ward. */
+    private Instant shiftedToWardAt;
+    /** Username of nursing staff who performed shift. */
+    private String shiftedToWardBy;
 
     public IPDAdmissionResponseDto() {
     }
@@ -160,6 +171,54 @@ public class IPDAdmissionResponseDto {
         this.remarks = remarks;
     }
 
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
+
+    public BigDecimal getDepositAmount() {
+        return depositAmount;
+    }
+
+    public void setDepositAmount(BigDecimal depositAmount) {
+        this.depositAmount = depositAmount;
+    }
+
+    public String getInsuranceTpa() {
+        return insuranceTpa;
+    }
+
+    public void setInsuranceTpa(String insuranceTpa) {
+        this.insuranceTpa = insuranceTpa;
+    }
+
+    public String getAdmissionFormDocumentRef() {
+        return admissionFormDocumentRef;
+    }
+
+    public void setAdmissionFormDocumentRef(String admissionFormDocumentRef) {
+        this.admissionFormDocumentRef = admissionFormDocumentRef;
+    }
+
+    public String getConsentFormDocumentRef() {
+        return consentFormDocumentRef;
+    }
+
+    public void setConsentFormDocumentRef(String consentFormDocumentRef) {
+        this.consentFormDocumentRef = consentFormDocumentRef;
+    }
+
+    public String getIdProofDocumentRef() {
+        return idProofDocumentRef;
+    }
+
+    public void setIdProofDocumentRef(String idProofDocumentRef) {
+        this.idProofDocumentRef = idProofDocumentRef;
+    }
+
     public String getDischargeRemarks() {
         return dischargeRemarks;
     }
@@ -254,5 +313,21 @@ public class IPDAdmissionResponseDto {
 
     public void setPriorityOverrideAt(Instant priorityOverrideAt) {
         this.priorityOverrideAt = priorityOverrideAt;
+    }
+
+    public Instant getShiftedToWardAt() {
+        return shiftedToWardAt;
+    }
+
+    public void setShiftedToWardAt(Instant shiftedToWardAt) {
+        this.shiftedToWardAt = shiftedToWardAt;
+    }
+
+    public String getShiftedToWardBy() {
+        return shiftedToWardBy;
+    }
+
+    public void setShiftedToWardBy(String shiftedToWardBy) {
+        this.shiftedToWardBy = shiftedToWardBy;
     }
 }

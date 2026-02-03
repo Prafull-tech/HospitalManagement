@@ -118,6 +118,15 @@ public class BedService {
         }
     }
 
+    /** Set bed to RESERVED (e.g. on IPD admission submit). */
+    public void setBedStatusReserved(Long bedId) {
+        Bed bed = bedRepository.findById(bedId).orElse(null);
+        if (bed != null) {
+            bed.setBedStatus(BedStatus.RESERVED);
+            bedRepository.save(bed);
+        }
+    }
+
     private BedResponseDto toDto(Bed b) {
         BedResponseDto dto = new BedResponseDto();
         dto.setId(b.getId());
