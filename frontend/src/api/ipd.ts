@@ -79,4 +79,14 @@ export const ipdApi = {
   getHospitalBeds(params?: { hospitalId?: number; wardType?: WardType; vacantOnly?: boolean }): Promise<BedAvailabilityResponse[]> {
     return apiClient.get(HOSPITAL_BEDS, { params: params ?? {} }).then((res) => res.data)
   },
+
+  /** PATCH /api/ipd/status-master/admissions/{id}/status — change admission status (e.g. to CANCELLED to disable). */
+  changeAdmissionStatus(
+    admissionId: number,
+    body: { toStatus: AdmissionStatus; reason?: string }
+  ): Promise<IPDAdmissionResponse> {
+    return apiClient
+      .patch(`/ipd/status-master/admissions/${admissionId}/status`, body)
+      .then((res) => res.data)
+  },
 }

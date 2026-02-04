@@ -79,6 +79,39 @@ public class PatientService {
         return toResponse(patient);
     }
 
+    @Transactional
+    public PatientResponseDto update(Long id, PatientRequestDto request) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
+        patient.setFullName(request.getFullName().trim());
+        patient.setIdProofType(request.getIdProofType() != null ? request.getIdProofType().trim() : null);
+        patient.setIdProofNumber(request.getIdProofNumber() != null ? request.getIdProofNumber().trim() : null);
+        patient.setDateOfBirth(request.getDateOfBirth());
+        patient.setAge(request.getAge());
+        patient.setAgeYears(request.getAgeYears());
+        patient.setAgeMonths(request.getAgeMonths());
+        patient.setAgeDays(request.getAgeDays());
+        patient.setGender(request.getGender().trim());
+        patient.setWeightKg(request.getWeightKg());
+        patient.setHeightCm(request.getHeightCm());
+        patient.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
+        patient.setAddress(request.getAddress() != null ? request.getAddress().trim() : null);
+        patient.setState(request.getState() != null ? request.getState().trim() : null);
+        patient.setCity(request.getCity() != null ? request.getCity().trim() : null);
+        patient.setDistrict(request.getDistrict() != null ? request.getDistrict().trim() : null);
+        patient.setFatherHusbandName(request.getFatherHusbandName() != null ? request.getFatherHusbandName().trim() : null);
+        patient.setReferredBy(request.getReferredBy() != null ? request.getReferredBy().trim() : null);
+        patient.setReferredName(request.getReferredName() != null ? request.getReferredName().trim() : null);
+        patient.setReferredPhone(request.getReferredPhone() != null ? request.getReferredPhone().trim() : null);
+        patient.setConsultantName(request.getConsultantName() != null ? request.getConsultantName().trim() : null);
+        patient.setSpecialization(request.getSpecialization() != null ? request.getSpecialization().trim() : null);
+        patient.setOrganisationType(request.getOrganisationType() != null ? request.getOrganisationType().trim() : null);
+        patient.setOrganisationName(request.getOrganisationName() != null ? request.getOrganisationName().trim() : null);
+        patient.setRemarks(request.getRemarks() != null ? request.getRemarks().trim() : null);
+        patient = patientRepository.save(patient);
+        return toResponse(patient);
+    }
+
     /**
      * Returns print-ready patient card data for GET /api/patients/{uhid}/card.
      */

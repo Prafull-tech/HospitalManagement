@@ -43,6 +43,17 @@ function statusBadgeLabel(s: AdmissionStatus): string {
   }
 }
 
+/** Statuses that can be changed to CANCELLED (disable registration). */
+const DISABLEABLE_STATUSES: AdmissionStatus[] = [
+  'ADMITTED',
+  'ACTIVE',
+  'TRANSFERRED',
+  'DISCHARGE_INITIATED',
+]
+function canDisableAdmission(status: AdmissionStatus): boolean {
+  return DISABLEABLE_STATUSES.includes(status)
+}
+
 function statusClass(s: AdmissionStatus): string {
   switch (s) {
     case 'ADMITTED':
@@ -111,6 +122,7 @@ export function IPDAdmissionsListPage() {
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [disablingId, setDisablingId] = useState<number | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -150,6 +162,39 @@ export function IPDAdmissionsListPage() {
     e.preventDefault()
     setApplied({ admissionNumber, patientUhid, patientName, status })
     setPage(0)
+  }
+
+  const handleDisable = (admissionId: number) => {
+    if (!window.confirm('Disable this admission (set status to Cancelled)? The bed will be released.')) return
+    setDisablingId(admissionId)
+    setError('')
+    ipdApi
+      .changeAdmissionStatus(admissionId, { toStatus: 'CANCELLED', reason: 'Disabled from list' })
+      .then(() => {
+        ipdApi
+          .search({
+            admissionNumber: applied.admissionNumber || undefined,
+            patientUhid: applied.patientUhid || undefined,
+            patientName: applied.patientName.trim() || undefined,
+            status: applied.status || undefined,
+            page,
+            size,
+          })
+          .then((data) => {
+            const content = Array.isArray(data?.content) ? data.content : []
+            setResult({
+              content,
+              totalElements: typeof data?.totalElements === 'number' ? data.totalElements : content.length,
+              totalPages: typeof data?.totalPages === 'number' ? data.totalPages : 1,
+              number: typeof data?.number === 'number' ? data.number : 0,
+            })
+          })
+          .catch(() => {})
+      })
+      .catch((err) => {
+        setError(err.response?.data?.message || 'Failed to disable admission')
+      })
+      .finally(() => setDisablingId(null))
   }
 
   const handlePrint = () => {
@@ -266,7 +311,7 @@ export function IPDAdmissionsListPage() {
           </div>
           {result.content.length === 0 ? (
             <div className="card-body">
-              <p className="text-muted mb-0 text-center py-3">No admissions found.</p>
+              <p className="text-muted mb-0 text-center py-3">No admissions found. Admit a patient from <Link to="/ipd/admission-management">IPD Admission Management</Link> or <Link to="/ipd/admit">Admit Patient</Link>.</p>
             </div>
           ) : (
             <>
@@ -280,7 +325,7 @@ export function IPDAdmissionsListPage() {
                       <th>Ward / Bed</th>
                       <th>Admitted</th>
                       <th>Status</th>
-                      <th></th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -293,9 +338,7 @@ export function IPDAdmissionsListPage() {
                         </td>
                         <td>{a.primaryDoctorName ?? '—'}</td>
                         <td>
-                          {a.currentWardName && a.currentBedNumber
-                            ? `${a.currentWardName} — ${a.currentBedNumber}`
-                            : '—'}
+                          {[a.currentWardName, a.currentBedNumber].filter(Boolean).join(' / ') || '—'}
                         </td>
                         <td>{a.admissionDateTime ? String(a.admissionDateTime).replace('T', ' ').slice(0, 16) : '—'}</td>
                         <td>
@@ -304,7 +347,20 @@ export function IPDAdmissionsListPage() {
                           </span>
                         </td>
                         <td>
-                          <Link to={`/ipd/admissions/${a.id}`} className="text-decoration-none">Open</Link>
+                          <div className="d-flex gap-2 flex-wrap">
+                            <Link to={`/ipd/admissions/${a.id}`} className="text-decoration-none">View</Link>
+                            <Link to={`/ipd/admissions/${a.id}/edit`} className="text-decoration-none">Edit</Link>
+                            {canDisableAdmission(a.admissionStatus) && (
+                              <button
+                                type="button"
+                                className="btn btn-link btn-sm p-0 text-danger text-decoration-none"
+                                onClick={() => handleDisable(a.id)}
+                                disabled={disablingId === a.id}
+                              >
+                                {disablingId === a.id ? '…' : 'Disable'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

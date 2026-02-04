@@ -1,0 +1,232 @@
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--hms-text);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--hms-card-border);
+  background: var(--hms-card);
+  border-radius: var(--hms-radius-card) var(--hms-radius-card) 0 0;
+  padding: 0.25rem 1rem 0 0;
+}
+
+.tab {
+  padding: 0.75rem 1.25rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--hms-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  border-radius: var(--hms-radius) var(--hms-radius) 0 0;
+}
+
+.tab:hover {
+  color: var(--hms-text);
+}
+
+.tabActive {
+  color: var(--hms-cta);
+  border-bottom-color: var(--hms-cta);
+}
+
+/* Card containing tab content */
+.card {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-top: none;
+  border-radius: 0 0 var(--hms-radius-card) var(--hms-radius-card);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.banner {
+  padding: 0.75rem 1rem;
+  background: var(--hms-success-bg);
+  color: var(--hms-success);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--hms-success-border);
+}
+
+.stepTitle {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--hms-text);
+}
+
+.sectionLabel {
+  font-weight: 600;
+  color: var(--hms-text);
+  margin: 1rem 0 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.row {
+  margin-bottom: 1rem;
+}
+
+.row label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  color: var(--hms-text);
+}
+
+.required {
+  color: var(--hms-error);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: var(--hms-input-padding);
+  border: 1px solid var(--hms-form-input-border);
+  border-radius: var(--hms-radius);
+  background: var(--hms-form-input-bg);
+  color: var(--hms-text);
+  font-size: 0.95rem;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 2px var(--hms-focus-ring);
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-error-border);
+}
+
+.success {
+  padding: 0.75rem 1rem;
+  background: var(--hms-success-bg);
+  color: var(--hms-success);
+  border-radius: var(--hms-radius);
+  margin-bottom: 1rem;
+  border: 1px solid var(--hms-success-border);
+}
+
+.success button {
+  margin-left: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.success button:hover {
+  background: var(--hms-cta-hover);
+}
+
+.submitRow {
+  margin-top: 1.25rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.submitBtn {
+  padding: var(--hms-btn-padding);
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border: none;
+  border-radius: var(--hms-radius);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--hms-cta-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading {
+  color: var(--hms-text-muted);
+  font-size: 0.9rem;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.hint a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.hint a:hover {
+  text-decoration: underline;
+}
+
+.eligible {
+  font-size: 0.9rem;
+  color: var(--hms-success);
+  margin-top: 0.35rem;
+}
+
+/* Patient form section (New Patient tab) - reuse same card */
+.patientFormWrap {
+  margin-top: 0.5rem;
+}
+
+.linkToSearch {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.linkToSearch a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.linkToSearch a:hover {
+  text-decoration: underline;
+}
+
+.bedRateHint {
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+  margin-top: 0.25rem;
+}

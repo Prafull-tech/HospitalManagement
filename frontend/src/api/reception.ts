@@ -12,6 +12,10 @@ export const receptionApi = {
     return apiClient.get(`${BASE}/by-id/${id}`).then((res) => res.data)
   },
 
+  update(id: number, data: PatientRequest): Promise<PatientResponse> {
+    return apiClient.put(`${BASE}/by-id/${id}`, data).then((res) => res.data)
+  },
+
   getByUhid(uhid: string): Promise<PatientResponse> {
     return apiClient.get(`${BASE}/${encodeURIComponent(uhid)}`).then((res) => res.data)
   },

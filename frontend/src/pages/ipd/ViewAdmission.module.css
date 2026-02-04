@@ -1,0 +1,134 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.headerLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--hms-text);
+}
+
+.breadcrumb {
+  font-size: 0.875rem;
+  color: var(--hms-text-muted);
+  margin: 0;
+}
+
+.breadcrumb a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb span {
+  margin: 0 0.35rem;
+  color: var(--hms-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actionBtn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-card-border);
+  background: var(--hms-card);
+  color: var(--hms-text);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.actionBtn:hover {
+  background: var(--hms-bg-elevated);
+  border-color: var(--hms-accent);
+  color: var(--hms-accent);
+}
+
+.actionBtnPrimary {
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  border-color: var(--hms-cta);
+}
+
+.actionBtnPrimary:hover {
+  background: var(--hms-cta-hover);
+  border-color: var(--hms-cta-hover);
+  color: var(--hms-text-inverse);
+}
+
+.error {
+  padding: 1rem 1.25rem;
+  background: var(--hms-error-bg);
+  color: var(--hms-error);
+  border-radius: var(--hms-radius);
+  border: 1px solid var(--hms-error-border);
+  margin-bottom: 1rem;
+}
+
+.skeleton {
+  padding: 2rem;
+}
+
+.skeletonLine {
+  height: 1rem;
+  background: var(--hms-bg-elevated);
+  border-radius: var(--hms-radius);
+  margin-bottom: 0.75rem;
+  max-width: 100%;
+}
+
+.skeletonLineShort {
+  width: 40%;
+}
+
+.skeletonCard {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+@media print {
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+  .actions,
+  .breadcrumb,
+  .noPrint {
+    display: none !important;
+  }
+  .header {
+    margin-bottom: 0.5rem;
+  }
+}

@@ -95,6 +95,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       { id: 'opd-queue', label: 'OPD Queue', route: '/opd/queue', end: false, icon: 'Queue', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
       { id: 'opd-visits', label: 'Search OPD Visits', route: '/opd/visits', end: true, icon: 'Search', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
       { id: 'ipd', label: 'IPD', route: '/ipd', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] },
+      { id: 'ipd-admission-mgmt', label: 'IPD Admission Management', route: '/ipd/admission-management', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
       { id: 'ipd-admit', label: 'Admit Patient', route: '/ipd/admit', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
       { id: 'ipd-beds', label: 'Bed Availability', route: '/ipd/beds', end: false, icon: 'Bed', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] },
       { id: 'ipd-hospital-beds', label: 'Hospital Bed Availability', route: '/ipd/hospital-beds', end: false, icon: 'Building2', allowedRoles: ['ADMIN', 'SUPER_ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'HELP_DESK'] },

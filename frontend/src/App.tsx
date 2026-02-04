@@ -15,10 +15,12 @@ import { OPDSearchVisitsPage } from './pages/OPDSearchVisitsPage'
 import { OPDVisitDetailPage } from './pages/OPDVisitDetailPage'
 import { IPDDashboard } from './pages/IPDDashboard'
 import { IPDAdmitPage } from './pages/IPDAdmitPage'
+import { IPDAdmissionManagementPage } from './pages/IPDAdmissionManagementPage'
 import { BedsAvailability } from './pages/ipd/BedsAvailability'
 import HospitalBedAvailability from './pages/ipd/HospitalBedAvailability'
 import { IPDAdmissionsListPage } from './pages/IPDAdmissionsListPage'
-import { IPDAdmissionDetailPage } from './pages/IPDAdmissionDetailPage'
+import { ViewAdmission } from './pages/ipd/ViewAdmission'
+import { EditAdmissionPage } from './pages/ipd/EditAdmissionPage'
 import { NursingDashboard } from './pages/NursingDashboard'
 import { NursingStaffPage } from './pages/NursingStaffPage'
 import { NursingAssignPage } from './pages/NursingAssignPage'
@@ -61,11 +63,13 @@ export default function App() {
         </Route>
           <Route path="ipd" element={<Outlet />}>
             <Route index element={<IPDDashboard />} />
+            <Route path="admission-management" element={<IPDAdmissionManagementPage />} />
             <Route path="admit" element={<IPDAdmitPage />} />
             <Route path="beds" element={<BedsAvailability />} />
             <Route path="hospital-beds" element={<HospitalBedAvailability />} />
             <Route path="admissions" element={<IPDAdmissionsListPage />} />
-            <Route path="admissions/:id" element={<IPDAdmissionDetailPage />} />
+            <Route path="admissions/:id" element={<ViewAdmission />} />
+            <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
           </Route>
         <Route path="nursing" element={<Outlet />}>
           <Route index element={<NursingDashboard />} />

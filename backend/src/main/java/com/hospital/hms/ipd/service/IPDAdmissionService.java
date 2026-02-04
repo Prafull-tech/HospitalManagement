@@ -150,6 +150,7 @@ public class IPDAdmissionService {
         return toResponse(admission, true);
     }
 
+    @Transactional(readOnly = true)
     public IPDAdmissionResponseDto getById(Long id) {
         IPDAdmission admission = admissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + id));
@@ -183,6 +184,7 @@ public class IPDAdmissionService {
         return toResponse(admission, true);
     }
 
+    @Transactional(readOnly = true)
     public Page<IPDAdmissionResponseDto> search(String admissionNumber, String patientUhid, String patientName,
                                                  AdmissionStatus status, LocalDateTime fromDate, LocalDateTime toDate,
                                                  int page, int size) {
@@ -196,7 +198,7 @@ public class IPDAdmissionService {
                 toDate,
                 pageable
         );
-        return result.map(a -> toResponse(a, false));
+        return result.map(a -> toResponse(a, true));
     }
 
     @Transactional
@@ -247,6 +249,10 @@ public class IPDAdmissionService {
         return toResponse(admission, true);
     }
 
+    /**
+     * Initiate or complete discharge. First call → DISCHARGE_INITIATED; second call → DISCHARGED, bed released.
+     * Hospital SOP: billing clearance should be verified before allowing final discharge (integrate with billing module when ready).
+     */
     @Transactional
     public IPDAdmissionResponseDto discharge(Long id, IPDDischargeRequestDto request) {
         IPDAdmission admission = admissionRepository.findById(id)
@@ -386,11 +392,14 @@ public class IPDAdmissionService {
         dto.setUpdatedAt(a.getUpdatedAt());
 
         if (loadCurrentBed) {
-            bedAllocationRepository.findActiveByAdmissionId(a.getId()).ifPresent(alloc -> {
+            bedAllocationRepository.findActiveByAdmissionIdWithBedAndRoom(a.getId()).ifPresent(alloc -> {
                 dto.setCurrentBedId(alloc.getBed().getId());
                 dto.setCurrentBedNumber(alloc.getBed().getBedNumber());
                 dto.setCurrentWardId(alloc.getBed().getWard().getId());
                 dto.setCurrentWardName(alloc.getBed().getWard().getName());
+                if (alloc.getBed().getRoom() != null) {
+                    dto.setCurrentRoomNumber(alloc.getBed().getRoom().getRoomNumber());
+                }
             });
         }
         return dto;

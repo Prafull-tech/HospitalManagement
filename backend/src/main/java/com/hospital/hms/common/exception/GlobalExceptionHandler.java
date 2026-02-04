@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.hibernate.LazyInitializationException;
+
 /**
  * Global exception handling for REST APIs. Returns consistent JSON error bodies.
  * Logs with correlationId and userId (from MDC); logs request method and URI.
@@ -104,6 +106,19 @@ public class GlobalExceptionHandler {
         logError(request, "Bad request: " + ex.getMessage(), ex);
         ErrorBody body = new ErrorBody(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), Instant.now());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(LazyInitializationException.class)
+    public ResponseEntity<ErrorBody> handleLazyInit(
+            LazyInitializationException ex,
+            HttpServletRequest request) {
+        logError(request, "LazyInitializationException - ensure entity associations are loaded in same transaction", ex);
+        ErrorBody body = new ErrorBody(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Data load error. Please try again.",
+                Instant.now()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

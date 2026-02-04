@@ -2,6 +2,26 @@
 
 IPD manages admitted patients from OPD referral, Emergency, or direct admission. It integrates with Reception (patient & UHID), Doctors (treating doctor), OPD (admission referrals), wards/beds, and will integrate with Billing later.
 
+---
+
+## 11-Step Admission → Discharge SOP (Mapping)
+
+| Step | SOP Step | Implementation |
+|------|----------|----------------|
+| 1 | Patient Registration (UHID) | Reception module: patient registration, UHID auto-generated. IPD admit requires valid UHID (patient must exist). |
+| 2 | OPD / Emergency Consultation | OPD visit with `admissionRecommended`, `admissionRecommendedAt`, `admissionRecommendedBy`. Only doctor can recommend; stored with visit. |
+| 3 | Admission Priority (P1–P4) | `AdmissionPriorityEvaluationService`, `PriorityCode` (P1 Emergency, P2 Serious, P3 Stable, P4 Elective). Queue order: `AdmissionQueueService`. |
+| 4 | Bed Availability Check | `GET /api/ipd/hospital-beds` (ward-wise). Bed statuses: VACANT, OCCUPIED, RESERVED, CLEANING. Only VACANT (`selectableForAdmission`, `vacantOnly=true`) selectable. View + select only; no allocation yet. |
+| 5 | IPD Admit Patient | `POST /api/ipd/admit`: UHID, treating doctor, ward type, bed, admission date/time, diagnosis; optional deposit, insurance; document refs. IPD number generated (e.g. IPD-2025-00001). Bed → RESERVED, admission status → ADMITTED. |
+| 6 | Patient Shift to Ward | `POST /api/ipd/{admissionId}/shift-to-ward` (nursing). Bed → OCCUPIED, admission status → ACTIVE. Shift timestamp mandatory. |
+| 7 | Treatment & Daily Management | Doctor orders, nursing notes, pharmacy, lab, billing linked by IPD admission ID. Timeline: `GET /api/ipd/admissions/{id}/timeline`. Charges auto-added to billing. |
+| 8 | Transfer / Upgrade | `POST /api/ipd/admissions/{id}/transfer`. Old bed → VACANT, new bed → OCCUPIED, admission status → TRANSFERRED (SHIFTED). |
+| 9 | Billing & Insurance | Billing module: charges per admission. **Rule:** Billing clearance should be verified before final discharge (integrate in discharge flow when billing API is ready). |
+| 10 | Discharge Process | `POST /api/ipd/admissions/{id}/discharge` (initiate then complete). Admission status → DISCHARGED, bed → VACANT (released). |
+| 11 | Post-Discharge (MRD) | Archive and audit via status history and admission/transfer/discharge audit logs. MRD integration when module is implemented. |
+
+**Status types (SOP):** ACTIVE, DISCHARGED, SHIFTED (TRANSFERRED), REFERRED, LAMA, EXPIRED — plus ADMITTED, DISCHARGE_INITIATED, CANCELLED for workflow.
+
 ## Roles
 
 | Role          | Admit | View / Search | Transfer | Discharge |

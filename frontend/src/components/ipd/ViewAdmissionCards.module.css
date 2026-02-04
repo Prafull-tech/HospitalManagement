@@ -1,0 +1,132 @@
+.card {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--hms-border);
+  color: var(--hms-text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.gridFull {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--hms-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.2rem;
+  display: block;
+}
+
+.value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--hms-text);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--hms-radius-badge);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badgeActive {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--hms-accent);
+}
+
+.badgeDischarged {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--hms-success);
+}
+
+.badgeAdmitted {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--hms-accent-purple);
+}
+
+.badgeTransferred {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--hms-accent-orange);
+}
+
+.badgeDischargeInitiated {
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+}
+
+.badgeCancelled,
+.badgeExpired,
+.badgeReferred,
+.badgeLama {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--hms-error);
+}
+
+.timelineList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--hms-card-border);
+  font-size: 0.9rem;
+}
+
+.timelineItem:last-child {
+  border-bottom: none;
+}
+
+.timelineTime {
+  flex-shrink: 0;
+  color: var(--hms-text-muted);
+  font-size: 0.85rem;
+  min-width: 140px;
+}
+
+.timelineTitle {
+  font-weight: 600;
+  color: var(--hms-text);
+  margin-bottom: 0.15rem;
+}
+
+.timelineDesc {
+  color: var(--hms-text-muted);
+  font-size: 0.85rem;
+}
+
+.timelineSource {
+  font-size: 0.75rem;
+  color: var(--hms-text-muted);
+  margin-top: 0.2rem;
+}
+
+.noData {
+  color: var(--hms-text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}

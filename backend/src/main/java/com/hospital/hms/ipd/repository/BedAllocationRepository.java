@@ -22,6 +22,9 @@ public interface BedAllocationRepository extends JpaRepository<BedAllocation, Lo
     @Query("SELECT ba FROM BedAllocation ba WHERE ba.admission.id = :admissionId AND ba.releasedAt IS NULL")
     Optional<BedAllocation> findActiveByAdmissionId(@Param("admissionId") Long admissionId);
 
+    @Query("SELECT ba FROM BedAllocation ba JOIN FETCH ba.bed b LEFT JOIN FETCH b.room WHERE ba.admission.id = :admissionId AND ba.releasedAt IS NULL")
+    Optional<BedAllocation> findActiveByAdmissionIdWithBedAndRoom(@Param("admissionId") Long admissionId);
+
     @Query("SELECT ba FROM BedAllocation ba WHERE ba.admission.id = :admissionId ORDER BY ba.allocatedAt DESC")
     List<BedAllocation> findByAdmissionIdOrderByAllocatedAtDesc(@Param("admissionId") Long admissionId);
 }

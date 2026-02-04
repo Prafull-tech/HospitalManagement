@@ -5,6 +5,7 @@ import com.hospital.hms.ipd.dto.*;
 import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.service.IPDAdmissionService;
 import com.hospital.hms.ipd.service.IPDAdmissionTimelineService;
+import com.hospital.hms.ipd.service.IPDAdmissionViewService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,10 +28,13 @@ public class IPDAdmissionController {
 
     private final IPDAdmissionService admissionService;
     private final IPDAdmissionTimelineService timelineService;
+    private final IPDAdmissionViewService viewService;
 
-    public IPDAdmissionController(IPDAdmissionService admissionService, IPDAdmissionTimelineService timelineService) {
+    public IPDAdmissionController(IPDAdmissionService admissionService, IPDAdmissionTimelineService timelineService,
+                                  IPDAdmissionViewService viewService) {
         this.admissionService = admissionService;
         this.timelineService = timelineService;
+        this.viewService = viewService;
     }
 
     @PostMapping
@@ -43,6 +47,16 @@ public class IPDAdmissionController {
     public ResponseEntity<IPDAdmissionResponseDto> getById(@PathVariable Long id) {
         IPDAdmissionResponseDto admission = admissionService.getById(id);
         return ResponseEntity.ok(admission);
+    }
+
+    /**
+     * Full read-only view for admission detail page: admission + patient + timeline + billing summary.
+     * Returns 404 if admission not found.
+     */
+    @GetMapping("/{id}/view")
+    public ResponseEntity<ViewAdmissionResponseDto> getViewById(@PathVariable Long id) {
+        ViewAdmissionResponseDto view = viewService.getViewById(id);
+        return ResponseEntity.ok(view);
     }
 
     /**

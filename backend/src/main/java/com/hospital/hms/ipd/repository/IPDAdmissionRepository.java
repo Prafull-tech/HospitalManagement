@@ -4,6 +4,7 @@ import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.entity.IPDAdmission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,6 +28,7 @@ public interface IPDAdmissionRepository extends JpaRepository<IPDAdmission, Long
 
     List<IPDAdmission> findByAdmissionStatusIn(List<AdmissionStatus> statuses);
 
+    @EntityGraph(attributePaths = { "patient", "primaryDoctor" })
     @Query("SELECT a FROM IPDAdmission a WHERE " +
            "(:admissionNumber IS NULL OR a.admissionNumber = :admissionNumber) " +
            "AND (:patientUhid IS NULL OR a.patient.uhid = :patientUhid) " +

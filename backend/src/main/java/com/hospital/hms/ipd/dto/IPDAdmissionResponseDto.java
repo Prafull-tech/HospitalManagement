@@ -36,6 +36,7 @@ public class IPDAdmissionResponseDto {
     private String dischargeRemarks;
     private Long currentWardId;
     private String currentWardName;
+    private String currentRoomNumber;
     private Long currentBedId;
     private String currentBedNumber;
     private Instant createdAt;
@@ -241,6 +242,14 @@ public class IPDAdmissionResponseDto {
 
     public void setCurrentWardName(String currentWardName) {
         this.currentWardName = currentWardName;
+    }
+
+    public String getCurrentRoomNumber() {
+        return currentRoomNumber;
+    }
+
+    public void setCurrentRoomNumber(String currentRoomNumber) {
+        this.currentRoomNumber = currentRoomNumber;
     }
 
     public Long getCurrentBedId() {
