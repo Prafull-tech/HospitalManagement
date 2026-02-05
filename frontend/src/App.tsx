@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { PermissionsProvider } from './contexts/PermissionsContext'
 import { Layout } from './components/Layout'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { ReceptionDashboard } from './pages/ReceptionDashboard'
 import { PatientRegisterPage } from './pages/PatientRegisterPage'
 import { PatientSearchPage } from './pages/PatientSearchPage'
@@ -34,6 +35,10 @@ import { SystemConfigRolesPage } from './pages/system-config/SystemConfigRolesPa
 import { SystemConfigModulesPage } from './pages/system-config/SystemConfigModulesPage'
 import { SystemConfigPermissionsPage } from './pages/system-config/SystemConfigPermissionsPage'
 import { SystemConfigFeaturesPage } from './pages/system-config/SystemConfigFeaturesPage'
+import { PharmacyDashboard } from './pages/PharmacyDashboard'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { UnauthorizedPage } from './pages/UnauthorizedPage'
 
 export default function App() {
   const { user } = useAuth()
@@ -41,13 +46,25 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<PermissionsProvider roleCodes={roleCodes}><Layout /></PermissionsProvider>}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/"
+        element={
+          <PermissionsProvider roleCodes={roleCodes}>
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          </PermissionsProvider>
+        }
+      >
         <Route index element={<Navigate to="/reception" replace />} />
         <Route path="reception" element={<Outlet />}>
           <Route index element={<ReceptionDashboard />} />
           <Route path="register" element={<PatientRegisterPage />} />
           <Route path="search" element={<PatientSearchPage />} />
         </Route>
+        <Route path="pharmacy" element={<PharmacyDashboard />} />
         <Route path="doctors" element={<Outlet />}>
           <Route index element={<DoctorListPage />} />
           <Route path="new" element={<DoctorFormPage />} />
@@ -93,7 +110,8 @@ export default function App() {
           <Route path="features" element={<SystemConfigFeaturesPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }

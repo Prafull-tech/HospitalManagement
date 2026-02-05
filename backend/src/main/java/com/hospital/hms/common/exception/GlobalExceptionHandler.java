@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hibernate.LazyInitializationException;
+import com.hospital.hms.pharmacy.exception.DuplicateMedicineCodeException;
 
 /**
  * Global exception handling for REST APIs. Returns consistent JSON error bodies.
@@ -86,6 +87,15 @@ public class GlobalExceptionHandler {
             DuplicateBedAvailabilityException ex,
             HttpServletRequest request) {
         logError(request, "Duplicate bed availability: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(HttpStatus.CONFLICT.value(), ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(DuplicateMedicineCodeException.class)
+    public ResponseEntity<ErrorBody> handleDuplicateMedicineCode(
+            DuplicateMedicineCodeException ex,
+            HttpServletRequest request) {
+        logError(request, "Duplicate medicine code: " + ex.getMessage(), null);
         ErrorBody body = new ErrorBody(HttpStatus.CONFLICT.value(), ex.getMessage(), Instant.now());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }

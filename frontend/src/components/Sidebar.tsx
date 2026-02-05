@@ -82,10 +82,9 @@ export function Sidebar({ userRoles, collapsed }: SidebarProps) {
   const [userCollapsed, setUserCollapsed] = useState<Set<string>>(loadUserCollapsed)
 
   const byRole = filterMenuByRole(SIDEBAR_MENU_GROUPS, userRoles)
-  const filteredGroups =
-    permissions?.hasPermissionData && permissions.isRouteAllowed
-      ? filterMenuByAllowedRoutes(byRole, permissions.isRouteAllowed)
-      : byRole
+  // Auth is currently relaxed; rely on role-based sidebar visibility only.
+  // Route-based filtering from /api/system/permissions/me is disabled for simplicity.
+  const filteredGroups = byRole
 
   useEffect(() => {
     saveExpanded(expanded)

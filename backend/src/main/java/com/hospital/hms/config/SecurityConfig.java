@@ -1,32 +1,35 @@
 package com.hospital.hms.config;
 
+import com.hospital.hms.auth.jwt.JwtAuthenticationFilter;
 import com.hospital.hms.common.logging.RequestCorrelationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Spring Security: role-based access for Reception module.
- * ADMIN, RECEPTIONIST, HELP_DESK. In-memory users for demo; replace with DB/LDAP in production.
- *
- * AUTH DISABLED: All requests permitted for development. Re-enable when all modules are ready
- * by uncommenting authenticated() rules and removing permitAll() for /reception/** and anyRequest().
+ * Spring Security configuration.
+ * Uses JWT bearer tokens + stateless sessions. User accounts are stored in DB (hms_users table)
+ * and seeded with dev users when running with 'dev' profile.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     @Bean
     public RequestCorrelationFilter requestCorrelationFilter() {
@@ -39,21 +42,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterAfter(requestCorrelationFilter(), BasicAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(requestCorrelationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/h2-console/**").permitAll()
-                        // Hospital Bed Availability: read allowed without login; write/update/delete protected by @PreAuthorize
-                        .requestMatchers("/api/hospitals/**").permitAll()
-                        .requestMatchers("/api/admission-priority/**", "/api/ipd/transfers/**").authenticated()
-                        // Shift-to-ward: only nursing roles; requires auth then @PreAuthorize NURSE/ADMIN
-                        .requestMatchers("/ipd/*/shift-to-ward").authenticated()
-                        // Only doctor can recommend admission; endpoint requires auth then @PreAuthorize DOCTOR
-                        .requestMatchers("/visit/**").authenticated()
-                        // Other modules: permit all until ready
-                        .requestMatchers("/patients/**", "/reception/**", "/doctors/**", "/departments/**", "/opd/**", "/emergency/**", "/ipd/**", "/nursing/**", "/wards/**", "/beds/**", "/system/**").permitAll()
-                        .anyRequest().permitAll()
-                )
-                .httpBasic(basic -> {});
+                        .requestMatchers("/auth/login").permitAll()
+                        // Allow system config endpoints in dev; can be tightened later with roles
+                        .requestMatchers("/system/**").permitAll()
+                        .anyRequest().authenticated());
         // Allow H2 console frame in dev
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
         return http.build();
@@ -65,48 +61,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(encoder.encode("admin123"))
-                .roles("ADMIN")
-                .build();
-        UserDetails receptionist = User.builder()
-                .username("receptionist")
-                .password(encoder.encode("rec123"))
-                .roles("RECEPTIONIST")
-                .build();
-        UserDetails helpdesk = User.builder()
-                .username("helpdesk")
-                .password(encoder.encode("help123"))
-                .roles("HELP_DESK")
-                .build();
-        UserDetails ipdManager = User.builder()
-                .username("ipdmanager")
-                .password(encoder.encode("ipd123"))
-                .roles("IPD_MANAGER")
-                .build();
-        UserDetails doctor = User.builder()
-                .username("doctor")
-                .password(encoder.encode("doc123"))
-                .roles("DOCTOR")
-                .build();
-        UserDetails medicalSuperintendent = User.builder()
-                .username("medsuper")
-                .password(encoder.encode("ms123"))
-                .roles("MEDICAL_SUPERINTENDENT")
-                .build();
-        UserDetails emergencyHead = User.builder()
-                .username("emergencyhead")
-                .password(encoder.encode("eh123"))
-                .roles("EMERGENCY_HEAD")
-                .build();
-        UserDetails nurse = User.builder()
-                .username("nurse")
-                .password(encoder.encode("nurse123"))
-                .roles("NURSE")
-                .build();
-        return new InMemoryUserDetailsManager(admin, receptionist, helpdesk, ipdManager, doctor,
-                medicalSuperintendent, emergencyHead, nurse);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }

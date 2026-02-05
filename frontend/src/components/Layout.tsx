@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { getPageTitleFromPath } from '../config/pageTitle'
@@ -35,13 +35,19 @@ function MenuIcon() {
 }
 
 export function Layout() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
+  const navigate = useNavigate()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const userRoles: HMSRole[] = user?.roles?.length ? user.roles : ['ADMIN']
   const pageTitle = getPageTitleFromPath(location.pathname)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -73,6 +79,15 @@ export function Layout() {
             <div className={styles.userBadge}>
               <span className={styles.userName}>{user?.username ?? 'Guest'}</span>
             </div>
+            {user && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn btn-outline-light btn-sm ms-2"
+              >
+                Logout
+              </button>
+            )}
           </div>
         </header>
 

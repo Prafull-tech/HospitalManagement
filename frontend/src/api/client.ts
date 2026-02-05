@@ -7,14 +7,15 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-/* Auth disabled for now. When re-enabling: add request interceptor to send Basic auth from localStorage. */
+// Attach JWT bearer token when available
 apiClient.interceptors.request.use((config) => {
   const auth = localStorage.getItem('hms_auth')
   if (auth) {
     try {
-      const { username, password } = JSON.parse(auth)
-      if (username && password) {
-        config.auth = { username, password }
+      const { token } = JSON.parse(auth)
+      if (token) {
+        config.headers = config.headers ?? {}
+        config.headers.Authorization = `Bearer ${token}`
       }
     } catch {
       // ignore
@@ -23,8 +24,16 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-/* Auth disabled: no redirect on 401. When re-enabling: redirect to /login on 401. */
+// Redirect to login on 401
 apiClient.interceptors.response.use(
   (res) => res,
-  (err) => Promise.reject(err)
+  (err) => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem('hms_auth')
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(err)
+  }
 )

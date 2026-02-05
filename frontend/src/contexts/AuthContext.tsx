@@ -1,16 +1,18 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { HMSRole } from '../config/sidebarMenu'
+import { apiClient } from '../api/client'
 
 export type Role = HMSRole
 
 export interface User {
   username: string
   roles: Role[]
+  fullName?: string
 }
 
 interface AuthState {
   user: User | null
-  login: (username: string, password: string) => void
+  login: (username: string, password: string) => Promise<void>
   logout: () => void
   hasRole: (...roles: Role[]) => boolean
   isAuthenticated: boolean
@@ -18,32 +20,20 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null)
 
-const DEMO_USERS: Record<string, { password: string; roles: Role[] }> = {
-  admin: { password: 'admin123', roles: ['ADMIN'] },
-  receptionist: { password: 'rec123', roles: ['RECEPTIONIST'] },
-  doctor: { password: 'doc123', roles: ['DOCTOR'] },
-  nurse: { password: 'nurse123', roles: ['NURSE'] },
-  lab: { password: 'lab123', roles: ['LAB_TECH'] },
-  pharmacist: { password: 'pharma123', roles: ['PHARMACIST'] },
-  billing: { password: 'bill123', roles: ['BILLING'] },
-  itadmin: { password: 'it123', roles: ['IT_ADMIN'] },
-  helpdesk: { password: 'help123', roles: ['HELP_DESK'] },
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
-  const login = useCallback((username: string, password: string) => {
-    const key = username.toLowerCase()
-    const demo = DEMO_USERS[key]
-    if (demo && demo.password === password) {
-      const u: User = { username: key, roles: demo.roles }
-      setUser(u)
-      localStorage.setItem('hms_auth', JSON.stringify({ username: key, password }))
-      return
+  const login = useCallback(async (username: string, password: string) => {
+    const res = await apiClient.post('/auth/login', { username, password })
+    const { token, role, fullName } = res.data as {
+      token: string
+      username: string
+      role: string
+      fullName: string
     }
-    setUser({ username, roles: ['HELP_DESK'] })
-    localStorage.setItem('hms_auth', JSON.stringify({ username, password }))
+    const u: User = { username, roles: [role as Role], fullName }
+    setUser(u)
+    localStorage.setItem('hms_auth', JSON.stringify({ username, role, fullName, token }))
   }, [])
 
   const logout = useCallback(() => {
@@ -63,13 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const auth = localStorage.getItem('hms_auth')
     if (auth) {
       try {
-        const { username } = JSON.parse(auth)
-        const key = (username || '').toLowerCase()
-        const demo = DEMO_USERS[key]
-        if (demo) {
-          setUser({ username: key, roles: demo.roles })
+        const parsed = JSON.parse(auth) as { username: string; role?: string; fullName?: string }
+        if (parsed?.username && parsed?.role) {
+          setUser({ username: parsed.username, roles: [parsed.role as Role], fullName: parsed.fullName })
         } else {
-          setUser({ username: key, roles: ['HELP_DESK'] })
+          setUser(null)
         }
       } catch {
         setUser(null)
@@ -93,3 +81,4 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }
+
