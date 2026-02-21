@@ -1,0 +1,44 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--hms-text);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.placeholder {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  padding: 2rem;
+  color: var(--hms-text-muted);
+}
+
+.placeholder p {
+  margin: 0 0 1rem 0;
+}
+
+.backLink {
+  color: var(--hms-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}

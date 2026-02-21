@@ -29,6 +29,10 @@ import { ViewAdmission } from './pages/ipd/ViewAdmission'
 import { EditAdmissionPage } from './pages/ipd/EditAdmissionPage'
 import { DischargePage } from './pages/ipd/DischargePage'
 import { BillingAccountPage } from './pages/billing/BillingAccountPage'
+import { BillingDashboard } from './pages/billing/BillingDashboard'
+import { InsurancePage } from './pages/billing/InsurancePage'
+import { PaymentsPage } from './pages/billing/PaymentsPage'
+import { RefundsPage } from './pages/billing/RefundsPage'
 import { NursingDashboard } from './pages/NursingDashboard'
 import { NursingStaffPage } from './pages/NursingStaffPage'
 import { NursingAssignPage } from './pages/NursingAssignPage'
@@ -138,9 +142,12 @@ export default function App() {
             <Route path="discharge/:id" element={<DischargePage />} />
           </Route>
         <Route path="billing" element={<Outlet />}>
-          <Route index element={<Navigate to="/ipd/admissions" replace />} />
+          <Route index element={<BillingDashboard />} />
           <Route path="account/:id" element={<BillingAccountPage />} />
         </Route>
+        <Route path="insurance" element={<InsurancePage />} />
+        <Route path="payments" element={<PaymentsPage />} />
+        <Route path="refunds" element={<RefundsPage />} />
         <Route path="nursing" element={<Outlet />}>
           <Route index element={<NursingDashboard />} />
           <Route path="staff" element={<NursingStaffPage />} />
