@@ -31,6 +31,7 @@ const DYNAMIC_TITLES: { pattern: RegExp; title: string }[] = [
   { pattern: /^\/doctors\/\d+\/availability/, title: 'Doctor Availability' },
   { pattern: /^\/opd\/visits\/\d+/, title: 'OPD Visit' },
   { pattern: /^\/ipd\/admissions\/\d+/, title: 'IPD Admission' },
+  { pattern: /^\/ipd\/discharge\/\d+/, title: 'Discharge' },
   { pattern: /^\/admin\/config\/roles/, title: 'Role Management' },
   { pattern: /^\/admin\/config\/modules/, title: 'Module Management' },
   { pattern: /^\/admin\/config\/permissions/, title: 'Permission Matrix' },

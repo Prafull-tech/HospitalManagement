@@ -123,24 +123,25 @@ export default function App() {
           <Route path=":id/edit" element={<DoctorFormPage />} />
           <Route path=":id/availability" element={<DoctorAvailabilityPage />} />
         </Route>
-        <Route path="opd" element={<Outlet />}>
+          <Route path="opd" element={<Outlet />}>
           <Route index element={<OPDDashboard />} />
           <Route path="register" element={<OPDRegisterVisitPage />} />
           <Route path="queue" element={<OPDQueuePage />} />
           <Route path="visits" element={<OPDSearchVisitsPage />} />
           <Route path="visits/:id" element={<OPDVisitDetailPage />} />
         </Route>
-          <Route path="ipd" element={<Outlet />}>
-            <Route index element={<IPDDashboard />} />
-            <Route path="admission-management" element={<IPDAdmissionManagementPage />} />
-            <Route path="admit" element={<IPDAdmitPage />} />
-            <Route path="beds" element={<BedsAvailability />} />
-            <Route path="hospital-beds" element={<HospitalBedAvailability />} />
-            <Route path="admissions" element={<IPDAdmissionsListPage />} />
-            <Route path="admissions/:id" element={<ViewAdmission />} />
-            <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
-            <Route path="discharge/:id" element={<DischargePage />} />
-          </Route>
+        {/* Explicit discharge route so /ipd/discharge/:id is matched reliably */}
+        <Route path="ipd/discharge/:id" element={<DischargePage />} />
+        <Route path="ipd" element={<Outlet />}>
+          <Route index element={<IPDDashboard />} />
+          <Route path="admission-management" element={<IPDAdmissionManagementPage />} />
+          <Route path="admit" element={<IPDAdmitPage />} />
+          <Route path="beds" element={<BedsAvailability />} />
+          <Route path="hospital-beds" element={<HospitalBedAvailability />} />
+          <Route path="admissions" element={<IPDAdmissionsListPage />} />
+          <Route path="admissions/:id" element={<ViewAdmission />} />
+          <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
+        </Route>
         <Route path="billing" element={<Outlet />}>
           <Route index element={<BillingDashboard />} />
           <Route path="account/:id" element={<BillingAccountPage />} />

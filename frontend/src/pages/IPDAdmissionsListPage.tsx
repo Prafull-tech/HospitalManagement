@@ -350,6 +350,7 @@ export function IPDAdmissionsListPage() {
                           <div className="d-flex gap-2 flex-wrap">
                             <Link to={`/ipd/admissions/${a.id}`} className="text-decoration-none">View</Link>
                             <Link to={`/ipd/admissions/${a.id}/edit`} className="text-decoration-none">Edit</Link>
+                            <Link to={`/ipd/discharge/${a.id}`} className="text-decoration-none">Discharge</Link>
                             {canDisableAdmission(a.admissionStatus) && (
                               <button
                                 type="button"
