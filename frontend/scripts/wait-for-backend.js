@@ -17,7 +17,8 @@ const res = await fetch(BACKEND_URL, { signal: ctrl.signal })
 clearTimeout(t)
       if (res.ok) {
         console.log('Backend is ready!')
-        process.exit(0)
+        setTimeout(() => process.exit(0), 50)
+        return
       }
     } catch {
       // ignore
@@ -27,6 +28,6 @@ clearTimeout(t)
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
   }
   console.error(`ERROR: Backend did not become ready in ${MAX_WAIT_MS / 1000}s`)
-  process.exit(1)
+  setTimeout(() => process.exit(1), 50)
 }
 wait()
