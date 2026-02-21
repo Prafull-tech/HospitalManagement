@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { doctorsApi } from '../api/doctors'
 import { ipdApi } from '../api/ipd'
 import { PatientSearch } from '../components/reception/PatientSearch'
+import { BedSeatGrid } from '../components/ipd/BedSeatGrid'
 import type { IPDAdmissionRequest, AdmissionType, BedAvailabilityResponse, WardType } from '../types/ipd'
 import type { DoctorResponse } from '../types/doctor'
 import type { PatientResponse } from '../types/patient'
@@ -240,16 +241,16 @@ export function IPDAdmitPage() {
         <div className={styles.row}>
           <label>
             Bed number <span className={styles.required}>*</span>
-            <select name="bedId" value={form.bedId || ''} onChange={handleChange} className={styles.select} required>
-              <option value="">Select bed (VACANT only)</option>
-              {selectableBeds.map((b) => (
-                <option key={b.bedId} value={b.bedId}>
-                  {b.wardName} — {b.bedNumber}
-                </option>
-              ))}
-            </select>
-            {form.wardType && selectableBeds.length === 0 && !loading && (
-              <span className={styles.hint}>No VACANT beds in this ward type.</span>
+            {form.wardType && (
+              <BedSeatGrid
+                beds={beds}
+                selectedBedId={form.bedId}
+                onSelectBed={(bedId) => setForm((prev) => ({ ...prev, bedId }))}
+                seatsPerRow={5}
+              />
+            )}
+            {!form.wardType && (
+              <span className={styles.hint}>Select ward type first to see available beds.</span>
             )}
           </label>
         </div>

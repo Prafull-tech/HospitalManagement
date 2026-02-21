@@ -1,9 +1,32 @@
 spring:
   application:
     name: hospital-management-system
-
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import: optional:file:./application-local.yml,optional:file:./backend/application-local.yml
+
+# 3rd Party Drug Lookup API (barcode/GTIN)
+# Placeholder - set THIRDPARTY_API_URL to enable. Example: https://api.druglookup.example.com/gtin
+# Response should map to: medicineName, strength, form, manufacturer, category
+thirdparty:
+  api:
+    url: ${THIRDPARTY_API_URL:}
+    key: ${THIRDPARTY_API_KEY:}
+
+# Pharmacy Invoice PDF
+pharmacy:
+  invoice:
+    storage-path: ${INVOICE_STORAGE_PATH:./data/invoices}
+    python-path: ${PYTHON_PATH:python}
+    script-path: ${INVOICE_SCRIPT_PATH:../invoice-generator/invoice_service.py}
+    gst-enabled: false
+    gst-percent: 0
+  hospital:
+    name: ${HOSPITAL_NAME:Sample Hospital}
+    address: ${HOSPITAL_ADDRESS:123 Hospital Road, City}
+    phone: ${HOSPITAL_PHONE:+91-1234567890}
+    gst-no: ${HOSPITAL_GST:}
 
   jpa:
     hibernate:
@@ -20,34 +43,35 @@ server:
     context-path: /api
 
 ---
-# H2 - local / dev (database-agnostic JPA)
+# MySQL - dev (default: root user for local dev; override via MYSQL_USER, MYSQL_PASSWORD)
 spring:
   config:
     activate:
       on-profile: dev
-  datasource:
-    url: jdbc:h2:mem:hms;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
+  devtools:
+    restart:
       enabled: true
-      path: /h2-console
+      exclude: static/**,public/**,templates/**
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:hms}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:root}
+    password: "${MYSQL_PASSWORD:Maknish@2217}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
 
 ---
-# MySQL - staging / prod
+# MySQL - prod (override MYSQL_USER, MYSQL_PASSWORD in production)
 spring:
   config:
     activate:
       on-profile: prod
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:hms}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${MYSQL_USER:hms}
-    password: ${MYSQL_PASSWORD:hms}
+    username: ${MYSQL_USER:root}
+    password: "${MYSQL_PASSWORD:Maknish@2217}"
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect

@@ -1,8 +1,13 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
+import { useAppBootstrap } from './components/AppBootstrap'
+import { setAuthRedirect } from './api/authRedirect'
 import { PermissionsProvider } from './contexts/PermissionsContext'
 import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { RoleProtectedRoute } from './components/RoleProtectedRoute'
+import { DashboardRedirect } from './components/DashboardRedirect'
 import { ReceptionDashboard } from './pages/ReceptionDashboard'
 import { PatientRegisterPage } from './pages/PatientRegisterPage'
 import { PatientSearchPage } from './pages/PatientSearchPage'
@@ -22,6 +27,8 @@ import HospitalBedAvailability from './pages/ipd/HospitalBedAvailability'
 import { IPDAdmissionsListPage } from './pages/IPDAdmissionsListPage'
 import { ViewAdmission } from './pages/ipd/ViewAdmission'
 import { EditAdmissionPage } from './pages/ipd/EditAdmissionPage'
+import { DischargePage } from './pages/ipd/DischargePage'
+import { BillingAccountPage } from './pages/billing/BillingAccountPage'
 import { NursingDashboard } from './pages/NursingDashboard'
 import { NursingStaffPage } from './pages/NursingStaffPage'
 import { NursingAssignPage } from './pages/NursingAssignPage'
@@ -36,13 +43,36 @@ import { SystemConfigModulesPage } from './pages/system-config/SystemConfigModul
 import { SystemConfigPermissionsPage } from './pages/system-config/SystemConfigPermissionsPage'
 import { SystemConfigFeaturesPage } from './pages/system-config/SystemConfigFeaturesPage'
 import { PharmacyDashboard } from './pages/PharmacyDashboard'
+import { LabDashboard } from './pages/LabDashboard'
+import { LabReportsPage } from './pages/LabReportsPage'
+import { RadiologyDashboard } from './pages/RadiologyDashboard'
+import { BloodBankDashboard } from './pages/BloodBankDashboard'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 
+const AUTH_BYPASS = false // Set true to isolate: render "App Loaded" and skip auth
+
 export default function App() {
+  console.log('App render')
   const { user } = useAuth()
-  const roleCodes = user?.roles?.length ? user.roles : ['ADMIN']
+  const roleCodes = user?.roles?.length ? user.roles : []
+
+  const navigate = useNavigate()
+  const bootstrap = useAppBootstrap()
+
+  useEffect(() => {
+    setAuthRedirect(() => navigate('/login', { replace: true }))
+    return () => setAuthRedirect(null)
+  }, [navigate])
+
+  useEffect(() => {
+    bootstrap?.setReady()
+  }, [bootstrap])
+
+  if (AUTH_BYPASS) {
+    return <div>App Loaded</div>
+  }
 
   return (
     <Routes>
@@ -58,13 +88,31 @@ export default function App() {
           </PermissionsProvider>
         }
       >
-        <Route index element={<Navigate to="/reception" replace />} />
+        <Route index element={<DashboardRedirect />} />
         <Route path="reception" element={<Outlet />}>
           <Route index element={<ReceptionDashboard />} />
           <Route path="register" element={<PatientRegisterPage />} />
           <Route path="search" element={<PatientSearchPage />} />
         </Route>
-        <Route path="pharmacy" element={<PharmacyDashboard />} />
+        <Route path="pharmacy" element={<RoleProtectedRoute><PharmacyDashboard /></RoleProtectedRoute>} />
+        <Route path="lab" element={<RoleProtectedRoute><Outlet /></RoleProtectedRoute>}>
+          <Route index element={<LabDashboard />} />
+          <Route path="reports" element={<LabReportsPage />} />
+        </Route>
+        <Route path="radiology" element={<RoleProtectedRoute><Outlet /></RoleProtectedRoute>}>
+          <Route index element={<RadiologyDashboard />} />
+          <Route path="reports" element={<RadiologyDashboard />} />
+          <Route path="requests" element={<RadiologyDashboard />} />
+          <Route path="view" element={<RadiologyDashboard />} />
+        </Route>
+        <Route path="bloodbank" element={<RoleProtectedRoute><Outlet /></RoleProtectedRoute>}>
+          <Route index element={<BloodBankDashboard />} />
+          <Route path="donors" element={<BloodBankDashboard />} />
+          <Route path="inventory" element={<BloodBankDashboard />} />
+          <Route path="issue" element={<BloodBankDashboard />} />
+          <Route path="requests" element={<BloodBankDashboard />} />
+          <Route path="alerts" element={<BloodBankDashboard />} />
+        </Route>
         <Route path="doctors" element={<Outlet />}>
           <Route index element={<DoctorListPage />} />
           <Route path="new" element={<DoctorFormPage />} />
@@ -87,7 +135,12 @@ export default function App() {
             <Route path="admissions" element={<IPDAdmissionsListPage />} />
             <Route path="admissions/:id" element={<ViewAdmission />} />
             <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
+            <Route path="discharge/:id" element={<DischargePage />} />
           </Route>
+        <Route path="billing" element={<Outlet />}>
+          <Route index element={<Navigate to="/ipd/admissions" replace />} />
+          <Route path="account/:id" element={<BillingAccountPage />} />
+        </Route>
         <Route path="nursing" element={<Outlet />}>
           <Route index element={<NursingDashboard />} />
           <Route path="staff" element={<NursingStaffPage />} />

@@ -15,6 +15,7 @@ public class MedicineMasterResponseDto {
     private String strength;
     private MedicineForm form;
     private Integer minStock;
+    private Integer quantity;
     private Boolean lasaFlag;
     private StorageType storageType;
     private Boolean active;
@@ -23,6 +24,12 @@ public class MedicineMasterResponseDto {
     private String createdByUser;
     private Instant createdAt;
     private Instant updatedAt;
+    private Long rackId;
+    private String rackCode;
+    private Long shelfId;
+    private String shelfCode;
+    private String binNumber;
+    private String barcode;
 
     public Long getId() {
         return id;
@@ -78,6 +85,14 @@ public class MedicineMasterResponseDto {
 
     public void setMinStock(Integer minStock) {
         this.minStock = minStock;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     public Boolean getLasaFlag() {
@@ -142,6 +157,54 @@ public class MedicineMasterResponseDto {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getRackId() {
+        return rackId;
+    }
+
+    public void setRackId(Long rackId) {
+        this.rackId = rackId;
+    }
+
+    public String getRackCode() {
+        return rackCode;
+    }
+
+    public void setRackCode(String rackCode) {
+        this.rackCode = rackCode;
+    }
+
+    public Long getShelfId() {
+        return shelfId;
+    }
+
+    public void setShelfId(Long shelfId) {
+        this.shelfId = shelfId;
+    }
+
+    public String getShelfCode() {
+        return shelfCode;
+    }
+
+    public void setShelfCode(String shelfCode) {
+        this.shelfCode = shelfCode;
+    }
+
+    public String getBinNumber() {
+        return binNumber;
+    }
+
+    public void setBinNumber(String binNumber) {
+        this.binNumber = binNumber;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
     }
 }
 

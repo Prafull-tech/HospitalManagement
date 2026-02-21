@@ -1,25 +1,25 @@
 import { useAuth } from '../contexts/AuthContext'
-import type { Role } from '../contexts/AuthContext'
+import { MASTER_ROLES, SELL_ROLES } from '../config/pharmacyPermissions'
 
 /**
- * Centralised pharmacy permission helper.
- * Policy:
- * - PHARMACY_MANAGER, STORE_INCHARGE: can add/edit/disable medicines
- * - IPD_PHARMACIST: issue only, no medicine master changes
- * - Others (DOCTOR, NURSE, ADMIN, etc.): view-only
+ * Centralized pharmacy permission helper.
+ * Matches backend @PreAuthorize exactly.
+ * Use this hook - no hardcoded role checks in JSX.
  */
-
-const MASTER_ROLES: Role[] = ['PHARMACY_MANAGER', 'STORE_INCHARGE']
-
 export function usePharmacyPermissions() {
   const { hasRole } = useAuth()
 
   const canManageMedicineMaster = hasRole(...MASTER_ROLES)
+  const canSell = hasRole(...SELL_ROLES)
 
   return {
     canAddMedicine: canManageMedicineMaster,
-    canEditMedicine: hasRole('PHARMACY_MANAGER'),
-    canDisableMedicine: hasRole('PHARMACY_MANAGER'),
+    canImportMedicines: canManageMedicineMaster,
+    canEditMedicine: canManageMedicineMaster,
+    canDisableMedicine: canManageMedicineMaster,
+    canManageMedicineMaster,
+    canPurchase: canManageMedicineMaster,
+    canSell,
   }
 }
 

@@ -28,6 +28,14 @@ public interface IPDAdmissionRepository extends JpaRepository<IPDAdmission, Long
 
     List<IPDAdmission> findByAdmissionStatusIn(List<AdmissionStatus> statuses);
 
+    @EntityGraph(attributePaths = { "patient" })
+    @Query("SELECT a FROM IPDAdmission a WHERE a.admissionStatus IN :statuses ORDER BY a.id")
+    List<IPDAdmission> findByAdmissionStatusInWithPatient(@Param("statuses") List<AdmissionStatus> statuses);
+
+    @EntityGraph(attributePaths = { "patient" })
+    @Query("SELECT a FROM IPDAdmission a ORDER BY a.id")
+    List<IPDAdmission> findAllWithPatient();
+
     @EntityGraph(attributePaths = { "patient", "primaryDoctor" })
     @Query("SELECT a FROM IPDAdmission a WHERE " +
            "(:admissionNumber IS NULL OR a.admissionNumber = :admissionNumber) " +

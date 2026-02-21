@@ -5,7 +5,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +23,8 @@ import jakarta.validation.constraints.Size;
         name = "medicine_master",
         indexes = {
                 @Index(name = "idx_medicine_code", columnList = "medicine_code", unique = true),
-                @Index(name = "idx_medicine_active", columnList = "active")
+                @Index(name = "idx_medicine_active", columnList = "active"),
+                @Index(name = "idx_medicine_barcode", columnList = "barcode")
         }
 )
 public class MedicineMaster extends BaseIdEntity {
@@ -54,6 +58,10 @@ public class MedicineMaster extends BaseIdEntity {
     private Integer minStock;
 
     @NotNull
+    @Column(name = "quantity", nullable = false, columnDefinition = "int default 0")
+    private Integer quantity = 0;
+
+    @NotNull
     @Column(name = "lasa_flag", nullable = false)
     private Boolean lasaFlag = false;
 
@@ -77,6 +85,25 @@ public class MedicineMaster extends BaseIdEntity {
     @Size(max = 255)
     @Column(name = "created_by_user", length = 255)
     private String createdByUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rack_id")
+    private PharmacyRack rack;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shelf_id")
+    private PharmacyShelf shelf;
+
+    @Size(max = 20)
+    @Column(name = "bin_number", length = 20)
+    private String binNumber;
+
+    @Size(max = 50)
+    @Column(name = "barcode", length = 50)
+    private String barcode;
+
+    @Column(name = "unit_price", precision = 15, scale = 2)
+    private java.math.BigDecimal unitPrice;
 
     public MedicineMaster() {
     }
@@ -129,6 +156,14 @@ public class MedicineMaster extends BaseIdEntity {
         this.minStock = minStock;
     }
 
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
     public Boolean getLasaFlag() {
         return lasaFlag;
     }
@@ -175,6 +210,46 @@ public class MedicineMaster extends BaseIdEntity {
 
     public void setCreatedByUser(String createdByUser) {
         this.createdByUser = createdByUser;
+    }
+
+    public PharmacyRack getRack() {
+        return rack;
+    }
+
+    public void setRack(PharmacyRack rack) {
+        this.rack = rack;
+    }
+
+    public PharmacyShelf getShelf() {
+        return shelf;
+    }
+
+    public void setShelf(PharmacyShelf shelf) {
+        this.shelf = shelf;
+    }
+
+    public String getBinNumber() {
+        return binNumber;
+    }
+
+    public void setBinNumber(String binNumber) {
+        this.binNumber = binNumber;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public java.math.BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(java.math.BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
     }
 }
 

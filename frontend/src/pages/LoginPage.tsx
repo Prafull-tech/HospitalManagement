@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -7,10 +7,26 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/reception'
+
+  // Redirect to app if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, from])
+
+  // Don't render login form if already authenticated (redirect in progress)
+  if (isAuthenticated) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <p className="text-muted">Redirecting…</p>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -151,7 +167,7 @@ export function LoginPage() {
             className="small mt-3 mb-0"
             style={{ color: 'rgba(248,250,252,0.8)' }}
           >
-            Dev users (profile=dev): admin/admin123, pharm/pharm123, store/store123, ipdph/ipdph123, doctor/doctor123, nurse/nurse123, ipd/ipd123, bill/bill123, quality/quality123
+            Dev users (profile=dev): admin/admin123, pharm/pharm123, pharmacist/pharm123, store/store123, ipdph/ipdph123, labtech/lab123, labsup/lab123, radtech/rad123, bloodtech/blood123, doctor/doctor123, nurse/nurse123, reception/rec123
           </p>
         </div>
       </div>

@@ -325,6 +325,27 @@
   font-weight: 500;
 }
 
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+  border-radius: var(--hms-radius);
+  color: var(--hms-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.logoutBtn:hover {
+  background: var(--hms-border);
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
 .content {
   flex: 1;
   padding: 1.75rem 2rem;

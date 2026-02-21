@@ -29,6 +29,10 @@ build/
 # Build info
 *.tsbuildinfo
 
+# Local config (MySQL credentials) - copy from application-local.yml.example
+backend/application-local.yml
+application-local.yml
+
 # Env files (keep .env.example if you use one)
 .env
 .env.local

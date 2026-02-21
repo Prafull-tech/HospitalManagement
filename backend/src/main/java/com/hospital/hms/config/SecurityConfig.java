@@ -45,13 +45,11 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(requestCorrelationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/h2-console/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/auth/login").permitAll()
                         // Allow system config endpoints in dev; can be tightened later with roles
                         .requestMatchers("/system/**").permitAll()
                         .anyRequest().authenticated());
-        // Allow H2 console frame in dev
-        http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
         return http.build();
     }
 

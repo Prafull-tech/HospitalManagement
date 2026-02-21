@@ -39,7 +39,7 @@ function statusBadgeLabel(s: AdmissionStatus): string {
     case 'CANCELLED':
       return 'Cancelled'
     default:
-      return s.replace(/_/g, ' ')
+      return String(s).replace(/_/g, ' ')
   }
 }
 

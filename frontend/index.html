@@ -7,12 +7,19 @@
     <title>HMS - Hospital Management System</title>
   </head>
   <body>
-    <div id="root">
-      <div class="app-loader" aria-live="polite" aria-label="Loading application">
-        <div class="app-loader__spinner"></div>
-        <span class="app-loader__text">Loading…</span>
-      </div>
-    </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // If root is still empty after 2s, React didn't mount (check Console for errors)
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && root.children.length === 0) {
+          root.innerHTML = '<div style="padding:2rem;font-family:sans-serif">' +
+            '<p><strong>Application did not load.</strong></p>' +
+            '<p>Open DevTools (F12) &rarr; Console and look for errors.</p>' +
+            '<p>Ensure the dev server is running and the backend is up (e.g. <code>http://localhost:8080</code>).</p></div>';
+        }
+      }, 2000);
+    </script>
   </body>
 </html>

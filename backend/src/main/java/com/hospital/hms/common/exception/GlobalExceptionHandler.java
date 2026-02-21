@@ -25,7 +25,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hibernate.LazyInitializationException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import com.hospital.hms.pharmacy.exception.DuplicateMedicineCodeException;
+import com.hospital.hms.pharmacy.exception.DuplicateRackCodeException;
+import com.hospital.hms.pharmacy.exception.InsufficientStockException;
+import com.hospital.hms.lab.exception.DuplicateTestCodeException;
 
 /**
  * Global exception handling for REST APIs. Returns consistent JSON error bodies.
@@ -100,6 +105,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(DuplicateTestCodeException.class)
+    public ResponseEntity<ErrorBody> handleDuplicateTestCode(
+            DuplicateTestCodeException ex,
+            HttpServletRequest request) {
+        logError(request, "Duplicate test code: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(HttpStatus.CONFLICT.value(), ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(DuplicateRackCodeException.class)
+    public ResponseEntity<ErrorBody> handleDuplicateRackCode(
+            DuplicateRackCodeException ex,
+            HttpServletRequest request) {
+        logError(request, "Duplicate rack code: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(HttpStatus.CONFLICT.value(), ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorBody> handleInsufficientStock(
+            InsufficientStockException ex,
+            HttpServletRequest request) {
+        logError(request, "Insufficient stock: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), Instant.now());
+        return ResponseEntity.badRequest().body(body);
+    }
+
     @ExceptionHandler(InvalidBedCountsException.class)
     public ResponseEntity<ErrorBody> handleInvalidBedCounts(
             InvalidBedCountsException ex,
@@ -116,6 +148,42 @@ public class GlobalExceptionHandler {
         logError(request, "Bad request: " + ex.getMessage(), ex);
         ErrorBody body = new ErrorBody(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), Instant.now());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorBody> handleMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+        String msg = ex.getMessage();
+        String userMsg = "Invalid request format. ";
+        if (msg != null) {
+            if (msg.contains("Cannot deserialize") || msg.contains("not a valid")) {
+                userMsg += "Please check that all fields have valid values (e.g. locationArea: MAIN_STORE, ICU_STORE, COLD_ROOM; storageType: ROOM_TEMP, COLD_CHAIN).";
+            } else if (msg.contains("Required request body")) {
+                userMsg += "Request body is required.";
+            } else {
+                userMsg += "Please check your input and try again.";
+            }
+        } else {
+            userMsg += "Please check your input and try again.";
+        }
+        logError(request, "Invalid request body: " + msg, ex);
+        ErrorBody body = new ErrorBody(HttpStatus.BAD_REQUEST.value(), userMsg, Instant.now());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorBody> handleDataIntegrity(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+        String msg = ex.getMessage();
+        String userMsg = "A record with this value already exists. Please use a unique code or name.";
+        if (msg != null && (msg.contains("unique") || msg.contains("duplicate") || msg.contains("Duplicate"))) {
+            userMsg = "This code or value already exists. Please use a unique value.";
+        }
+        logError(request, "Data integrity violation: " + msg, ex);
+        ErrorBody body = new ErrorBody(HttpStatus.CONFLICT.value(), userMsg, Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(LazyInitializationException.class)
@@ -168,7 +236,7 @@ public class GlobalExceptionHandler {
         // #endregion
         ErrorBody body = new ErrorBody(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred",
+                "An unexpected error occurred. Please try again or contact support.",
                 Instant.now()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);

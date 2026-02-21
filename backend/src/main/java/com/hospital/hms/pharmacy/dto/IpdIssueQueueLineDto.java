@@ -10,6 +10,9 @@ public class IpdIssueQueueLineDto {
     private String nextBatchExpiryDisplay;
     private String expiryRiskClass;
     private boolean lasa;
+    private String rackCode;
+    private String shelfCode;
+    private String binNumber;
 
     public String getMedicineCode() {
         return medicineCode;
@@ -73,6 +76,30 @@ public class IpdIssueQueueLineDto {
 
     public void setLasa(boolean lasa) {
         this.lasa = lasa;
+    }
+
+    public String getRackCode() {
+        return rackCode;
+    }
+
+    public void setRackCode(String rackCode) {
+        this.rackCode = rackCode;
+    }
+
+    public String getShelfCode() {
+        return shelfCode;
+    }
+
+    public void setShelfCode(String shelfCode) {
+        this.shelfCode = shelfCode;
+    }
+
+    public String getBinNumber() {
+        return binNumber;
+    }
+
+    public void setBinNumber(String binNumber) {
+        this.binNumber = binNumber;
     }
 }
 

@@ -31,6 +31,9 @@ public class MedicineMasterRequestDto {
     @Min(0)
     private Integer minStock;
 
+    @Min(0)
+    private Integer quantity = 0;
+
     @NotNull
     private Boolean lasaFlag;
 
@@ -44,6 +47,13 @@ public class MedicineMasterRequestDto {
 
     @Size(max = 1000)
     private String notes;
+
+    private Long rackId;
+    private Long shelfId;
+    @Size(max = 20)
+    private String binNumber;
+    @Size(max = 50)
+    private String barcode;
 
     public String getMedicineCode() {
         return medicineCode;
@@ -93,6 +103,14 @@ public class MedicineMasterRequestDto {
         this.minStock = minStock;
     }
 
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
     public Boolean getLasaFlag() {
         return lasaFlag;
     }
@@ -131,6 +149,38 @@ public class MedicineMasterRequestDto {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public Long getRackId() {
+        return rackId;
+    }
+
+    public void setRackId(Long rackId) {
+        this.rackId = rackId;
+    }
+
+    public Long getShelfId() {
+        return shelfId;
+    }
+
+    public void setShelfId(Long shelfId) {
+        this.shelfId = shelfId;
+    }
+
+    public String getBinNumber() {
+        return binNumber;
+    }
+
+    public void setBinNumber(String binNumber) {
+        this.binNumber = binNumber;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
     }
 }
 

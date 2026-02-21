@@ -20,7 +20,7 @@ public class JwtTokenService {
 
     public JwtTokenService(
             @Value("${hms.security.jwt.secret:dev-jwt-secret-change-me}") String secret,
-            @Value("${hms.security.jwt.expiry-minutes:480}") long expiryMinutes) {
+            @Value("${hms.security.jwt.expiry-minutes:30}") long expiryMinutes) {
         this.algorithm = Algorithm.HMAC256(secret);
         this.expiryMinutes = expiryMinutes;
     }

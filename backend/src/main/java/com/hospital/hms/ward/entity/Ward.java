@@ -51,6 +51,9 @@ public class Ward extends BaseIdEntity {
     @Column(name = "charge_category", length = 50)
     private String chargeCategory;
 
+    @Column(name = "daily_charge_per_bed", precision = 15, scale = 2)
+    private java.math.BigDecimal dailyChargePerBed;
+
     @Size(max = 500)
     @Column(name = "remarks", length = 500)
     private String remarks;
@@ -107,6 +110,14 @@ public class Ward extends BaseIdEntity {
 
     public void setChargeCategory(String chargeCategory) {
         this.chargeCategory = chargeCategory;
+    }
+
+    public java.math.BigDecimal getDailyChargePerBed() {
+        return dailyChargePerBed;
+    }
+
+    public void setDailyChargePerBed(java.math.BigDecimal dailyChargePerBed) {
+        this.dailyChargePerBed = dailyChargePerBed;
     }
 
     public String getRemarks() {

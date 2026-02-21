@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { SIDEBAR_MENU_GROUPS } from '../config/sidebarMenu'
-import { filterMenuByRole, filterMenuByAllowedRoutes } from '../config/menuFilter'
+import { filterMenuByRole } from '../config/menuFilter'
 import type { HMSRole, SidebarMenuItem } from '../config/sidebarMenu'
 import { usePermissionsOptional } from '../contexts/PermissionsContext'
 import { SidebarIcon } from './SidebarIcons'
@@ -77,7 +77,7 @@ function saveUserCollapsed(set: Set<string>) {
 
 export function Sidebar({ userRoles, collapsed }: SidebarProps) {
   const location = useLocation()
-  const permissions = usePermissionsOptional()
+  void usePermissionsOptional()
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded)
   const [userCollapsed, setUserCollapsed] = useState<Set<string>>(loadUserCollapsed)
 

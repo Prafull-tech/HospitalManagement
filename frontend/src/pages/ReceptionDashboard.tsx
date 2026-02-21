@@ -59,16 +59,39 @@ export function ReceptionDashboard() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    setLoading(true)
     setError('')
+    setLoading(true)
+    let cancelled = false
+    const safetyTimer = setTimeout(() => {
+      if (cancelled) return
+      setLoading(false)
+      setError('Request timed out. Is the backend running at http://localhost:8080?')
+      setStats(null)
+    }, 5000)
     dashboardApi
       .getStats({ fromDate, toDate })
-      .then(setStats)
+      .then((data) => {
+        if (!cancelled) {
+          setStats(data)
+          setError('')
+        }
+      })
       .catch((err) => {
-        setError(err.response?.data?.message || 'Failed to load stats')
+        if (cancelled) return
+        const msg = err.response?.data?.message || err.code === 'ECONNABORTED'
+          ? 'Request timed out. Is the backend running at http://localhost:8080?'
+          : 'Failed to load stats. Is the backend running?'
+        setError(msg)
         setStats(null)
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+        clearTimeout(safetyTimer)
+      })
+    return () => {
+      cancelled = true
+      clearTimeout(safetyTimer)
+    }
   }, [fromDate, toDate])
 
   const handlePrint = () => {
@@ -164,7 +187,7 @@ export function ReceptionDashboard() {
       </div>
 
       {error && <div className="alert alert-danger py-2 mb-0" role="alert">{error}</div>}
-      {loading && <p className="text-muted mb-0">Loading…</p>}
+      {loading && !stats && <p className="text-muted mb-0 small">Loading stats…</p>}
 
       <div className="row g-3">
         <div className="col-12 col-md-6 col-xl-4">

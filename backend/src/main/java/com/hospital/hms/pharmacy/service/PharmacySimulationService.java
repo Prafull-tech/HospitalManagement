@@ -7,8 +7,11 @@ import com.hospital.hms.pharmacy.dto.FefoStockRowDto;
 import com.hospital.hms.pharmacy.dto.IpdIssueQueueItemDto;
 import com.hospital.hms.pharmacy.dto.IpdIssueQueueLineDto;
 import com.hospital.hms.pharmacy.dto.PharmacySummaryDto;
+import com.hospital.hms.pharmacy.repository.MedicineMasterRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,17 +32,20 @@ import java.util.stream.Collectors;
 public class PharmacySimulationService {
 
     private final IPDAdmissionRepository admissionRepository;
+    private final MedicineMasterRepository medicineRepository;
     private final ConcurrentHashMap<Long, IpdIssueQueueItemDto> queue = new ConcurrentHashMap<>();
     private final AtomicLong alertSeq = new AtomicLong(1);
 
-    public PharmacySimulationService(IPDAdmissionRepository admissionRepository) {
+    public PharmacySimulationService(IPDAdmissionRepository admissionRepository,
+                                     MedicineMasterRepository medicineRepository) {
         this.admissionRepository = admissionRepository;
-        seedInitialData();
+        this.medicineRepository = medicineRepository;
     }
 
-    private void seedInitialData() {
+    @PostConstruct
+    public void seedInitialData() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        List<IPDAdmission> admissions = admissionRepository.findAll()
+        List<IPDAdmission> admissions = admissionRepository.findAllWithPatient()
                 .stream().limit(3).collect(Collectors.toList());
         long id = 1;
         for (IPDAdmission adm : admissions) {
@@ -85,8 +91,19 @@ public class PharmacySimulationService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<IpdIssueQueueItemDto> getIssueQueue(String q) {
         List<IpdIssueQueueItemDto> values = new ArrayList<>(queue.values());
+        for (IpdIssueQueueItemDto item : values) {
+            for (IpdIssueQueueLineDto line : item.getLines()) {
+                medicineRepository.findByMedicineCodeIgnoreCase(line.getMedicineCode())
+                        .ifPresent(m -> {
+                            if (m.getRack() != null) line.setRackCode(m.getRack().getRackCode());
+                            if (m.getShelf() != null) line.setShelfCode(m.getShelf().getShelfCode());
+                            line.setBinNumber(m.getBinNumber());
+                        });
+            }
+        }
         if (q != null && !q.isBlank()) {
             String lower = q.toLowerCase();
             values = values.stream()

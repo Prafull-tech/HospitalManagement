@@ -4,11 +4,7 @@
  */
 
 import { Link } from 'react-router-dom'
-import type {
-  HospitalBedItem,
-  BedStatus,
-  GeneralWardAction,
-} from '../../types/bed.types'
+import type { HospitalBedItem, BedStatus } from '../../types/bed.types'
 import {
   BED_STATUS_LABELS,
   canPerformGeneralWardAction,
@@ -169,7 +165,7 @@ export function WardBedTable({
                   </>
                 )}
                 {!(bed.bedStatus === 'OCCUPIED' && bed.admissionId != null && (canView || canAddNote || canTransfer)) &&
-                  !(canMarkCleaningOrVacant && onMarkStatus && (bed.bedStatus !== 'CLEANING' && bed.bedStatus !== 'MAINTENANCE' && bed.bedStatus !== 'ISOLATION' || bed.bedStatus === 'CLEANING' || bed.bedStatus === 'AVAILABLE')) &&
+                  !(canMarkCleaningOrVacant && onMarkStatus && bed.bedStatus !== 'MAINTENANCE' && bed.bedStatus !== 'ISOLATION') &&
                   '—'}
               </td>
             </tr>

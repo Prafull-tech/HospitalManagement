@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { HMSRole } from '../config/sidebarMenu'
 import { apiClient } from '../api/client'
+import { setAuthClearCallback } from '../api/authRedirect'
 
 export type Role = HMSRole
 
@@ -20,8 +21,40 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null)
 
+function getInitialUser(): User | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const auth = localStorage.getItem('hms_auth')
+    if (!auth) return null
+    const parsed = JSON.parse(auth) as { username?: string; role?: string; fullName?: string }
+    if (parsed?.username && parsed?.role) {
+      return { username: parsed.username, roles: [parsed.role as Role], fullName: parsed.fullName }
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  console.log('Auth init start')
+  const [user, setUser] = useState<User | null>(getInitialUser)
+  const token =
+    typeof window === 'undefined'
+      ? null
+      : (() => {
+          try {
+            const auth = localStorage.getItem('hms_auth')
+            if (!auth) return null
+            const p = JSON.parse(auth) as { token?: string }
+            return p?.token ?? null
+          } catch {
+            return null
+          }
+        })()
+  console.log('Token:', token != null ? '[present]' : 'null')
+  console.log('Auth success (user from localStorage):', user?.username ?? 'none')
+  console.log('Auth loading set false (sync init only)')
 
   const login = useCallback(async (username: string, password: string) => {
     const res = await apiClient.post('/auth/login', { username, password })
@@ -41,6 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('hms_auth')
   }, [])
 
+  useEffect(() => {
+    setAuthClearCallback(logout)
+    return () => setAuthClearCallback(null)
+  }, [logout])
+
   const hasRole = useCallback(
     (...roles: Role[]) => {
       if (!user) return false
@@ -48,22 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [user]
   )
-
-  useEffect(() => {
-    const auth = localStorage.getItem('hms_auth')
-    if (auth) {
-      try {
-        const parsed = JSON.parse(auth) as { username: string; role?: string; fullName?: string }
-        if (parsed?.username && parsed?.role) {
-          setUser({ username: parsed.username, roles: [parsed.role as Role], fullName: parsed.fullName })
-        } else {
-          setUser(null)
-        }
-      } catch {
-        setUser(null)
-      }
-    }
-  }, [])
 
   const value: AuthState = {
     user,

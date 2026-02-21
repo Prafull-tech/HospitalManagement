@@ -2,7 +2,7 @@
 
 Backend: **Spring Boot 3.x** (Java 17)  
 Frontend: **React** (Vite + TypeScript)  
-Database: **Dual configuration** — H2 (dev) and MySQL (staging/prod). All code is DB-agnostic.
+Database: **MySQL** (dev and prod). Configure via `MYSQL_HOST`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`.
 
 ## Module: Reception / Front Desk
 
@@ -13,29 +13,36 @@ See [docs/RECEPTION_MODULE.md](docs/RECEPTION_MODULE.md) for API contract, sampl
 
 ## Quick Start
 
-### Backend
+**Recommended:** Use the unified startup script so the frontend starts only after the backend is ready:
+
+```bash
+# Windows (Command Prompt)
+start.bat
+
+# Windows (PowerShell)
+.\start.ps1
+```
+
+This will:
+1. Start the backend (Spring Boot)
+2. Wait for the backend health check to pass
+3. Start the frontend (Vite)
+
+### Manual Start (Backend first, then Frontend)
+
+**Backend** (must be running before frontend):
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-- Default profile: **dev** (H2 in-memory).
+- Default profile: **dev** (MySQL). Ensure MySQL is running. Create database: `CREATE DATABASE hms;`
+- Credentials: Copy `backend/src/main/resources/application-local.yml.example` to `backend/application-local.yml` and set your MySQL username/password. (application-local.yml is gitignored.)
 - API base: **http://localhost:8080/api**
-- H2 console: http://localhost:8080/h2-console (dev only)
+- Health check: http://localhost:8080/api/actuator/health
 
-**MySQL (prod):**
-
-```bash
-export SPRING_PROFILES_ACTIVE=prod
-export MYSQL_HOST=localhost
-export MYSQL_DATABASE=hms
-export MYSQL_USER=hms
-export MYSQL_PASSWORD=hms
-mvn spring-boot:run
-```
-
-### Frontend
+**Frontend** (start only after backend is ready):
 
 ```bash
 cd frontend
@@ -43,10 +50,12 @@ npm install
 npm run dev
 ```
 
+- `npm run dev` waits for the backend health check before starting Vite.
+- Use `npm run dev:only` to start the frontend without waiting (e.g. when backend is already running).
 - App: **http://localhost:3000**
-- Proxy: `/api` → `http://localhost:8080` (start backend first)
+- Proxy: `/api` → `http://localhost:8080`
 
-**Demo logins:** admin / admin123, receptionist / rec123, helpdesk / help123
+**Login:** All pages require authentication. Demo logins: admin/admin123, pharm/pharm123, nurse/nurse123, doctor/doctor123
 
 ---
 

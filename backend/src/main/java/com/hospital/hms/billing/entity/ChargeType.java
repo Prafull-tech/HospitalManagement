@@ -10,5 +10,10 @@ public enum ChargeType {
     CONSULTATION,
     NURSING,
     PROCEDURE,
+    OT,
+    RADIOLOGY,
+    BLOOD_BANK,
+    PHYSIOTHERAPY,
+    EMERGENCY,
     OTHER
 }

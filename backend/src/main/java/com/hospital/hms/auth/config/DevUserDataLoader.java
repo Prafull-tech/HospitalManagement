@@ -29,13 +29,19 @@ public class DevUserDataLoader {
             List<DevUser> users = List.of(
                     new DevUser("admin", "Admin", "admin123", UserRole.ADMIN),
                     new DevUser("pharm", "Pharmacy Manager", "pharm123", UserRole.PHARMACY_MANAGER),
+                    new DevUser("pharmacist", "Pharmacist", "pharm123", UserRole.PHARMACIST),
                     new DevUser("store", "Store In-charge", "store123", UserRole.STORE_INCHARGE),
                     new DevUser("ipdph", "IPD Pharmacist", "ipdph123", UserRole.IPD_PHARMACIST),
                     new DevUser("doctor", "Doctor", "doctor123", UserRole.DOCTOR),
                     new DevUser("nurse", "Nurse", "nurse123", UserRole.NURSE),
                     new DevUser("ipd", "IPD Manager", "ipd123", UserRole.IPD_MANAGER),
                     new DevUser("bill", "Billing", "bill123", UserRole.BILLING),
-                    new DevUser("quality", "Quality Manager", "quality123", UserRole.QUALITY_MANAGER)
+                    new DevUser("quality", "Quality Manager", "quality123", UserRole.QUALITY_MANAGER),
+                    new DevUser("labtech", "Lab Technician", "lab123", UserRole.LAB_TECHNICIAN),
+                    new DevUser("labsup", "Lab Supervisor", "lab123", UserRole.LAB_SUPERVISOR),
+                    new DevUser("radtech", "Radiology Tech", "rad123", UserRole.RADIOLOGY_TECH),
+                    new DevUser("bloodtech", "Blood Bank Tech", "blood123", UserRole.BLOOD_BANK_TECH),
+                    new DevUser("reception", "Receptionist", "rec123", UserRole.RECEPTIONIST)
             );
 
             for (DevUser u : users) {

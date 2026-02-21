@@ -23,6 +23,10 @@ function findLabelInItems(items: SidebarMenuItem[], pathname: string): string | 
 }
 
 const DYNAMIC_TITLES: { pattern: RegExp; title: string }[] = [
+  { pattern: /^\/lab\/reports/, title: 'View Reports' },
+  { pattern: /^\/pharmacy/, title: 'Pharmacy / Medical Store' },
+  { pattern: /^\/radiology/, title: 'Radiology / Imaging' },
+  { pattern: /^\/bloodbank/, title: 'Blood Bank' },
   { pattern: /^\/doctors\/\d+\/edit/, title: 'Edit Doctor' },
   { pattern: /^\/doctors\/\d+\/availability/, title: 'Doctor Availability' },
   { pattern: /^\/opd\/visits\/\d+/, title: 'OPD Visit' },

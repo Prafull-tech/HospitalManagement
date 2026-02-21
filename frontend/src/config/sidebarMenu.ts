@@ -2,7 +2,39 @@
  * HMS Sidebar Menu Configuration
  * Scalable, data-driven navigation with role-based visibility.
  * Icon keys map to components in the icon registry.
+ * Diagnostic modules (Pathology, Pharmacy, Radiology, Blood Bank) use menuConfig for strict RBAC.
  */
+
+import { MODULE_MENU_CONFIG } from './menuConfig'
+
+/** Build SidebarMenuGroup[] from centralized menuConfig (Pathology, Pharmacy, Radiology, Blood Bank). */
+function buildDiagnosticMenuGroups(): SidebarMenuGroup[] {
+  return MODULE_MENU_CONFIG.map((module) => ({
+    id: module.id,
+    label: module.moduleName,
+    allowedRoles: module.allowedRoles as HMSRole[],
+    items: [
+      {
+        id: `${module.id}-parent`,
+        label: module.moduleName,
+        route: module.route,
+        end: false,
+        icon: module.icon as MenuIconKey,
+        allowedRoles: module.allowedRoles as HMSRole[],
+        children: module.subMenus.map((sub) => ({
+          id: sub.id,
+          label: sub.label,
+          route: sub.route,
+          end: true,
+          icon: sub.icon as MenuIconKey,
+          allowedRoles: module.allowedRoles as HMSRole[],
+        })),
+      },
+    ],
+  }))
+}
+
+const DIAGNOSTIC_MENU_GROUPS = buildDiagnosticMenuGroups()
 
 export type MenuIconKey =
   | 'LayoutDashboard'
@@ -58,6 +90,9 @@ export type HMSRole =
   | 'DOCTOR'
   | 'NURSE'
   | 'LAB_TECH'
+  | 'LAB_TECHNICIAN'
+  | 'LAB_SUPERVISOR'
+  | 'PHLEBOTOMIST'
   | 'PHARMACIST'
   | 'PHARMACY_MANAGER'
   | 'STORE_INCHARGE'
@@ -65,6 +100,10 @@ export type HMSRole =
   | 'BILLING'
   | 'IT_ADMIN'
   | 'HELP_DESK'
+  | 'QUALITY_MANAGER'
+  | 'RADIOLOGY_TECH'
+  | 'BLOOD_BANK_TECH'
+  | 'IPD_MANAGER'
 
 export interface SidebarMenuItem {
   id: string
@@ -139,125 +178,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       { id: 'dialysis', label: 'Dialysis Unit', route: '/dialysis', end: true, icon: 'Droplets', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE'] },
     ],
   },
-  {
-    id: 'diagnostics-pharmacy',
-    label: 'Diagnostics & Pharmacy',
-    allowedRoles: [
-      'ADMIN',
-      'SUPER_ADMIN',
-      'HR',
-      'MEDICAL_SUPERINTENDENT',
-      'RECEPTIONIST',
-      'DOCTOR',
-      'NURSE',
-      'LAB_TECH',
-      'PHARMACIST',
-      'PHARMACY_MANAGER',
-      'STORE_INCHARGE',
-      'IPD_PHARMACIST',
-      'BILLING',
-      'IT_ADMIN',
-      'HELP_DESK',
-    ],
-    items: [
-      {
-        id: 'pathology',
-        label: 'Pathology / Laboratory',
-        route: '/lab',
-        end: true,
-        icon: 'FlaskConical',
-        allowedRoles: [
-          'ADMIN',
-          'SUPER_ADMIN',
-          'HR',
-          'MEDICAL_SUPERINTENDENT',
-          'RECEPTIONIST',
-          'DOCTOR',
-          'NURSE',
-          'LAB_TECH',
-          'PHARMACIST',
-          'PHARMACY_MANAGER',
-          'STORE_INCHARGE',
-          'IPD_PHARMACIST',
-          'BILLING',
-          'IT_ADMIN',
-          'HELP_DESK',
-        ],
-      },
-      {
-        id: 'radiology',
-        label: 'Radiology / Imaging',
-        route: '/radiology',
-        end: true,
-        icon: 'ScanLine',
-        allowedRoles: [
-          'ADMIN',
-          'SUPER_ADMIN',
-          'HR',
-          'MEDICAL_SUPERINTENDENT',
-          'RECEPTIONIST',
-          'DOCTOR',
-          'NURSE',
-          'LAB_TECH',
-          'PHARMACIST',
-          'PHARMACY_MANAGER',
-          'STORE_INCHARGE',
-          'IPD_PHARMACIST',
-          'BILLING',
-          'IT_ADMIN',
-          'HELP_DESK',
-        ],
-      },
-      {
-        id: 'pharmacy',
-        label: 'Pharmacy / Medical Store',
-        route: '/pharmacy',
-        end: true,
-        icon: 'Pill',
-        allowedRoles: [
-          'ADMIN',
-          'SUPER_ADMIN',
-          'HR',
-          'MEDICAL_SUPERINTENDENT',
-          'RECEPTIONIST',
-          'DOCTOR',
-          'NURSE',
-          'LAB_TECH',
-          'PHARMACIST',
-          'PHARMACY_MANAGER',
-          'STORE_INCHARGE',
-          'IPD_PHARMACIST',
-          'BILLING',
-          'IT_ADMIN',
-          'HELP_DESK',
-        ],
-      },
-      {
-        id: 'blood-bank',
-        label: 'Blood Bank',
-        route: '/blood-bank',
-        end: true,
-        icon: 'Droplets',
-        allowedRoles: [
-          'ADMIN',
-          'SUPER_ADMIN',
-          'HR',
-          'MEDICAL_SUPERINTENDENT',
-          'RECEPTIONIST',
-          'DOCTOR',
-          'NURSE',
-          'LAB_TECH',
-          'PHARMACIST',
-          'PHARMACY_MANAGER',
-          'STORE_INCHARGE',
-          'IPD_PHARMACIST',
-          'BILLING',
-          'IT_ADMIN',
-          'HELP_DESK',
-        ],
-      },
-    ],
-  },
+  ...DIAGNOSTIC_MENU_GROUPS,
   {
     id: 'billing-financials',
     label: 'Billing, Insurance & Financials',

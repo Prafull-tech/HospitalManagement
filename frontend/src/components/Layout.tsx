@@ -83,7 +83,7 @@ export function Layout() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="btn btn-outline-light btn-sm ms-2"
+                className={styles.logoutBtn}
               >
                 Logout
               </button>

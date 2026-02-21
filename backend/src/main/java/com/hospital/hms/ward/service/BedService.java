@@ -127,6 +127,15 @@ public class BedService {
         }
     }
 
+    /** Set bed to CLEANING (housekeeping task assigned). */
+    public void setBedStatusCleaning(Long bedId) {
+        Bed bed = bedRepository.findById(bedId).orElse(null);
+        if (bed != null) {
+            bed.setBedStatus(BedStatus.CLEANING);
+            bedRepository.save(bed);
+        }
+    }
+
     private BedResponseDto toDto(Bed b) {
         BedResponseDto dto = new BedResponseDto();
         dto.setId(b.getId());

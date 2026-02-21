@@ -1,10 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ipdApi } from '../api/ipd'
 import { nursingApi } from '../api/nursing'
+import { pharmacyApi } from '../api/pharmacy'
 import type { MedicationAdministrationRequest, MedicationAdministrationResponse } from '../types/nursing'
 import type { IPDAdmissionResponse } from '../types/ipd'
 import type { NursingStaffResponse } from '../types/nursing'
+import type { MedicineResponse } from '../types/pharmacy'
 import styles from './NursingMARPage.module.css'
+
+/** Map medicine form to typical administration route. */
+function formToRoute(form?: string): string {
+  if (!form) return ''
+  switch (form.toUpperCase()) {
+    case 'TABLET':
+    case 'CAPSULE':
+    case 'SYRUP':
+      return 'Oral'
+    case 'INJECTION':
+      return 'Injection'
+    case 'IV':
+      return 'IV'
+    case 'OINTMENT':
+      return 'Topical'
+    default:
+      return ''
+  }
+}
 
 export function NursingMARPage() {
   const [admissions, setAdmissions] = useState<IPDAdmissionResponse[]>([])
@@ -24,6 +45,14 @@ export function NursingMARPage() {
   const [loadingList, setLoadingList] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // Medicine search (autocomplete) - load all once, filter client-side
+  const [allMedicines, setAllMedicines] = useState<MedicineResponse[]>([])
+  const [medicineResults, setMedicineResults] = useState<MedicineResponse[]>([])
+  const [medicineSearching, setMedicineSearching] = useState(false)
+  const [showMedicineDropdown, setShowMedicineDropdown] = useState(false)
+  const medicineDropdownRef = useRef<HTMLDivElement>(null)
+  const skipSearchRef = useRef(false)
 
   useEffect(() => {
     ipdApi
@@ -58,6 +87,65 @@ export function NursingMARPage() {
       ipdAdmissionId: admissionId ? Number(admissionId) : 0,
     }))
   }, [admissionId])
+
+  // Load all medicines when admission is selected
+  useEffect(() => {
+    if (!admissionId) return
+    setMedicineSearching(true)
+    pharmacyApi
+      .listMedicines()
+      .then((data) => {
+        const list = (data ?? []).filter((m) => m.active !== false)
+        setAllMedicines(list)
+      })
+      .catch(() => setAllMedicines([]))
+      .finally(() => setMedicineSearching(false))
+  }, [admissionId])
+
+  // Filter medicines client-side as user types
+  useEffect(() => {
+    if (skipSearchRef.current) {
+      skipSearchRef.current = false
+      return
+    }
+    const q = form.medicationName.trim().toLowerCase()
+    if (q.length < 1) {
+      setMedicineResults(allMedicines.slice(0, 100))
+    } else {
+      const filtered = allMedicines.filter(
+        (m) =>
+          (m.medicineName?.toLowerCase().includes(q) ?? false) ||
+          (m.medicineCode?.toLowerCase().includes(q) ?? false)
+      )
+      setMedicineResults(filtered)
+    }
+  }, [admissionId, form.medicationName, allMedicines])
+
+  // Close medicine dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (medicineDropdownRef.current && !medicineDropdownRef.current.contains(e.target as Node)) {
+        setShowMedicineDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleSelectMedicine = (m: MedicineResponse) => {
+    skipSearchRef.current = true
+    const displayName = m.strength ? `${m.medicineName} (${m.strength})` : m.medicineName
+    setForm((prev) => ({
+      ...prev,
+      medicationName: displayName,
+      dosage: m.strength ?? prev.dosage ?? '',
+      route: formToRoute(m.form) || (prev.route ?? ''),
+    }))
+    setShowMedicineDropdown(false)
+    setMedicineResults([])
+  }
+
+  const handleMedicineFocus = () => setShowMedicineDropdown(true)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -116,9 +204,48 @@ export function NursingMARPage() {
         </div>
         {admissionId && (
           <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.row}>
+            <div className={styles.row} ref={medicineDropdownRef}>
               <label><span>Medication name <span className={styles.required}>*</span></span></label>
-              <input name="medicationName" value={form.medicationName} onChange={handleChange} placeholder="e.g. Paracetamol" className={styles.input} />
+              <div className={styles.medicineSearchWrap}>
+                <input
+                  name="medicationName"
+                  value={form.medicationName}
+                  onChange={handleChange}
+                  onFocus={handleMedicineFocus}
+                  placeholder="Search medicine (e.g. Paracetamol)"
+                  className={styles.input}
+                  autoComplete="off"
+                />
+                {medicineSearching && <span className={styles.searchHint}>Searching…</span>}
+                {showMedicineDropdown && (
+                  <ul className={styles.medicineDropdown}>
+                    {medicineSearching ? (
+                      <li className={styles.medicineDropdownItem} style={{ color: 'var(--hms-text-muted)', cursor: 'default' }}>
+                        Loading medicines…
+                      </li>
+                    ) : medicineResults.length > 0 ? (
+                      medicineResults.map((m) => (
+                        <li
+                          key={m.id}
+                          className={styles.medicineDropdownItem}
+                          onClick={() => handleSelectMedicine(m)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSelectMedicine(m)}
+                          role="option"
+                          tabIndex={0}
+                        >
+                          <span className={styles.medicineName}>{m.medicineName}</span>
+                          {m.strength && <span className={styles.medicineMeta}> — {m.strength}</span>}
+                          {m.form && <span className={styles.medicineMeta}> • {m.form}</span>}
+                        </li>
+                      ))
+                    ) : (
+                      <li className={styles.medicineDropdownItem} style={{ color: 'var(--hms-text-muted)', cursor: 'default' }}>
+                        {form.medicationName.trim() ? 'No matching medicines.' : 'Type to search. Add medicines in Pharmacy if empty.'}
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
             <div className={styles.row}>
               <label>Dosage</label>

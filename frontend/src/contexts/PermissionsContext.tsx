@@ -88,8 +88,11 @@ export function PermissionsProvider({
       return
     }
     setState((s) => ({ ...s, loading: true, error: null }))
-    systemPermissionsApi
-      .getMyPermissions(roleCodes)
+    const timeoutMs = 8000
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), timeoutMs)
+    )
+    Promise.race([systemPermissionsApi.getMyPermissions(roleCodes), timeoutPromise])
       .then((data) => {
         setState((s) => ({ ...s, loading: false, error: null, ...buildState(data) }))
       })
@@ -100,6 +103,9 @@ export function PermissionsProvider({
           error: 'Failed to load permissions',
           ...buildState(null),
         }))
+      })
+      .finally(() => {
+        setState((s) => ({ ...s, loading: false }))
       })
   }, [roleCodes.join(',')])
 

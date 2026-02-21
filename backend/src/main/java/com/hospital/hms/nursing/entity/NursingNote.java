@@ -53,7 +53,7 @@ public class NursingNote extends BaseIdEntity {
     private String noteType;
 
     @NotBlank
-    @Column(name = "content", nullable = false, columnDefinition = "CLOB")
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @NotNull

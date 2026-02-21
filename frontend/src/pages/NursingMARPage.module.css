@@ -120,3 +120,58 @@
   color: var(--hms-text-muted);
   background: var(--hms-bg-elevated);
 }
+
+/* Medicine search autocomplete */
+.medicineSearchWrap {
+  position: relative;
+  max-width: 360px;
+}
+
+.searchHint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--hms-text-muted);
+}
+
+.medicineDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius);
+  box-shadow: var(--hms-shadow);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.medicineDropdownItem {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--hms-border);
+  font-size: 0.9rem;
+  color: var(--hms-text);
+}
+
+.medicineDropdownItem:last-child {
+  border-bottom: none;
+}
+
+.medicineDropdownItem:hover {
+  background: var(--hms-bg-elevated);
+}
+
+.medicineName {
+  font-weight: 500;
+}
+
+.medicineMeta {
+  color: var(--hms-text-muted);
+  font-size: 0.85rem;
+}

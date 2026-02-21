@@ -205,7 +205,13 @@ export function ViewAdmission() {
           </p>
         </div>
         <div className={styles.actions}>
-          <button type="button" onClick={handlePrint} className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}>
+          <Link to={`/billing/account/${id}`} className={styles.actionBtn}>
+            Billing
+          </Link>
+          <Link to={`/ipd/discharge/${id}`} className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}>
+            Discharge
+          </Link>
+          <button type="button" onClick={handlePrint} className={styles.actionBtn}>
             Print Admission
           </button>
           <button type="button" onClick={handleDownloadPdf} className={styles.actionBtn}>

@@ -284,7 +284,7 @@ public class IPDAdmissionService {
 
         if (admission.getAdmissionStatus() == AdmissionStatus.DISCHARGED) {
             bedAllocationRepository.findActiveByAdmissionId(admission.getId()).ifPresent(alloc -> {
-                bedService.setBedStatusAvailable(alloc.getBed().getId());
+                bedService.setBedStatusCleaning(alloc.getBed().getId());
                 alloc.setReleasedAt(Instant.now());
                 bedAllocationRepository.save(alloc);
             });

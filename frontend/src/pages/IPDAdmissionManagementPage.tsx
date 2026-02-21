@@ -136,9 +136,9 @@ export function IPDAdmissionManagementPage() {
     setAdmissionForm((prev) => {
       const next = { ...prev, [name]: value }
       if (name === 'wardType') next.bedId = 0
-      if (name === 'primaryDoctorId' || name === 'bedId' || name === 'referenceDoctorId') {
-        next[name as keyof typeof next] = value === '' ? (name === 'referenceDoctorId' ? undefined : 0) : Number(value)
-      }
+      if (name === 'primaryDoctorId') next.primaryDoctorId = value === '' ? 0 : Number(value)
+      else if (name === 'bedId') next.bedId = value === '' ? 0 : Number(value)
+      else if (name === 'referenceDoctorId') next.referenceDoctorId = value === '' ? undefined : Number(value)
       if (name === 'depositAmount') {
         const n = value === '' ? undefined : Number(value)
         next.depositAmount = n != null && !Number.isNaN(n) ? n : undefined
