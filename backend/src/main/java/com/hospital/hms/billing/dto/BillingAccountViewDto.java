@@ -28,6 +28,11 @@ public class BillingAccountViewDto {
     private Map<com.hospital.hms.billing.entity.BillingServiceType, BigDecimal> totalByServiceType;
     private List<BillingItemResponseDto> items;
 
+    private Boolean corporate;
+    private Boolean corporateApproved;
+    private Boolean emiActive;
+    private Boolean hasGstSplit;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getPatientId() { return patientId; }
@@ -58,4 +63,12 @@ public class BillingAccountViewDto {
     public void setTotalByServiceType(Map<com.hospital.hms.billing.entity.BillingServiceType, BigDecimal> totalByServiceType) { this.totalByServiceType = totalByServiceType; }
     public List<BillingItemResponseDto> getItems() { return items; }
     public void setItems(List<BillingItemResponseDto> items) { this.items = items; }
+    public Boolean getCorporate() { return corporate; }
+    public void setCorporate(Boolean corporate) { this.corporate = corporate; }
+    public Boolean getCorporateApproved() { return corporateApproved; }
+    public void setCorporateApproved(Boolean corporateApproved) { this.corporateApproved = corporateApproved; }
+    public Boolean getEmiActive() { return emiActive; }
+    public void setEmiActive(Boolean emiActive) { this.emiActive = emiActive; }
+    public Boolean getHasGstSplit() { return hasGstSplit; }
+    public void setHasGstSplit(Boolean hasGstSplit) { this.hasGstSplit = hasGstSplit; }
 }

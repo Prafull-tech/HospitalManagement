@@ -82,6 +82,18 @@ public class BillingItem extends BaseIdEntity {
     @Column(name = "charge_date")
     private LocalDate chargeDate;
 
+    @Column(name = "gst_percent", precision = 5, scale = 2)
+    private BigDecimal gstPercent;
+
+    @Column(name = "cgst", precision = 15, scale = 2)
+    private BigDecimal cgst;
+
+    @Column(name = "sgst", precision = 15, scale = 2)
+    private BigDecimal sgst;
+
+    @Column(name = "igst", precision = 15, scale = 2)
+    private BigDecimal igst;
+
     public BillingItem() {
     }
 
@@ -109,4 +121,12 @@ public class BillingItem extends BaseIdEntity {
     public void setCorrelationId(String correlationId) { this.correlationId = correlationId; }
     public LocalDate getChargeDate() { return chargeDate; }
     public void setChargeDate(LocalDate chargeDate) { this.chargeDate = chargeDate; }
+    public BigDecimal getGstPercent() { return gstPercent; }
+    public void setGstPercent(BigDecimal gstPercent) { this.gstPercent = gstPercent; }
+    public BigDecimal getCgst() { return cgst; }
+    public void setCgst(BigDecimal cgst) { this.cgst = cgst; }
+    public BigDecimal getSgst() { return sgst; }
+    public void setSgst(BigDecimal sgst) { this.sgst = sgst; }
+    public BigDecimal getIgst() { return igst; }
+    public void setIgst(BigDecimal igst) { this.igst = igst; }
 }

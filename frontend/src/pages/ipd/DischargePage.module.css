@@ -224,3 +224,36 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+.billingStatus {
+  margin-bottom: 0.5rem;
+}
+
+.billingPaid {
+  color: var(--hms-success, #059669);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.billingPending {
+  color: var(--hms-warning, #d97706);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.billingAlert {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  color: var(--hms-warning, #d97706);
+}
+
+.billingAlert a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.billingAlert a:hover {
+  text-decoration: underline;
+}

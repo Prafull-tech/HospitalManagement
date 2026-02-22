@@ -57,7 +57,17 @@ public class BillingEngine {
             throw new IllegalArgumentException("Either ipdAdmissionId or opdVisitId must be provided");
         }
 
-        BigDecimal totalPrice = request.getUnitPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
+        BigDecimal baseAmount = request.getUnitPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
+        BigDecimal totalPrice = baseAmount;
+        BigDecimal gstPercent = request.getGstPercent();
+        BigDecimal cgst = BigDecimal.ZERO, sgst = BigDecimal.ZERO, igst = BigDecimal.ZERO;
+        if (gstPercent != null && gstPercent.compareTo(BigDecimal.ZERO) > 0
+                && request.getServiceType() == BillingServiceType.PHARMACY) {
+            BigDecimal half = gstPercent.divide(BigDecimal.valueOf(2), 2, java.math.RoundingMode.HALF_UP);
+            cgst = baseAmount.multiply(half).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            sgst = cgst;
+            totalPrice = baseAmount.add(cgst).add(sgst);
+        }
         String user = SecurityContextUserResolver.resolveUserId();
         String correlationId = java.util.Optional.ofNullable(org.slf4j.MDC.get(MdcKeys.CORRELATION_ID))
                 .orElse("BILL-" + UUID.randomUUID());
@@ -71,6 +81,10 @@ public class BillingEngine {
         item.setQuantity(request.getQuantity());
         item.setUnitPrice(request.getUnitPrice());
         item.setTotalPrice(totalPrice);
+        item.setGstPercent(gstPercent);
+        item.setCgst(cgst);
+        item.setSgst(sgst);
+        item.setIgst(igst);
         item.setDepartment(request.getDepartment());
         item.setCreatedBy(user);
         item.setStatus(BillingItemStatus.POSTED);

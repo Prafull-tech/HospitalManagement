@@ -38,6 +38,9 @@ public class AddBillingItemRequestDto {
 
     private LocalDate chargeDate;
 
+    /** GST % for pharmacy items. CGST+SGST split (9%+9% = 18%). */
+    private java.math.BigDecimal gstPercent;
+
     public Long getIpdAdmissionId() { return ipdAdmissionId; }
     public void setIpdAdmissionId(Long ipdAdmissionId) { this.ipdAdmissionId = ipdAdmissionId; }
     public Long getOpdVisitId() { return opdVisitId; }
@@ -56,4 +59,6 @@ public class AddBillingItemRequestDto {
     public void setDepartment(String department) { this.department = department; }
     public LocalDate getChargeDate() { return chargeDate; }
     public void setChargeDate(LocalDate chargeDate) { this.chargeDate = chargeDate; }
+    public java.math.BigDecimal getGstPercent() { return gstPercent; }
+    public void setGstPercent(java.math.BigDecimal gstPercent) { this.gstPercent = gstPercent; }
 }

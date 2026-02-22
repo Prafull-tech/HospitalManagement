@@ -128,6 +128,15 @@ export const MODULE_MENU_CONFIG: ModuleMenuConfig[] = [
  */
 export const ROUTE_PERMISSIONS: Record<string, HMSRole[]> = {
   '/reception': ['ADMIN', 'RECEPTIONIST', 'HELP_DESK', 'DOCTOR', 'NURSE'],
+  '/billing': ['ADMIN', 'BILLING'],
+  '/billing/ipd': ['ADMIN', 'BILLING'],
+  '/billing/corporate': ['ADMIN', 'BILLING'],
+  '/billing/emi': ['ADMIN', 'BILLING'],
+  '/billing/payment/online': ['ADMIN', 'BILLING'],
+  '/billing/opd/group': ['ADMIN', 'BILLING'],
+  '/billing/tpa': ['ADMIN', 'BILLING'],
+  '/billing/payments': ['ADMIN', 'BILLING'],
+  '/billing/refunds': ['ADMIN', 'BILLING'],
   '/lab': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
   '/lab/reports': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
   '/pharmacy': ['PHARMACY_MANAGER', 'STORE_INCHARGE', 'IPD_PHARMACIST', 'PHARMACIST', 'ADMIN'],

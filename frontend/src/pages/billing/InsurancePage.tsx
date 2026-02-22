@@ -9,7 +9,8 @@ export function InsurancePage() {
         <p className={styles.subtitle}>Insurance claims, TPA approvals, and pre-authorization</p>
       </header>
       <div className={styles.placeholder}>
-        <p>Insurance module coming soon. TPA approval status is tracked on IPD admissions.</p>
+        <p>Insurance / TPA pre-authorization. Use POST /api/billing/tpa/preauth for pre-auth requests.</p>
+        <p>TPA approval status is tracked on IPD admissions and billing accounts.</p>
         <Link to="/billing" className={styles.backLink}>← Back to Billing</Link>
       </div>
     </div>

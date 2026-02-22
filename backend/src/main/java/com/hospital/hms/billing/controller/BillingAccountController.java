@@ -3,6 +3,7 @@ package com.hospital.hms.billing.controller;
 import com.hospital.hms.billing.dto.AddBillingItemRequestDto;
 import com.hospital.hms.billing.dto.BillingAccountViewDto;
 import com.hospital.hms.billing.dto.BillingItemResponseDto;
+import com.hospital.hms.billing.dto.PaymentRequestDto;
 import com.hospital.hms.billing.entity.BillingItem;
 import com.hospital.hms.billing.service.BillingAccountService;
 import com.hospital.hms.billing.service.BillingEngine;
@@ -51,6 +52,26 @@ public class BillingAccountController {
         return ResponseEntity.ok(billingAccountService.getAccountViewByIpdAdmissionId(ipdAdmissionId));
     }
 
+    /** Alias for GET /api/billing/account/{ipdId} — IPD billing view. */
+    @GetMapping("/ipd/{ipdAdmissionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<BillingAccountViewDto> getIpdBilling(@PathVariable Long ipdAdmissionId) {
+        return ResponseEntity.ok(billingAccountService.getAccountViewByIpdAdmissionId(ipdAdmissionId));
+    }
+
+    @GetMapping("/account/{ipdAdmissionId}/items")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<java.util.List<BillingItemResponseDto>> getAccountItems(@PathVariable Long ipdAdmissionId) {
+        return ResponseEntity.ok(billingAccountService.getItemsByIpdAdmissionId(ipdAdmissionId));
+    }
+
+    @PostMapping("/payment")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING')")
+    public ResponseEntity<BillingAccountViewDto> recordPayment(@Valid @RequestBody PaymentRequestDto request) {
+        BillingAccountViewDto updated = billingAccountService.recordPayment(request);
+        return ResponseEntity.ok(updated);
+    }
+
     @PostMapping("/finalize/{ipdAdmissionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'BILLING')")
     public ResponseEntity<DischargeStatusDto> finalizeBill(@PathVariable Long ipdAdmissionId,
@@ -76,6 +97,10 @@ public class BillingAccountController {
         dto.setCreatedBy(bi.getCreatedBy());
         dto.setStatus(bi.getStatus());
         dto.setCreatedAt(bi.getCreatedAt());
+        dto.setGstPercent(bi.getGstPercent());
+        dto.setCgst(bi.getCgst());
+        dto.setSgst(bi.getSgst());
+        dto.setIgst(bi.getIgst());
         return dto;
     }
 }

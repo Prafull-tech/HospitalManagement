@@ -20,6 +20,10 @@ public class BillingItemResponseDto {
     private String createdBy;
     private BillingItemStatus status;
     private Instant createdAt;
+    private BigDecimal gstPercent;
+    private BigDecimal cgst;
+    private BigDecimal sgst;
+    private BigDecimal igst;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -45,4 +49,12 @@ public class BillingItemResponseDto {
     public void setStatus(BillingItemStatus status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public BigDecimal getGstPercent() { return gstPercent; }
+    public void setGstPercent(BigDecimal gstPercent) { this.gstPercent = gstPercent; }
+    public BigDecimal getCgst() { return cgst; }
+    public void setCgst(BigDecimal cgst) { this.cgst = cgst; }
+    public BigDecimal getSgst() { return sgst; }
+    public void setSgst(BigDecimal sgst) { this.sgst = sgst; }
+    public BigDecimal getIgst() { return igst; }
+    public void setIgst(BigDecimal igst) { this.igst = igst; }
 }

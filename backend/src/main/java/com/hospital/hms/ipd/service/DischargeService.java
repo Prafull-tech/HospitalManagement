@@ -113,20 +113,23 @@ public class DischargeService {
         dto.setPendingPharmacyCount(pendingPharmacy.size());
         dto.setPendingLabCount(pendingLab.size());
 
-        BigDecimal total = admissionChargeService.getTotalForIpdAdmission(ipdAdmissionId);
+        // Use PatientBillingAccount as source of truth for billing totals (NABH compliant)
+        var account = billingAccountService.getAccountViewByIpdAdmissionId(ipdAdmissionId);
+        BigDecimal total = account.getTotalAmount();
+        BigDecimal pending = account.getPendingAmount();
+        boolean billingClear = billingAccountService.canDischarge(ipdAdmissionId);
         dto.setBillingTotal(total);
-        dto.setBillingPaid(discharge != null && Boolean.TRUE.equals(discharge.getBillingClearance()));
+        dto.setBillingPendingAmount(pending);
+        dto.setBillingPaid(billingClear);
 
         boolean insuranceApplicable = admission.getInsuranceTpa() != null && !admission.getInsuranceTpa().isBlank();
         if (!insuranceApplicable && discharge == null) {
             dto.setInsuranceClearance(true);
         }
-
-        boolean billingPaid = billingAccountService.isPaid(ipdAdmissionId);
         boolean allClear = dto.isDoctorClearance() && dto.isNursingClearance() && dto.isPharmacyClearance()
                 && dto.isLabClearance() && dto.isBillingClearance() && dto.isInsuranceClearance() && dto.isHousekeepingClearance();
         dto.setAllClearancesComplete(allClear);
-        dto.setCanFinalizeDischarge(allClear && billingPaid && ACTIVE_STATUSES.contains(admission.getAdmissionStatus()));
+        dto.setCanFinalizeDischarge(allClear && billingClear && ACTIVE_STATUSES.contains(admission.getAdmissionStatus()));
 
         return dto;
     }
@@ -219,6 +222,14 @@ public class DischargeService {
     @Transactional
     public DischargeStatusDto recordBillingClearance(Long ipdAdmissionId) {
         validateActiveAdmission(ipdAdmissionId);
+        if (!billingAccountService.canDischarge(ipdAdmissionId)) {
+            BigDecimal pending = billingAccountService.getPendingAmount(ipdAdmissionId);
+            String user = SecurityContextUserResolver.resolveUserId();
+            String correlationId = MDC.get(MdcKeys.CORRELATION_ID) != null ? MDC.get(MdcKeys.CORRELATION_ID) : "DIS-" + UUID.randomUUID();
+            log.warn("Billing clearance denied for IPD {} - pending amount {} - userId {} correlationId {}",
+                    ipdAdmissionId, pending, user, correlationId);
+            throw new IllegalArgumentException("Pending bill ₹" + pending + " must be cleared before billing clearance. Collect payment first.");
+        }
         PatientDischarge d = getOrCreateDischarge(ipdAdmissionId);
         String user = SecurityContextUserResolver.resolveUserId();
         d.setBillingClearance(true);
@@ -281,8 +292,13 @@ public class DischargeService {
                 || !Boolean.TRUE.equals(d.getBillingClearance()) || !Boolean.TRUE.equals(d.getInsuranceClearance())) {
             throw new IllegalArgumentException("All clearances must be complete before final discharge.");
         }
-        if (!billingAccountService.isPaid(ipdAdmissionId)) {
-            throw new IllegalArgumentException("Billing must be PAID before discharge.");
+        if (!billingAccountService.canDischarge(ipdAdmissionId)) {
+            BigDecimal pending = billingAccountService.getPendingAmount(ipdAdmissionId);
+            String user = SecurityContextUserResolver.resolveUserId();
+            String correlationId = MDC.get(MdcKeys.CORRELATION_ID) != null ? MDC.get(MdcKeys.CORRELATION_ID) : "DIS-" + UUID.randomUUID();
+            log.warn("Discharge attempt blocked - IPD {} billing pending {} (paid/corporate/EMI required) - userId {} correlationId {}",
+                    ipdAdmissionId, pending, user, correlationId);
+            throw new IllegalArgumentException("Billing clearance required before discharge. Pending bill ₹" + pending + " must be cleared.");
         }
 
         String user = SecurityContextUserResolver.resolveUserId();

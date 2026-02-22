@@ -34,6 +34,7 @@ public class DischargeStatusDto {
     private int pendingPharmacyCount;
     private int pendingLabCount;
     private java.math.BigDecimal billingTotal;
+    private java.math.BigDecimal billingPendingAmount;
     private boolean billingPaid;
 
     private List<DischargePendingItemDto> pendingPharmacy;
@@ -94,6 +95,8 @@ public class DischargeStatusDto {
     public void setPendingLabCount(int pendingLabCount) { this.pendingLabCount = pendingLabCount; }
     public java.math.BigDecimal getBillingTotal() { return billingTotal; }
     public void setBillingTotal(java.math.BigDecimal billingTotal) { this.billingTotal = billingTotal; }
+    public java.math.BigDecimal getBillingPendingAmount() { return billingPendingAmount; }
+    public void setBillingPendingAmount(java.math.BigDecimal billingPendingAmount) { this.billingPendingAmount = billingPendingAmount; }
     public boolean isBillingPaid() { return billingPaid; }
     public void setBillingPaid(boolean billingPaid) { this.billingPaid = billingPaid; }
     public List<DischargePendingItemDto> getPendingPharmacy() { return pendingPharmacy; }

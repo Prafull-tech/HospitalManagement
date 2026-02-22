@@ -69,6 +69,15 @@ public class PatientBillingAccount extends BaseIdEntity {
     @Column(name = "tpa_approval_status", length = 30)
     private String tpaApprovalStatus;
 
+    @Column(name = "corporate")
+    private Boolean corporate = false;
+
+    @Column(name = "corporate_account_id")
+    private Long corporateAccountId;
+
+    @Column(name = "corporate_approved")
+    private Boolean corporateApproved = false;
+
     public PatientBillingAccount() {
     }
 
@@ -92,4 +101,10 @@ public class PatientBillingAccount extends BaseIdEntity {
     public void setInsuranceType(String insuranceType) { this.insuranceType = insuranceType; }
     public String getTpaApprovalStatus() { return tpaApprovalStatus; }
     public void setTpaApprovalStatus(String tpaApprovalStatus) { this.tpaApprovalStatus = tpaApprovalStatus; }
+    public Boolean getCorporate() { return corporate; }
+    public void setCorporate(Boolean corporate) { this.corporate = corporate; }
+    public Long getCorporateAccountId() { return corporateAccountId; }
+    public void setCorporateAccountId(Long corporateAccountId) { this.corporateAccountId = corporateAccountId; }
+    public Boolean getCorporateApproved() { return corporateApproved; }
+    public void setCorporateApproved(Boolean corporateApproved) { this.corporateApproved = corporateApproved; }
 }

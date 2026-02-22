@@ -31,6 +31,7 @@ export interface DischargeStatus {
   pendingPharmacyCount: number
   pendingLabCount: number
   billingTotal?: number
+  billingPendingAmount?: number
   billingPaid: boolean
 
   pendingPharmacy: DischargePendingItem[]

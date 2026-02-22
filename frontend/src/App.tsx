@@ -30,7 +30,12 @@ import { EditAdmissionPage } from './pages/ipd/EditAdmissionPage'
 import { DischargePage } from './pages/ipd/DischargePage'
 import { BillingAccountPage } from './pages/billing/BillingAccountPage'
 import { BillingDashboard } from './pages/billing/BillingDashboard'
+import { IpdBillingPage } from './pages/billing/IpdBillingPage'
+import { CorporateAccountsPage } from './pages/billing/CorporateAccountsPage'
+import { EMIPlansPage } from './pages/billing/EMIPlansPage'
 import { InsurancePage } from './pages/billing/InsurancePage'
+import { OnlinePaymentPage } from './pages/billing/OnlinePaymentPage'
+import { OpdGroupBillingPage } from './pages/billing/OpdGroupBillingPage'
 import { PaymentsPage } from './pages/billing/PaymentsPage'
 import { RefundsPage } from './pages/billing/RefundsPage'
 import { NursingDashboard } from './pages/NursingDashboard'
@@ -142,13 +147,21 @@ export default function App() {
           <Route path="admissions/:id" element={<ViewAdmission />} />
           <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
         </Route>
-        <Route path="billing" element={<Outlet />}>
+        <Route path="billing" element={<ProtectedRoute allowedRoles={['BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
           <Route index element={<BillingDashboard />} />
+          <Route path="ipd" element={<IpdBillingPage />} />
           <Route path="account/:id" element={<BillingAccountPage />} />
+          <Route path="corporate" element={<CorporateAccountsPage />} />
+          <Route path="emi" element={<EMIPlansPage />} />
+          <Route path="payment/online" element={<OnlinePaymentPage />} />
+          <Route path="opd/group" element={<OpdGroupBillingPage />} />
+          <Route path="tpa" element={<InsurancePage />} />
+          <Route path="payments" element={<PaymentsPage />} />
+          <Route path="refunds" element={<RefundsPage />} />
         </Route>
-        <Route path="insurance" element={<InsurancePage />} />
-        <Route path="payments" element={<PaymentsPage />} />
-        <Route path="refunds" element={<RefundsPage />} />
+        <Route path="insurance" element={<Navigate to="/billing/tpa" replace />} />
+        <Route path="payments" element={<Navigate to="/billing/payments" replace />} />
+        <Route path="refunds" element={<Navigate to="/billing/refunds" replace />} />
         <Route path="nursing" element={<Outlet />}>
           <Route index element={<NursingDashboard />} />
           <Route path="staff" element={<NursingStaffPage />} />

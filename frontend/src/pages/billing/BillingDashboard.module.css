@@ -35,6 +35,10 @@
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
 }
 
 .card:hover {

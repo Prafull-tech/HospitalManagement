@@ -236,9 +236,27 @@ export function DischargePage() {
       </section>
 
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Billing</h2>
-        <p><strong>Total</strong> {formatCurrency(status.billingTotal)}</p>
-        <p><strong>Status</strong> {status.billingPaid ? 'Paid' : 'Pending'}</p>
+        <h2 className={styles.cardTitle}>Billing Status</h2>
+        <div className={styles.billingStatus}>
+          {status.billingPaid ? (
+            <p className={styles.billingPaid}>✔ Paid</p>
+          ) : (
+            <p className={styles.billingPending}>
+              ❌ Pending {formatCurrency(status.billingPendingAmount ?? status.billingTotal ?? 0)}
+            </p>
+          )}
+        </div>
+        <p className={styles.muted}>
+          Total: {formatCurrency(status.billingTotal)} — Paid: {formatCurrency(
+            (status.billingTotal ?? 0) - (status.billingPendingAmount ?? 0)
+          )}
+        </p>
+        {!status.billingPaid && (
+          <p className={styles.billingAlert}>
+            Pending bill must be cleared before discharge.{' '}
+            <Link to={`/billing/account/${ipdId}`}>Go to Billing</Link>
+          </p>
+        )}
       </section>
 
       <section className={styles.card}>
@@ -361,7 +379,11 @@ export function DischargePage() {
             </button>
           </div>
           {!status.canFinalizeDischarge && (
-            <p className={styles.muted}>All clearances must be complete before final discharge.</p>
+            <p className={styles.muted}>
+              {!status.billingPaid
+                ? `Pending bill ₹${status.billingPendingAmount ?? 0} must be cleared before discharge.`
+                : 'All clearances must be complete before final discharge.'}
+            </p>
           )}
         </section>
       )}

@@ -134,6 +134,10 @@ public class Patient extends BaseIdEntity {
     @Column(name = "organisation_name", length = 255)
     private String organisationName;
 
+    /** Corporate account ID for tie-up billing. */
+    @Column(name = "corporate_id")
+    private Long corporateId;
+
     @Size(max = 1000)
     @Column(name = "remarks", length = 1000)
     private String remarks;
@@ -356,6 +360,9 @@ public class Patient extends BaseIdEntity {
     public void setOrganisationName(String organisationName) {
         this.organisationName = organisationName;
     }
+
+    public Long getCorporateId() { return corporateId; }
+    public void setCorporateId(Long corporateId) { this.corporateId = corporateId; }
 
     public String getRemarks() {
         return remarks;

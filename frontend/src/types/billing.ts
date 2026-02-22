@@ -14,6 +14,13 @@ export type BillingServiceType =
   | 'PROCEDURE'
   | 'OTHER'
 
+export interface PaymentRequest {
+  ipdId: number
+  amount: number
+  mode: 'Cash' | 'Card' | 'UPI'
+  referenceNo?: string
+}
+
 export interface BillingItemResponse {
   id: number
   billingAccountId: number
@@ -23,6 +30,10 @@ export interface BillingItemResponse {
   quantity: number
   unitPrice: number
   totalPrice: number
+  gstPercent?: number
+  cgst?: number
+  sgst?: number
+  igst?: number
   department?: string
   createdBy?: string
   status: string
@@ -45,4 +56,9 @@ export interface BillingAccountView {
   tpaApprovalStatus?: string
   totalByServiceType?: Record<BillingServiceType, number>
   items: BillingItemResponse[]
+
+  corporate?: boolean
+  corporateApproved?: boolean
+  emiActive?: boolean
+  hasGstSplit?: boolean
 }

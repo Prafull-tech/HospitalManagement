@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { getPageTitleFromPath } from '../config/pageTitle'
 import type { HMSRole } from '../config/sidebarMenu'
 import { Sidebar } from './Sidebar'
+import { DevTools } from './DevTools'
 import styles from './Layout.module.css'
 
 function SunIcon() {
@@ -66,6 +67,7 @@ export function Layout() {
           </button>
           <h1 className={styles.pageTitle}>{pageTitle}</h1>
           <div className={styles.topbarRight}>
+            <DevTools />
             <button
               type="button"
               onClick={toggleTheme}

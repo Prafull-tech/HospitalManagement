@@ -58,20 +58,34 @@ public class AdmissionChargeService {
 
         PatientBillingAccount account = accountRepository.findByIpdAdmissionId(ipdAdmissionId)
                 .orElseGet(() -> createAccountForIpd(admission));
+
+        BigDecimal baseAmount = request.getAmount();
+        BigDecimal totalPrice = baseAmount;
+        BigDecimal cgst = BigDecimal.ZERO, sgst = BigDecimal.ZERO;
+        if (request.getChargeType() == ChargeType.PHARMACY) {
+            BigDecimal gstPct = BigDecimal.valueOf(18);
+            cgst = baseAmount.multiply(BigDecimal.valueOf(9)).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            sgst = cgst;
+            totalPrice = baseAmount.add(cgst).add(sgst);
+        }
+
         BillingItem item = new BillingItem();
         item.setBillingAccount(account);
         item.setServiceType(toBillingServiceType(request.getChargeType()));
         item.setServiceName(request.getDescription() != null ? request.getDescription() : request.getChargeType().name());
         item.setReferenceId(request.getReferenceId());
         item.setQuantity(1);
-        item.setUnitPrice(request.getAmount());
-        item.setTotalPrice(request.getAmount());
+        item.setUnitPrice(baseAmount);
+        item.setTotalPrice(totalPrice);
+        item.setGstPercent(request.getChargeType() == ChargeType.PHARMACY ? BigDecimal.valueOf(18) : null);
+        item.setCgst(cgst);
+        item.setSgst(sgst);
         item.setDepartment(request.getChargeType().name());
         item.setCreatedBy(SecurityContextUserResolver.resolveUserId());
         item.setStatus(BillingItemStatus.POSTED);
         itemRepository.save(item);
-        account.setTotalAmount(account.getTotalAmount().add(request.getAmount()));
-        account.setPendingAmount(account.getPendingAmount().add(request.getAmount()));
+        account.setTotalAmount(account.getTotalAmount().add(totalPrice));
+        account.setPendingAmount(account.getPendingAmount().add(totalPrice));
         accountRepository.save(account);
 
         return charge;

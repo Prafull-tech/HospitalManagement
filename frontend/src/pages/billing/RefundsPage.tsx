@@ -9,7 +9,7 @@ export function RefundsPage() {
         <p className={styles.subtitle}>Refund requests and processing</p>
       </header>
       <div className={styles.placeholder}>
-        <p>Refunds module coming soon.</p>
+        <p>Refund requests. Use POST /api/billing/refund with paymentId, amount, and reason.</p>
         <Link to="/billing" className={styles.backLink}>← Back to Billing</Link>
       </div>
     </div>
