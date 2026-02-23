@@ -4,7 +4,6 @@ import com.hospital.hms.billing.dto.TpaPreauthRequestDto;
 import com.hospital.hms.billing.dto.TpaPreauthResponseDto;
 import com.hospital.hms.billing.service.TpaService;
 import jakarta.validation.Valid;
-import org.slf4.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
