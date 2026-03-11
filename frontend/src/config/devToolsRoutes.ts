@@ -51,7 +51,7 @@ export const DEV_TOOLS_ROUTES: DevRoute[] = [
   // Diagnostics
   { label: 'Pharmacy', path: '/pharmacy', group: 'Diagnostics' },
   { label: 'Lab', path: '/lab', group: 'Diagnostics' },
-  { label: 'Lab Reports', path: '/lab/reports', group: 'Diagnostics' },
+  { label: 'Lab Reports', path: '/lab/view-reports', group: 'Diagnostics' },
   { label: 'Radiology', path: '/radiology', group: 'Diagnostics' },
   { label: 'Blood Bank', path: '/bloodbank', group: 'Diagnostics' },
 

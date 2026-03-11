@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { labApi } from '../api/lab'
 import type {
+  LabDashboardResponse,
   LabDashboardSummary,
-  LabDashboardOverview,
-  LabTodaySummary,
   TestOrder,
   SampleCollectionRequest,
 } from '../types/lab'
@@ -205,26 +205,25 @@ function RejectSampleModal({
 }
 
 export function LabDashboard() {
+  const navigate = useNavigate()
+  const [dashboard, setDashboard] = useState<LabDashboardResponse | null>(null)
   const [summary, setSummary] = useState<LabDashboardSummary | null>(null)
-  const [overview, setOverview] = useState<LabDashboardOverview | null>(null)
-  const [todaySummary, setTodaySummary] = useState<LabTodaySummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'verification' | 'breaches' | 'emergency'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'processing' | 'verification' | 'breaches' | 'emergency'>('overview')
   const [collectOrder, setCollectOrder] = useState<TestOrder | null>(null)
   const [rejectOrder, setRejectOrder] = useState<TestOrder | null>(null)
+  const [processingOrderId, setProcessingOrderId] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [sum, ov, today] = await Promise.all([
+      const [dash, sum] = await Promise.all([
+        labApi.getDashboard(),
         labApi.getDashboardSummary(),
-        labApi.getDashboardOverview(),
-        labApi.getTodaySummary(),
       ])
+      setDashboard(dash)
       setSummary(sum)
-      setOverview(ov)
-      setTodaySummary(today)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to load lab dashboard.'
       setError(msg)
@@ -252,6 +251,19 @@ export function LabDashboard() {
     load()
   }, [load])
 
+  const handleStartProcessing = useCallback(async (orderId: number) => {
+    setProcessingOrderId(orderId)
+    try {
+      await labApi.startProcessing(orderId)
+      navigate(`/lab/results?orderId=${orderId}`)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to start processing.'
+      alert(msg)
+    } finally {
+      setProcessingOrderId(null)
+    }
+  }, [navigate])
+
   if (loading && !summary) {
     return <LabDashboardSkeleton />
   }
@@ -269,7 +281,7 @@ export function LabDashboard() {
     )
   }
 
-  if (!summary) {
+  if (!dashboard) {
     return null
   }
 
@@ -278,38 +290,60 @@ export function LabDashboard() {
       <h2 className="mb-4">Laboratory Dashboard</h2>
 
       {/* Metric cards */}
-      <div className="row mb-4">
-        <div className="col-md-3">
+      <div className="row mb-4 g-2">
+        <div className="col-6 col-md-4 col-lg">
           <div className="card text-white bg-primary">
             <div className="card-body">
               <h5 className="card-title">Pending Collection</h5>
-              <h2>{summary.pendingCollectionCount}</h2>
+              <h2>{dashboard.pendingCollection}</h2>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-6 col-md-4 col-lg">
+          <div className="card text-white bg-secondary">
+            <div className="card-body">
+              <h5 className="card-title">Pending Processing</h5>
+              <h2>{dashboard.pendingProcessing}</h2>
+            </div>
+          </div>
+        </div>
+        <div className="col-6 col-md-4 col-lg">
           <div className="card text-white bg-warning">
             <div className="card-body">
               <h5 className="card-title">Pending Verification</h5>
-              <h2>{summary.pendingVerificationCount}</h2>
+              <h2>{dashboard.pendingVerification}</h2>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-6 col-md-4 col-lg">
           <div className="card text-white bg-danger">
             <div className="card-body">
               <h5 className="card-title">TAT Breaches</h5>
-              <h2>{summary.tatBreachCount}</h2>
+              <h2>{dashboard.tatBreaches}</h2>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-6 col-md-4 col-lg">
           <div className="card text-white bg-info">
             <div className="card-body">
               <h5 className="card-title">Emergency Samples</h5>
-              <h2>{summary.emergencySamplesCount}</h2>
+              <h2>{dashboard.emergencySamples}</h2>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Today's activity */}
+      <div className="card bg-light mb-4">
+        <div className="card-body">
+          <h5 className="card-title">Today&apos;s activity</h5>
+          <ul className="list-unstyled mb-0">
+            <li>Total tests ordered: <strong>{dashboard.todayOrdered}</strong></li>
+            <li>Tests collected: <strong>{dashboard.todayCollected}</strong></li>
+            <li>Tests completed: <strong>{dashboard.todayCompleted}</strong></li>
+            <li>Tests verified: <strong>{dashboard.todayVerified}</strong></li>
+            <li>TAT compliance: <strong>{(dashboard.tatCompliancePercent ?? 0).toFixed(1)}%</strong></li>
+          </ul>
         </div>
       </div>
 
@@ -321,22 +355,27 @@ export function LabDashboard() {
         </li>
         <li className="nav-item">
           <button className={`nav-link ${activeTab === 'pending' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('pending')}>
-            Pending Collection ({summary.pendingCollectionCount})
+            Pending Collection ({dashboard.pendingCollection})
+          </button>
+        </li>
+        <li className="nav-item">
+          <button className={`nav-link ${activeTab === 'processing' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('processing')}>
+            Pending Processing ({dashboard.pendingProcessing})
           </button>
         </li>
         <li className="nav-item">
           <button className={`nav-link ${activeTab === 'verification' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('verification')}>
-            Pending Verification ({summary.pendingVerificationCount})
+            Pending Verification ({dashboard.pendingVerification})
           </button>
         </li>
         <li className="nav-item">
           <button className={`nav-link ${activeTab === 'breaches' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('breaches')}>
-            TAT Breaches ({summary.tatBreachCount})
+            TAT Breaches ({dashboard.tatBreaches})
           </button>
         </li>
         <li className="nav-item">
           <button className={`nav-link ${activeTab === 'emergency' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('emergency')}>
-            Emergency ({summary.emergencySamplesCount})
+            Emergency ({dashboard.emergencySamples})
           </button>
         </li>
       </ul>
@@ -344,25 +383,57 @@ export function LabDashboard() {
       <div className="tab-content">
         {activeTab === 'overview' && (
           <div>
-            <h4 className="mb-3">Today&apos;s activity</h4>
-            {overview && (
-              <ul className="list-unstyled mb-4">
-                <li>Total tests ordered today: <strong>{overview.totalOrderedToday}</strong></li>
-                <li>Tests collected today: <strong>{overview.testsCollectedToday}</strong></li>
-                <li>Tests completed today: <strong>{overview.testsCompletedToday}</strong></li>
-                <li>Tests verified today: <strong>{overview.testsVerifiedToday}</strong></li>
-                <li>TAT compliance: <strong>{overview.tatCompliancePercent.toFixed(1)}%</strong></li>
-              </ul>
-            )}
-            {todaySummary && (
-              <div className="card bg-light">
-                <div className="card-body">
-                  <h5 className="card-title">Today&apos;s summary</h5>
-                  <p className="mb-0 small">Completed tests: <strong>{todaySummary.completedTestsToday}</strong> · Pending samples: <strong>{todaySummary.pendingSamplesToday}</strong> · TAT compliance: <strong>{todaySummary.tatCompliancePercent.toFixed(1)}%</strong> · Emergency handled: <strong>{todaySummary.emergencyTestsHandledToday}</strong></p>
-                </div>
+            <p className="text-muted small mb-0">Laboratory dashboard provides real-time visibility into test orders, sample collection, processing, and TAT compliance. NABH audit trail is recorded for collection, verification, and release.</p>
+          </div>
+        )}
+
+        {activeTab === 'processing' && (
+          <div>
+            <h4 className="mb-3">Pending processing</h4>
+            <p className="text-muted small mb-2">Samples collected, awaiting testing. Start processing to begin result entry.</p>
+            {(summary?.pendingProcessing?.length ?? 0) === 0 ? (
+              <div className="alert alert-light border">No samples pending processing.</div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>UHID / IPD No</th>
+                      <th>Patient</th>
+                      <th>Test</th>
+                      <th>Sample type</th>
+                      <th>Collected at</th>
+                      <th>Priority</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(summary?.pendingProcessing ?? []).map((order) => (
+                      <tr key={order.id}>
+                        <td>{order.orderNumber}</td>
+                        <td>{order.patientUhid} {order.ipdAdmissionNumber ? ` / ${order.ipdAdmissionNumber}` : ''}</td>
+                        <td>{order.patientName}</td>
+                        <td>{order.testName}</td>
+                        <td>{order.sampleType ?? '—'}</td>
+                        <td>{order.sampleCollectedAt ? new Date(order.sampleCollectedAt).toLocaleString() : '—'}</td>
+                        <td>{order.isPriority ? <span className="badge bg-danger">Emergency</span> : <span className="badge bg-secondary">Normal</span>}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={processingOrderId === order.id}
+                            onClick={() => handleStartProcessing(order.id)}
+                          >
+                            {processingOrderId === order.id ? 'Starting…' : 'Start processing'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-            <p className="text-muted small mt-3 mb-0">Laboratory dashboard provides real-time visibility into test orders, sample collection, processing, and TAT compliance. NABH audit trail is recorded for collection, verification, and release.</p>
           </div>
         )}
 
@@ -389,7 +460,7 @@ export function LabDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {summary.pendingCollection.map((order) => (
+                    {(summary?.pendingCollection ?? []).map((order) => (
                       <tr key={order.id}>
                         <td>{order.orderNumber}</td>
                         <td>{order.patientUhid} {order.ipdAdmissionNumber ? ` / ${order.ipdAdmissionNumber}` : ''}</td>
@@ -416,7 +487,7 @@ export function LabDashboard() {
           <div>
             <h4 className="mb-3">Pending verification</h4>
             <p className="text-muted small mb-2">Queue for lab supervisor. Technician cannot verify own report.</p>
-            {summary.pendingVerification.length === 0 ? (
+            {(!summary?.pendingVerification || summary.pendingVerification.length === 0) ? (
               <div className="alert alert-light border">No tests pending verification.</div>
             ) : (
               <table className="table table-striped">
@@ -430,7 +501,7 @@ export function LabDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.pendingVerification.map((order) => (
+                    {(summary?.pendingVerification ?? []).map((order) => (
                     <tr key={order.id}>
                       <td>{order.orderNumber}</td>
                       <td>{order.patientName}</td>
@@ -449,7 +520,7 @@ export function LabDashboard() {
           <div>
             <h4 className="mb-3">TAT breaches</h4>
             <p className="text-muted small mb-2">Quality &amp; NABH monitoring. Link to NABH Audit Dashboard.</p>
-            {summary.tatBreaches.length === 0 ? (
+            {(!summary?.tatBreaches || summary.tatBreaches.length === 0) ? (
               <div className="alert alert-light border">No TAT breaches. All within target.</div>
             ) : (
               <table className="table table-striped">
@@ -462,7 +533,7 @@ export function LabDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.tatBreaches.map((order) => (
+                    {(summary?.tatBreaches ?? []).map((order) => (
                     <tr key={order.id}>
                       <td>{order.orderNumber}</td>
                       <td>{order.patientName}</td>
@@ -480,7 +551,7 @@ export function LabDashboard() {
           <div>
             <h4 className="mb-3">Emergency samples</h4>
             <p className="text-muted small mb-2">ICU / Emergency first. Sorted by urgency; highlight in red/amber.</p>
-            {summary.emergencySamples.length === 0 ? (
+            {(!summary?.emergencySamples || summary.emergencySamples.length === 0) ? (
               <div className="alert alert-light border">No emergency samples in queue.</div>
             ) : (
               <table className="table table-striped">
@@ -494,7 +565,7 @@ export function LabDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.emergencySamples.map((order) => (
+                    {(summary?.emergencySamples ?? []).map((order) => (
                     <tr key={order.id} className={order.isPriority ? 'table-danger' : ''}>
                       <td>{order.orderNumber}</td>
                       <td>{order.patientName}</td>

@@ -112,6 +112,7 @@ public class TestMasterService {
         entity.setPanelTestCodes(request.getPanelTestCodes() != null ? request.getPanelTestCodes().trim() : null);
         entity.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
         entity.setNormalRange(request.getNormalRange() != null ? request.getNormalRange().trim() : null);
+        entity.setUnit(request.getUnit() != null ? request.getUnit().trim() : null);
         entity.setInstructions(request.getInstructions() != null ? request.getInstructions().trim() : null);
     }
 
@@ -130,6 +131,7 @@ public class TestMasterService {
         dto.setPanelTestCodes(t.getPanelTestCodes());
         dto.setDescription(t.getDescription());
         dto.setNormalRange(t.getNormalRange());
+        dto.setUnit(t.getUnit());
         dto.setInstructions(t.getInstructions());
         dto.setCreatedByUser(t.getCreatedByUser());
         dto.setCreatedAt(t.getCreatedAt());

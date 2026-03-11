@@ -42,7 +42,7 @@ public class AppUser extends BaseIdEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 40)
+    @Column(name = "role", nullable = false, length = 50)
     private UserRole role;
 
     @NotNull

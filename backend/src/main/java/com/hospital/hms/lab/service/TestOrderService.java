@@ -160,6 +160,44 @@ public class TestOrderService {
         return createdOrders;
     }
 
+    /**
+     * Create a single TestOrder entity for lab workflow (used by LabOrderService).
+     */
+    @Transactional
+    public TestOrder createTestOrderEntity(Patient patient, Doctor doctor, IPDAdmission ipdAdmission,
+                                           OPDVisit opdVisit, TestMaster testMaster, boolean isPriority) {
+        TestOrder order = new TestOrder();
+        order.setOrderNumber(orderNumberGenerator.generate());
+        order.setPatient(patient);
+        order.setTestMaster(testMaster);
+        order.setDoctor(doctor);
+        order.setIpdAdmission(ipdAdmission);
+        order.setOpdVisit(opdVisit);
+        order.setStatus(TestStatus.ORDERED);
+        order.setOrderedAt(LocalDateTime.now());
+        order.setIsPriority(isPriority);
+
+        order = testOrderRepository.save(order);
+
+        if (ipdAdmission != null && !order.getBillingChargePosted()) {
+            AdmissionChargeRequestDto chargeRequest = new AdmissionChargeRequestDto();
+            chargeRequest.setChargeType(ChargeType.LAB);
+            chargeRequest.setAmount(testMaster.getPrice());
+            chargeRequest.setDescription("Lab Test: " + testMaster.getTestName() + " (" + testMaster.getTestCode() + ")");
+            chargeRequest.setReferenceType("LAB_TEST_ORDER");
+            chargeRequest.setReferenceId(order.getId());
+            try {
+                var charge = admissionChargeService.addCharge(ipdAdmission.getId(), chargeRequest);
+                order.setBillingChargePosted(true);
+                order.setBillingChargeId(charge.getId());
+                testOrderRepository.save(order);
+            } catch (Exception e) {
+                // Billing can be posted later
+            }
+        }
+        return order;
+    }
+
     @Transactional(readOnly = true)
     public TestOrderResponseDto findById(Long id) {
         TestOrder order = testOrderRepository.findById(id)
@@ -204,7 +242,7 @@ public class TestOrderService {
 
     @Transactional(readOnly = true)
     public List<TestOrderResponseDto> findByStatus(TestStatus status) {
-        return testOrderRepository.findByStatusOrderByOrderedAtAsc(status).stream()
+        return testOrderRepository.findByStatusOrderByIsPriorityDescOrderedAtAsc(status).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }

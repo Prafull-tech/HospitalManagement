@@ -24,6 +24,7 @@ public class TestMasterResponseDto {
     private String panelTestCodes;
     private String description;
     private String normalRange;
+    private String unit;
     private String instructions;
     private String createdByUser;
     private java.time.Instant createdAt;
@@ -135,6 +136,14 @@ public class TestMasterResponseDto {
 
     public void setNormalRange(String normalRange) {
         this.normalRange = normalRange;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 
     public String getInstructions() {

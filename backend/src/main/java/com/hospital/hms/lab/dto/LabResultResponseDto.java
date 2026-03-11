@@ -9,6 +9,7 @@ public class LabResultResponseDto {
 
     private Long id;
     private Long testOrderId;
+    private Long orderItemId;
     private String parameterName;
     private String resultValue;
     private String unit;
@@ -37,6 +38,14 @@ public class LabResultResponseDto {
 
     public void setTestOrderId(Long testOrderId) {
         this.testOrderId = testOrderId;
+    }
+
+    public Long getOrderItemId() {
+        return orderItemId;
+    }
+
+    public void setOrderItemId(Long orderItemId) {
+        this.orderItemId = orderItemId;
     }
 
     public String getParameterName() {

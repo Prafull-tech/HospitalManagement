@@ -12,7 +12,9 @@ import java.util.List;
 @Repository
 public interface LabResultRepository extends JpaRepository<LabResult, Long> {
 
-    List<LabResult> findByTestOrderIdOrderByParameterNameAsc(Long testOrderId);
+    List<LabResult> findByTestOrder_IdOrderByParameterNameAsc(Long testOrderId);
 
     List<LabResult> findByTestOrderIdAndIsCriticalTrue(Long testOrderId);
+
+    List<LabResult> findByOrderItem_IdOrderByIdAsc(Long orderItemId);
 }

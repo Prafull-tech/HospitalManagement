@@ -54,6 +54,14 @@ import { SystemConfigFeaturesPage } from './pages/system-config/SystemConfigFeat
 import { PharmacyDashboard } from './pages/PharmacyDashboard'
 import { LabDashboard } from './pages/LabDashboard'
 import { LabReportsPage } from './pages/LabReportsPage'
+import { SampleCollectionPage } from './pages/lab/SampleCollectionPage'
+import { SampleProcessingPage } from './pages/lab/SampleProcessingPage'
+import { ResultEntryPage } from './pages/lab/ResultEntryPage'
+import { LabResultEntryPage } from './pages/lab/LabResultEntryPage'
+import { ResultVerificationPage } from './pages/lab/ResultVerificationPage'
+import { LabResultVerificationPage } from './pages/lab/LabResultVerificationPage'
+import { ReportViewerPage } from './pages/lab/ReportViewerPage'
+import { LabTestMasterPage } from './pages/lab/LabTestMasterPage'
 import { RadiologyDashboard } from './pages/RadiologyDashboard'
 import { BloodBankDashboard } from './pages/BloodBankDashboard'
 import { HousekeepingDashboard } from './pages/patient-services/HousekeepingDashboard'
@@ -110,7 +118,18 @@ export default function App() {
         <Route path="pharmacy" element={<RoleProtectedRoute><PharmacyDashboard /></RoleProtectedRoute>} />
         <Route path="lab" element={<RoleProtectedRoute><Outlet /></RoleProtectedRoute>}>
           <Route index element={<LabDashboard />} />
+          <Route path="collection" element={<SampleCollectionPage />} />
+          <Route path="processing" element={<SampleProcessingPage />} />
+          <Route path="sample-processing" element={<SampleProcessingPage />} />
+          <Route path="results" element={<ResultEntryPage />} />
+          <Route path="result-entry" element={<LabResultEntryPage />} />
+          <Route path="verification" element={<ResultVerificationPage />} />
+          <Route path="result-verification" element={<LabResultVerificationPage />} />
+          <Route path="report/:orderId" element={<ReportViewerPage />} />
           <Route path="reports" element={<LabReportsPage />} />
+          <Route path="view-reports" element={<LabReportsPage />} />
+          <Route path="test-master" element={<LabTestMasterPage />} />
+          <Route path="tests" element={<LabTestMasterPage />} />
         </Route>
         <Route path="radiology" element={<RoleProtectedRoute><Outlet /></RoleProtectedRoute>}>
           <Route index element={<RadiologyDashboard />} />

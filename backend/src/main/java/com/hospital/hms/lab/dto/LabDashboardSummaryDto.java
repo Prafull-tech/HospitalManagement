@@ -8,11 +8,13 @@ import java.util.List;
 public class LabDashboardSummaryDto {
 
     private Long pendingCollectionCount;
+    private Long pendingProcessingCount;
     private Long pendingVerificationCount;
     private Long completedTodayCount;
     private Long tatBreachCount;
     private Long emergencySamplesCount;
     private List<TestOrderResponseDto> pendingCollection;
+    private List<TestOrderResponseDto> pendingProcessing;
     private List<TestOrderResponseDto> pendingVerification;
     private List<TestOrderResponseDto> tatBreaches;
     private List<TestOrderResponseDto> emergencySamples;
@@ -35,6 +37,14 @@ public class LabDashboardSummaryDto {
 
     public void setPendingVerificationCount(Long pendingVerificationCount) {
         this.pendingVerificationCount = pendingVerificationCount;
+    }
+
+    public Long getPendingProcessingCount() {
+        return pendingProcessingCount;
+    }
+
+    public void setPendingProcessingCount(Long pendingProcessingCount) {
+        this.pendingProcessingCount = pendingProcessingCount;
     }
 
     public Long getCompletedTodayCount() {
@@ -67,6 +77,14 @@ public class LabDashboardSummaryDto {
 
     public void setPendingCollection(List<TestOrderResponseDto> pendingCollection) {
         this.pendingCollection = pendingCollection;
+    }
+
+    public List<TestOrderResponseDto> getPendingProcessing() {
+        return pendingProcessing;
+    }
+
+    public void setPendingProcessing(List<TestOrderResponseDto> pendingProcessing) {
+        this.pendingProcessing = pendingProcessing;
     }
 
     public List<TestOrderResponseDto> getPendingVerification() {

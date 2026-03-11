@@ -2,8 +2,10 @@ package com.hospital.hms.lab.service;
 
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.lab.dto.LabReportResponseDto;
+import com.hospital.hms.lab.entity.LabAuditEventType;
 import com.hospital.hms.lab.entity.LabReport;
 import com.hospital.hms.lab.entity.ReportStatus;
+import com.hospital.hms.lab.entity.TATStatus;
 import com.hospital.hms.lab.entity.TestOrder;
 import com.hospital.hms.lab.entity.TestStatus;
 import com.hospital.hms.common.logging.MdcKeys;
@@ -15,9 +17,15 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Year;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Service for report verification, supervisor authorization, correction logging, and release workflow.
@@ -29,12 +37,15 @@ public class ReportVerificationService {
 
     private final LabReportRepository labReportRepository;
     private final TestOrderRepository testOrderRepository;
+    private final LabAuditService labAuditService;
     private final AtomicLong reportSequence = new AtomicLong(0);
     private volatile int lastYear = Year.now().getValue();
 
-    public ReportVerificationService(LabReportRepository labReportRepository, TestOrderRepository testOrderRepository) {
+    public ReportVerificationService(LabReportRepository labReportRepository, TestOrderRepository testOrderRepository,
+                                    LabAuditService labAuditService) {
         this.labReportRepository = labReportRepository;
         this.testOrderRepository = testOrderRepository;
+        this.labAuditService = labAuditService;
     }
 
     /**
@@ -85,11 +96,25 @@ public class ReportVerificationService {
         }
 
         report.setStatus(ReportStatus.VERIFIED);
-        report.setVerifiedAt(LocalDateTime.now());
+        LocalDateTime verifiedAt = LocalDateTime.now();
+        report.setVerifiedAt(verifiedAt);
         report.setVerifiedBy(verifiedBy);
         report.setSupervisorSignature(supervisorSignature);
 
         report = labReportRepository.save(report);
+
+        // Update TestOrder: TAT = Result Verified Time - Sample Collection Time
+        TestOrder order = report.getTestOrder();
+        order.setStatus(TestStatus.VERIFIED);
+        order.setVerifiedAt(verifiedAt);
+        order.setVerifiedBy(verifiedBy);
+        order.setTatEndTime(verifiedAt.atZone(java.time.ZoneId.systemDefault()).toInstant());
+        evaluateTAT(order);
+        testOrderRepository.save(order);
+
+        labAuditService.log(LabAuditEventType.RESULT_VERIFIED, order.getId(), null, report.getId(), verifiedBy,
+                order.getOrderNumber());
+
         if (log.isInfoEnabled()) {
             MDC.put(MdcKeys.MODULE, "LAB");
             log.info("LAB_AUDIT report_verification reportId={} orderNumber={} verifiedBy={} correlationId={}",
@@ -133,11 +158,44 @@ public class ReportVerificationService {
         return toDto(report);
     }
 
+    /**
+     * Search reports by UHID, patient name, test name, and date range.
+     */
+    @Transactional(readOnly = true)
+    public List<LabReportResponseDto> searchReports(
+            String uhid, String patientName, String testName,
+            LocalDate fromDate, LocalDate toDate) {
+        LocalDateTime from = fromDate != null ? fromDate.atStartOfDay() : null;
+        LocalDateTime to = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
+        List<LabReport> reports = labReportRepository.searchReports(uhid, patientName, testName, from, to);
+        return reports.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public LabReportResponseDto findByTestOrderId(Long testOrderId) {
         LabReport report = labReportRepository.findByTestOrderId(testOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found for test order: " + testOrderId));
         return toDto(report);
+    }
+
+    /** TAT = Result Verified Time - Sample Collection Time. Mark BREACH if exceeded. */
+    private void evaluateTAT(TestOrder order) {
+        Instant start = order.getTatStartTime();
+        if (start == null && order.getSampleCollectedAt() != null) {
+            start = order.getSampleCollectedAt().atZone(java.time.ZoneId.systemDefault()).toInstant();
+        }
+        Instant end = order.getTatEndTime();
+        if (start == null || end == null || order.getTestMaster().getNormalTATMinutes() == null) return;
+        long actualMinutes = Duration.between(start, end).toMinutes();
+        int normalMinutes = order.getTestMaster().getNormalTATMinutes();
+        if (actualMinutes > normalMinutes) {
+            order.setTatStatus(TATStatus.BREACH);
+            if (order.getTatBreachReason() == null || order.getTatBreachReason().isEmpty()) {
+                order.setTatBreachReason("TAT exceeded by " + (actualMinutes - normalMinutes) + " minutes");
+            }
+        } else {
+            order.setTatStatus(TATStatus.WITHIN_TAT);
+        }
     }
 
     private String generateReportNumber() {
@@ -160,6 +218,9 @@ public class ReportVerificationService {
         dto.setReportNumber(r.getReportNumber());
         dto.setTestOrderId(r.getTestOrder().getId());
         dto.setOrderNumber(r.getTestOrder().getOrderNumber());
+        dto.setPatientName(r.getTestOrder().getPatient().getFullName());
+        dto.setPatientUhid(r.getTestOrder().getPatient().getUhid());
+        dto.setTestName(r.getTestOrder().getTestMaster().getTestName());
         dto.setStatus(r.getStatus());
         dto.setGeneratedAt(r.getGeneratedAt());
         dto.setGeneratedBy(r.getGeneratedBy());

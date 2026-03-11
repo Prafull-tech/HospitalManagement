@@ -2,6 +2,7 @@ package com.hospital.hms.lab.service;
 
 import com.hospital.hms.lab.dto.LabDashboardMetricsDto;
 import com.hospital.hms.lab.dto.LabDashboardOverviewDto;
+import com.hospital.hms.lab.dto.LabDashboardResponseDto;
 import com.hospital.hms.lab.dto.LabDashboardSummaryDto;
 import com.hospital.hms.lab.dto.LabTodaySummaryDto;
 import com.hospital.hms.lab.dto.TestOrderResponseDto;
@@ -35,14 +36,23 @@ public class LabDashboardService {
     public LabDashboardSummaryDto getDashboardSummary() {
         LabDashboardSummaryDto summary = new LabDashboardSummaryDto();
 
-        // Pending collection (ORDERED status)
+        // Pending collection (ORDERED status) - emergency first
         List<TestOrderResponseDto> pendingCollection = testOrderRepository
-                .findByStatusOrderByOrderedAtAsc(TestStatus.ORDERED).stream()
+                .findByStatusOrderByIsPriorityDescOrderedAtAsc(TestStatus.ORDERED).stream()
                 .map(testOrderService::toDto)
                 .limit(50) // Limit for performance
                 .collect(Collectors.toList());
         summary.setPendingCollection(pendingCollection);
         summary.setPendingCollectionCount((long) pendingCollection.size());
+
+        // Pending processing (COLLECTED status) - emergency first
+        List<TestOrderResponseDto> pendingProcessing = testOrderRepository
+                .findByStatusOrderByIsPriorityDescOrderedAtAsc(TestStatus.COLLECTED).stream()
+                .map(testOrderService::toDto)
+                .limit(50)
+                .collect(Collectors.toList());
+        summary.setPendingProcessing(pendingProcessing);
+        summary.setPendingProcessingCount((long) pendingProcessing.size());
 
         // Pending verification (COMPLETED status)
         List<TestOrderResponseDto> pendingVerification = testOrderRepository
@@ -79,6 +89,42 @@ public class LabDashboardService {
         summary.setCompletedTodayCount(completedToday != null ? completedToday : 0L);
 
         return summary;
+    }
+
+    /**
+     * Unified dashboard API: counts + today's activity.
+     */
+    @Transactional(readOnly = true)
+    public LabDashboardResponseDto getDashboard() {
+        LabDashboardResponseDto dto = new LabDashboardResponseDto();
+        dto.setPendingCollection(testOrderRepository.countByStatus(TestStatus.ORDERED));
+        dto.setPendingProcessing(testOrderRepository.countByStatus(TestStatus.COLLECTED));
+        dto.setPendingVerification(testOrderRepository.countPendingVerification(TestStatus.COMPLETED));
+        dto.setTatBreaches(testOrderRepository.countTatBreaches(
+                List.of(TestStatus.COLLECTED, TestStatus.IN_PROGRESS, TestStatus.COMPLETED, TestStatus.VERIFIED)));
+        dto.setEmergencySamples(testOrderRepository.countEmergencySamplesPendingCollection(TestStatus.ORDERED));
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+
+        Long ordered = testOrderRepository.countOrderedBetween(startOfDay, endOfDay);
+        Long collected = testOrderRepository.countCollectedBetween(startOfDay, endOfDay);
+        Long completed = testOrderRepository.countResultEnteredBetween(startOfDay, endOfDay);
+        Long verified = testOrderRepository.countVerifiedBetween(startOfDay, endOfDay);
+        Long releasedTotal = testOrderRepository.countReleasedBetween(TestStatus.RELEASED, startOfDay, endOfDay);
+        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetween(startOfDay, endOfDay, TATStatus.WITHIN_TAT);
+
+        dto.setTodayOrdered(ordered != null ? ordered : 0L);
+        dto.setTodayCollected(collected != null ? collected : 0L);
+        dto.setTodayCompleted(completed != null ? completed : 0L);
+        dto.setTodayVerified(verified != null ? verified : 0L);
+        if (releasedTotal != null && releasedTotal > 0 && withinTat != null) {
+            dto.setTatCompliancePercent(100.0 * withinTat / releasedTotal);
+        } else {
+            dto.setTatCompliancePercent(100.0);
+        }
+        return dto;
     }
 
     @Transactional(readOnly = true)

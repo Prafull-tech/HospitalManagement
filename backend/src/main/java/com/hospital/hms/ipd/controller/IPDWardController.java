@@ -2,7 +2,6 @@ package com.hospital.hms.ipd.controller;
 
 import com.hospital.hms.ipd.dto.BedAvailabilityResponseDto;
 import com.hospital.hms.ipd.dto.WardResponseDto;
-import com.hospital.hms.ipd.entity.BedAllocation;
 import com.hospital.hms.ipd.repository.BedAllocationRepository;
 import com.hospital.hms.ward.dto.BedResponseDto;
 import com.hospital.hms.ward.dto.BedStatusRequestDto;
@@ -66,17 +65,7 @@ public class IPDWardController {
         }
         List<BedAvailabilityResponseDto> ipdList = stream
                 .map(this::toIpdBedDto)
-                .peek(dto -> {
-                    if (BedStatus.OCCUPIED.equals(dto.getBedStatus())) {
-                        bedAllocationRepository.findActiveByBedIdWithAdmissionAndPatient(dto.getBedId()).ifPresent(ba -> {
-                            dto.setPatientId(ba.getAdmission().getPatient().getId());
-                            dto.setPatientName(ba.getAdmission().getPatient().getFullName());
-                            dto.setPatientUhid(ba.getAdmission().getPatient().getUhid());
-                            dto.setAdmissionNumber(ba.getAdmission().getAdmissionNumber());
-                            dto.setAdmissionId(ba.getAdmission().getId());
-                        });
-                    }
-                })
+                .peek(dto -> enrichWithPatientIfAllocated(dto))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ipdList);
     }
@@ -100,18 +89,8 @@ public class IPDWardController {
             stream = stream.filter(b -> b.getBedNumber() != null && b.getBedNumber().toLowerCase().contains(term));
         }
         List<BedAvailabilityResponseDto> ipdList = stream
-                .map(b -> toIpdBedDto(b))
-                .peek(dto -> {
-                    if (BedStatus.OCCUPIED.equals(dto.getBedStatus())) {
-                        bedAllocationRepository.findActiveByBedIdWithAdmissionAndPatient(dto.getBedId()).ifPresent(ba -> {
-                            dto.setPatientId(ba.getAdmission().getPatient().getId());
-                            dto.setPatientName(ba.getAdmission().getPatient().getFullName());
-                            dto.setPatientUhid(ba.getAdmission().getPatient().getUhid());
-                            dto.setAdmissionNumber(ba.getAdmission().getAdmissionNumber());
-                            dto.setAdmissionId(ba.getAdmission().getId());
-                        });
-                    }
-                })
+                .map(this::toIpdBedDto)
+                .peek(this::enrichWithPatientIfAllocated)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ipdList);
     }
@@ -121,15 +100,7 @@ public class IPDWardController {
                                                                        @Valid @RequestBody BedStatusRequestDto request) {
         BedResponseDto updated = bedService.updateStatus(bedId, request);
         BedAvailabilityResponseDto dto = toIpdBedDto(updated);
-        if (BedStatus.OCCUPIED.equals(dto.getBedStatus())) {
-            bedAllocationRepository.findActiveByBedIdWithAdmissionAndPatient(bedId).ifPresent(ba -> {
-                dto.setPatientId(ba.getAdmission().getPatient().getId());
-                dto.setPatientName(ba.getAdmission().getPatient().getFullName());
-                dto.setPatientUhid(ba.getAdmission().getPatient().getUhid());
-                dto.setAdmissionNumber(ba.getAdmission().getAdmissionNumber());
-                dto.setAdmissionId(ba.getAdmission().getId());
-            });
-        }
+        enrichWithPatientIfAllocated(dto);
         return ResponseEntity.ok(dto);
     }
 
@@ -160,6 +131,23 @@ public class IPDWardController {
         dto.setSelectableForAdmission(Boolean.TRUE.equals(b.getAvailable()));
         dto.setUpdatedAt(b.getUpdatedAt());
         return dto;
+    }
+
+    /**
+     * Enrich bed DTO with patient info when bed has an active allocation.
+     * Applies to OCCUPIED and RESERVED (admitted but not yet shifted).
+     */
+    private void enrichWithPatientIfAllocated(BedAvailabilityResponseDto dto) {
+        if (!BedStatus.OCCUPIED.equals(dto.getBedStatus()) && !BedStatus.RESERVED.equals(dto.getBedStatus())) {
+            return;
+        }
+        bedAllocationRepository.findActiveByBedIdWithAdmissionAndPatient(dto.getBedId()).ifPresent(ba -> {
+            dto.setPatientId(ba.getAdmission().getPatient().getId());
+            dto.setPatientName(ba.getAdmission().getPatient().getFullName());
+            dto.setPatientUhid(ba.getAdmission().getPatient().getUhid());
+            dto.setAdmissionNumber(ba.getAdmission().getAdmissionNumber());
+            dto.setAdmissionId(ba.getAdmission().getId());
+        });
     }
 
     /** Maps BedStatus to display label (VACANT for AVAILABLE). */

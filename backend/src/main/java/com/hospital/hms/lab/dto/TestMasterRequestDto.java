@@ -51,6 +51,9 @@ public class TestMasterRequestDto {
     @Size(max = 1000)
     private String normalRange;
 
+    @Size(max = 50)
+    private String unit;
+
     @Size(max = 500)
     private String instructions;
 
@@ -152,6 +155,14 @@ public class TestMasterRequestDto {
 
     public void setNormalRange(String normalRange) {
         this.normalRange = normalRange;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 
     public String getInstructions() {

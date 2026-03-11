@@ -26,11 +26,14 @@ public interface TestOrderRepository extends JpaRepository<TestOrder, Long> {
 
     List<TestOrder> findByOpdVisitIdOrderByOrderedAtDesc(Long opdVisitId);
 
-    List<TestOrder> findByStatusOrderByOrderedAtAsc(TestStatus status);
+    /** Emergency (isPriority) first, then by orderedAt. */
+    @Query("SELECT t FROM TestOrder t WHERE t.status = :status ORDER BY t.isPriority DESC, t.orderedAt ASC")
+    List<TestOrder> findByStatusOrderByIsPriorityDescOrderedAtAsc(@Param("status") TestStatus status);
 
     List<TestOrder> findByStatusAndIsPriorityTrueOrderByOrderedAtAsc(TestStatus status);
 
-    @Query("SELECT t FROM TestOrder t WHERE t.status = :status AND t.sampleCollectedAt IS NOT NULL ORDER BY t.sampleCollectedAt ASC")
+    /** Emergency first, then by sampleCollectedAt. */
+    @Query("SELECT t FROM TestOrder t WHERE t.status = :status AND t.sampleCollectedAt IS NOT NULL ORDER BY t.isPriority DESC, t.sampleCollectedAt ASC")
     List<TestOrder> findPendingVerification(@Param("status") TestStatus status);
 
     @Query("SELECT t FROM TestOrder t WHERE t.status IN :statuses AND t.tatStatus = 'BREACH' ORDER BY t.tatEndTime DESC")

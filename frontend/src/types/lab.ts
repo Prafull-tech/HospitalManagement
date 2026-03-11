@@ -44,6 +44,8 @@ export interface TestMaster {
   testName: string
   category: TestCategory
   sampleType: SampleType
+  unit?: string
+  normalRange?: string
   normalTATMinutes: number
   price: number
   active: boolean
@@ -65,6 +67,8 @@ export interface TestMasterRequest {
   sampleType: SampleType
   normalTATMinutes: number
   price: number
+  unit?: string
+  normalRange?: string
   active?: boolean
   priorityLevel?: PriorityLevel
   isPanel?: boolean
@@ -123,6 +127,64 @@ export interface TestOrderRequest {
   isPriority?: boolean
 }
 
+export type LabOrderPriority = 'NORMAL' | 'EMERGENCY'
+
+export type LabOrderStatus = 'ORDERED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+
+export type LabOrderItemStatus = 'ORDERED' | 'COLLECTED' | 'IN_PROGRESS' | 'COMPLETED' | 'VERIFIED' | 'RELEASED' | 'REJECTED' | 'CANCELLED'
+
+export type LabOrderItemSampleStatus = 'PENDING' | 'COLLECTED' | 'REJECTED'
+
+export interface LabOrderItem {
+  id: number
+  orderId: number
+  testId: number
+  testCode: string
+  testName: string
+  status: LabOrderItemStatus
+  sampleStatus: LabOrderItemSampleStatus
+  testOrderId?: number
+  /** Display fields for sample processing list */
+  orderNumber?: string
+  patientUhid?: string
+  patientName?: string
+  sampleCollectedAt?: string
+  isPriority?: boolean
+  /** COLLECTED -> Start Processing, IN_PROGRESS -> Mark Processed */
+  testOrderStatus?: TestStatus
+  resultEnteredAt?: string
+  resultEnteredBy?: string
+}
+
+export interface LabOrder {
+  id: number
+  patientId: number
+  uhid: string
+  patientName: string
+  ipdAdmissionId?: number
+  ipdAdmissionNumber?: string
+  opdVisitId?: number
+  opdVisitNumber?: string
+  orderedByDoctorId: number
+  orderedByDoctorName: string
+  priority: LabOrderPriority
+  status: LabOrderStatus
+  orderedAt: string
+  items: LabOrderItem[]
+}
+
+export interface LabOrderRequest {
+  orderedByDoctorId: number
+  doctorId?: number
+  patientId?: number
+  ipdAdmissionId?: number
+  opdVisitId?: number
+  priority?: LabOrderPriority
+  isPriority?: boolean
+  testIds?: number[]
+  testMasterId?: number
+}
+
 export interface SampleCollectionRequest {
   testOrderId: number
   wardName?: string
@@ -142,6 +204,15 @@ export interface LabResult {
   enteredBy?: string
   remarks?: string
   isCritical: boolean
+}
+
+/** Request for POST /api/lab/result (single result by orderItemId) */
+export interface LabResultEntryRequest {
+  orderItemId: number
+  testValue: string
+  unit?: string
+  referenceRange?: string
+  remarks?: string
 }
 
 export interface LabResultRequest {
@@ -164,6 +235,9 @@ export interface LabReport {
   reportNumber: string
   testOrderId: number
   orderNumber: string
+  patientName?: string
+  patientUhid?: string
+  testName?: string
   status: ReportStatus
   generatedAt?: string
   generatedBy?: string
@@ -179,13 +253,29 @@ export interface LabReport {
   pdfPath?: string
 }
 
+/** GET /api/lab/dashboard response */
+export interface LabDashboardResponse {
+  pendingCollection: number
+  pendingProcessing: number
+  pendingVerification: number
+  tatBreaches: number
+  emergencySamples: number
+  todayOrdered: number
+  todayCollected: number
+  todayCompleted: number
+  todayVerified: number
+  tatCompliancePercent: number
+}
+
 export interface LabDashboardSummary {
   pendingCollectionCount: number
+  pendingProcessingCount: number
   pendingVerificationCount: number
   completedTodayCount: number
   tatBreachCount: number
   emergencySamplesCount: number
   pendingCollection: TestOrder[]
+  pendingProcessing: TestOrder[]
   pendingVerification: TestOrder[]
   tatBreaches: TestOrder[]
   emergencySamples: TestOrder[]

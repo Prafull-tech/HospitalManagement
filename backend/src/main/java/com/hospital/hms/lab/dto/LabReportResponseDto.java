@@ -26,6 +26,9 @@ public class LabReportResponseDto {
     private String correctionLog;
     private Boolean isReadOnly;
     private String pdfPath;
+    private String patientName;
+    private String patientUhid;
+    private String testName;
 
     public LabReportResponseDto() {
     }
@@ -165,5 +168,29 @@ public class LabReportResponseDto {
 
     public void setPdfPath(String pdfPath) {
         this.pdfPath = pdfPath;
+    }
+
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
+    public String getPatientUhid() {
+        return patientUhid;
+    }
+
+    public void setPatientUhid(String patientUhid) {
+        this.patientUhid = patientUhid;
+    }
+
+    public String getTestName() {
+        return testName;
+    }
+
+    public void setTestName(String testName) {
+        this.testName = testName;
     }
 }

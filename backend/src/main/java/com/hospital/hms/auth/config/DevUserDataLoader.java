@@ -39,6 +39,7 @@ public class DevUserDataLoader {
                     new DevUser("quality", "Quality Manager", "quality123", UserRole.QUALITY_MANAGER),
                     new DevUser("labtech", "Lab Technician", "lab123", UserRole.LAB_TECHNICIAN),
                     new DevUser("labsup", "Lab Supervisor", "lab123", UserRole.LAB_SUPERVISOR),
+                    new DevUser("pathologist", "Pathologist", "lab123", UserRole.PATHOLOGIST),
                     new DevUser("radtech", "Radiology Tech", "rad123", UserRole.RADIOLOGY_TECH),
                     new DevUser("bloodtech", "Blood Bank Tech", "blood123", UserRole.BLOOD_BANK_TECH),
                     new DevUser("reception", "Receptionist", "rec123", UserRole.RECEPTIONIST)

@@ -27,6 +27,7 @@ export type HMSRole =
   | 'LAB_TECH'
   | 'LAB_TECHNICIAN'
   | 'LAB_SUPERVISOR'
+  | 'PATHOLOGIST'
   | 'QUALITY_MANAGER'
   | 'DOCTOR'
   | 'PHARMACY_MANAGER'
@@ -71,10 +72,15 @@ export const MODULE_MENU_CONFIG: ModuleMenuConfig[] = [
     moduleName: 'Pathology / Laboratory',
     route: '/lab',
     icon: 'FlaskConical',
-    allowedRoles: ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
+    allowedRoles: ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'PATHOLOGIST', 'PHLEBOTOMIST', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
     subMenus: [
       { id: 'lab-dashboard', label: 'Lab Dashboard', route: '/lab', icon: 'LayoutDashboard' },
-      { id: 'lab-reports', label: 'View Reports', route: '/lab/reports', icon: 'FileText' },
+      { id: 'lab-collection', label: 'Sample Collection', route: '/lab/collection', icon: 'Package' },
+      { id: 'lab-processing', label: 'Sample Processing', route: '/lab/sample-processing', icon: 'LayoutDashboard' },
+      { id: 'lab-results', label: 'Result Entry', route: '/lab/result-entry', icon: 'FileText' },
+      { id: 'lab-verification', label: 'Result Verification', route: '/lab/result-verification', icon: 'FileText' },
+      { id: 'lab-reports', label: 'View Reports', route: '/lab/view-reports', icon: 'FileText' },
+      { id: 'lab-test-master', label: 'Test Master', route: '/lab/test-master', icon: 'FileText' },
     ],
   },
   {
@@ -137,8 +143,9 @@ export const ROUTE_PERMISSIONS: Record<string, HMSRole[]> = {
   '/billing/tpa': ['ADMIN', 'BILLING'],
   '/billing/payments': ['ADMIN', 'BILLING'],
   '/billing/refunds': ['ADMIN', 'BILLING'],
-  '/lab': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
-  '/lab/reports': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
+  '/lab': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'PATHOLOGIST', 'PHLEBOTOMIST', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
+  '/lab/reports': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'PATHOLOGIST', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
+  '/lab/view-reports': ['LAB_TECH', 'LAB_TECHNICIAN', 'LAB_SUPERVISOR', 'PATHOLOGIST', 'DOCTOR', 'QUALITY_MANAGER', 'ADMIN'],
   '/pharmacy': ['PHARMACY_MANAGER', 'STORE_INCHARGE', 'IPD_PHARMACIST', 'PHARMACIST', 'ADMIN'],
   '/radiology': ['RADIOLOGY_TECH', 'DOCTOR', 'ADMIN'],
   '/radiology/reports': ['RADIOLOGY_TECH', 'DOCTOR', 'ADMIN'],

@@ -3,6 +3,7 @@ package com.hospital.hms.lab.service;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.lab.dto.SampleCollectionRequestDto;
 import com.hospital.hms.lab.dto.TestOrderResponseDto;
+import com.hospital.hms.lab.entity.LabAuditEventType;
 import com.hospital.hms.lab.entity.TestOrder;
 import com.hospital.hms.lab.entity.TestStatus;
 import com.hospital.hms.common.logging.MdcKeys;
@@ -26,10 +27,13 @@ public class SampleCollectionService {
 
     private final TestOrderRepository testOrderRepository;
     private final TestOrderService testOrderService;
+    private final LabAuditService labAuditService;
 
-    public SampleCollectionService(TestOrderRepository testOrderRepository, TestOrderService testOrderService) {
+    public SampleCollectionService(TestOrderRepository testOrderRepository, TestOrderService testOrderService,
+                                   LabAuditService labAuditService) {
         this.testOrderRepository = testOrderRepository;
         this.testOrderService = testOrderService;
+        this.labAuditService = labAuditService;
     }
 
     /**
@@ -52,6 +56,8 @@ public class SampleCollectionService {
         order.setTatStartTime(Instant.now()); // TAT timer starts at collection
 
         order = testOrderRepository.save(order);
+        labAuditService.log(LabAuditEventType.SAMPLE_COLLECTED, order.getId(), null, null, collectedBy,
+                order.getOrderNumber());
         if (log.isInfoEnabled()) {
             MDC.put(MdcKeys.MODULE, "LAB");
             log.info("LAB_AUDIT sample_collection orderId={} orderNumber={} collectedBy={} correlationId={}",

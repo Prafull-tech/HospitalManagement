@@ -22,15 +22,19 @@ import java.time.LocalDateTime;
     name = "lab_results",
     indexes = {
         @Index(name = "idx_lab_result_order", columnList = "test_order_id"),
+        @Index(name = "idx_lab_result_order_item", columnList = "order_item_id"),
         @Index(name = "idx_lab_result_entered_at", columnList = "entered_at")
     }
 )
 public class LabResult extends BaseIdEntity {
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "test_order_id", nullable = false)
-    private TestOrder testOrder;
+    @JoinColumn(name = "test_order_id")
+    private TestOrder testOrder; // Nullable when orderItemId is used
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id")
+    private LabOrderItem orderItem; // For result entry by order item
 
     @Size(max = 255)
     @Column(name = "parameter_name", length = 255)
@@ -46,7 +50,7 @@ public class LabResult extends BaseIdEntity {
 
     @Size(max = 1000)
     @Column(name = "normal_range", length = 1000)
-    private String normalRange; // Normal range for this parameter
+    private String normalRange; // Normal range / reference range
 
     @Size(max = 50)
     @Column(name = "flag", length = 50)
@@ -76,6 +80,14 @@ public class LabResult extends BaseIdEntity {
 
     public void setTestOrder(TestOrder testOrder) {
         this.testOrder = testOrder;
+    }
+
+    public LabOrderItem getOrderItem() {
+        return orderItem;
+    }
+
+    public void setOrderItem(LabOrderItem orderItem) {
+        this.orderItem = orderItem;
     }
 
     public String getParameterName() {
