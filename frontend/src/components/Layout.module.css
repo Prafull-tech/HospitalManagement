@@ -352,3 +352,24 @@
   background: var(--hms-bg);
   overflow: auto;
 }
+
+/* Print: hide sidebar and topbar, show only main content */
+@media print {
+  .sidebar,
+  .topbar,
+  .sidebarToggle,
+  .topbarRight,
+  .themeToggle,
+  .themeLabel {
+    display: none !important;
+  }
+
+  .mainWrap {
+    padding: 0;
+  }
+
+  .content {
+    padding: 0;
+    background: #fff;
+  }
+}

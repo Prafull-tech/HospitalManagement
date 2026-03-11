@@ -96,6 +96,8 @@ public class DischargeService {
             dto.setBillingClearance(Boolean.TRUE.equals(discharge.getBillingClearance()));
             dto.setInsuranceClearance(Boolean.TRUE.equals(discharge.getInsuranceClearance()));
             dto.setHousekeepingClearance(Boolean.TRUE.equals(discharge.getHousekeepingClearance()));
+            dto.setLinenClearance(Boolean.TRUE.equals(discharge.getLinenClearance()));
+            dto.setDietaryClearance(Boolean.TRUE.equals(discharge.getDietaryClearance()));
             dto.setDiagnosisSummary(discharge.getDiagnosisSummary());
             dto.setTreatmentSummary(discharge.getTreatmentSummary());
             dto.setProcedures(discharge.getProcedures());
@@ -127,7 +129,8 @@ public class DischargeService {
             dto.setInsuranceClearance(true);
         }
         boolean allClear = dto.isDoctorClearance() && dto.isNursingClearance() && dto.isPharmacyClearance()
-                && dto.isLabClearance() && dto.isBillingClearance() && dto.isInsuranceClearance() && dto.isHousekeepingClearance();
+                && dto.isLabClearance() && dto.isBillingClearance() && dto.isInsuranceClearance()
+                && dto.isHousekeepingClearance() && dto.isLinenClearance() && dto.isDietaryClearance();
         dto.setAllClearancesComplete(allClear);
         dto.setCanFinalizeDischarge(allClear && billingClear && ACTIVE_STATUSES.contains(admission.getAdmissionStatus()));
 
@@ -241,6 +244,39 @@ public class DischargeService {
     }
 
     @Transactional
+    public DischargeStatusDto recordHousekeepingClearance(Long ipdAdmissionId) {
+        validateActiveAdmission(ipdAdmissionId);
+        PatientDischarge d = getOrCreateDischarge(ipdAdmissionId);
+        String user = SecurityContextUserResolver.resolveUserId();
+        d.setHousekeepingClearance(true);
+        dischargeRepository.save(d);
+        log.info("Housekeeping clearance recorded for IPD {} by {}", ipdAdmissionId, user);
+        return getStatus(ipdAdmissionId);
+    }
+
+    @Transactional
+    public DischargeStatusDto recordLinenClearance(Long ipdAdmissionId) {
+        validateActiveAdmission(ipdAdmissionId);
+        PatientDischarge d = getOrCreateDischarge(ipdAdmissionId);
+        String user = SecurityContextUserResolver.resolveUserId();
+        d.setLinenClearance(true);
+        dischargeRepository.save(d);
+        log.info("Linen clearance recorded for IPD {} by {}", ipdAdmissionId, user);
+        return getStatus(ipdAdmissionId);
+    }
+
+    @Transactional
+    public DischargeStatusDto recordDietaryClearance(Long ipdAdmissionId) {
+        validateActiveAdmission(ipdAdmissionId);
+        PatientDischarge d = getOrCreateDischarge(ipdAdmissionId);
+        String user = SecurityContextUserResolver.resolveUserId();
+        d.setDietaryClearance(true);
+        dischargeRepository.save(d);
+        log.info("Dietary clearance recorded for IPD {} by {}", ipdAdmissionId, user);
+        return getStatus(ipdAdmissionId);
+    }
+
+    @Transactional
     public DischargeStatusDto recordInsuranceClearance(Long ipdAdmissionId, boolean adminOverride) {
         validateActiveAdmission(ipdAdmissionId);
         IPDAdmission admission = admissionRepository.findById(ipdAdmissionId)
@@ -289,8 +325,10 @@ public class DischargeService {
 
         if (!Boolean.TRUE.equals(d.getDoctorClearance()) || !Boolean.TRUE.equals(d.getNursingClearance())
                 || !Boolean.TRUE.equals(d.getPharmacyClearance()) || !Boolean.TRUE.equals(d.getLabClearance())
-                || !Boolean.TRUE.equals(d.getBillingClearance()) || !Boolean.TRUE.equals(d.getInsuranceClearance())) {
-            throw new IllegalArgumentException("All clearances must be complete before final discharge.");
+                || !Boolean.TRUE.equals(d.getBillingClearance()) || !Boolean.TRUE.equals(d.getInsuranceClearance())
+                || !Boolean.TRUE.equals(d.getHousekeepingClearance()) || !Boolean.TRUE.equals(d.getLinenClearance())
+                || !Boolean.TRUE.equals(d.getDietaryClearance())) {
+            throw new IllegalArgumentException("All clearances must be complete before final discharge (including housekeeping, linen, dietary).");
         }
         if (!billingAccountService.canDischarge(ipdAdmissionId)) {
             BigDecimal pending = billingAccountService.getPendingAmount(ipdAdmissionId);
@@ -309,7 +347,6 @@ public class DischargeService {
         d.setDischargedBy(user);
         d.setDischargedAt(Instant.now());
         d.setCorrelationId(correlationId);
-        d.setHousekeepingClearance(true);
         dischargeRepository.save(d);
 
         // IPD discharge is two-step: ACTIVE -> DISCHARGE_INITIATED -> DISCHARGED. Call twice if needed.

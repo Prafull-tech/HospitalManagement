@@ -91,7 +91,7 @@ export const DEV_TOOLS_ROUTES: DevRoute[] = [
   { label: 'Housekeeping', path: '/housekeeping', group: 'Housekeeping' },
   { label: 'Laundry', path: '/laundry', group: 'Housekeeping' },
   { label: 'Dietary', path: '/dietary', group: 'Housekeeping' },
-  { label: 'Patient Meals', path: '/patient-meals', group: 'Housekeeping' },
+  { label: 'Patient Meals', path: '/meals', group: 'Housekeeping' },
 
   // IT & Systems
   { label: 'IT Department', path: '/admin', group: 'IT & Systems' },

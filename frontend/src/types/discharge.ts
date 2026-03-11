@@ -27,6 +27,8 @@ export interface DischargeStatus {
   billingClearance: boolean
   insuranceClearance: boolean
   housekeepingClearance: boolean
+  linenClearance: boolean
+  dietaryClearance: boolean
 
   pendingPharmacyCount: number
   pendingLabCount: number

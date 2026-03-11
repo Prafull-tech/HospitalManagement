@@ -30,6 +30,8 @@ public class DischargeStatusDto {
     private boolean billingClearance;
     private boolean insuranceClearance;
     private boolean housekeepingClearance;
+    private boolean linenClearance;
+    private boolean dietaryClearance;
 
     private int pendingPharmacyCount;
     private int pendingLabCount;
@@ -89,6 +91,10 @@ public class DischargeStatusDto {
     public void setInsuranceClearance(boolean insuranceClearance) { this.insuranceClearance = insuranceClearance; }
     public boolean isHousekeepingClearance() { return housekeepingClearance; }
     public void setHousekeepingClearance(boolean housekeepingClearance) { this.housekeepingClearance = housekeepingClearance; }
+    public boolean isLinenClearance() { return linenClearance; }
+    public void setLinenClearance(boolean linenClearance) { this.linenClearance = linenClearance; }
+    public boolean isDietaryClearance() { return dietaryClearance; }
+    public void setDietaryClearance(boolean dietaryClearance) { this.dietaryClearance = dietaryClearance; }
     public int getPendingPharmacyCount() { return pendingPharmacyCount; }
     public void setPendingPharmacyCount(int pendingPharmacyCount) { this.pendingPharmacyCount = pendingPharmacyCount; }
     public int getPendingLabCount() { return pendingLabCount; }

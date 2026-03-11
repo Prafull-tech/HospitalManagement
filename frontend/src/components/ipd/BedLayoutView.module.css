@@ -1,0 +1,99 @@
+/* IPD Bed Layout – Movie-style seat map */
+
+.bedLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.wardSection {
+  background: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.wardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--bs-body-color);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--bs-border-color-translucent);
+}
+
+.roomBlock {
+  margin-bottom: 1.5rem;
+}
+
+.roomBlock:last-child {
+  margin-bottom: 0;
+}
+
+.roomHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.roomName {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.roomStats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--bs-secondary-color);
+}
+
+.roomStats span {
+  white-space: nowrap;
+}
+
+.bedGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .bedGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.bedSeatCard {
+  aspect-ratio: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bedSeatCard:not(:disabled):hover {
+  transform: scale(1.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--bs-secondary-color);
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}

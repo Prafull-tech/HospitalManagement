@@ -26,9 +26,16 @@ function formatDate(iso?: string): string {
 export interface BedDetailsModalProps {
   bed: BedAvailabilityItem | null
   onClose: () => void
+  /** When provided and bed is occupied, show View / Transfer / Discharge actions */
+  onView?: (bed: BedAvailabilityItem) => void
+  onTransfer?: (bed: BedAvailabilityItem) => void
+  onDischarge?: (bed: BedAvailabilityItem) => void
+  /** When provided, show Status and Maintenance actions */
+  onChangeStatus?: (bed: BedAvailabilityItem) => void
+  onMarkMaintenance?: (bed: BedAvailabilityItem) => void
 }
 
-export function BedDetailsModal({ bed, onClose }: BedDetailsModalProps) {
+export function BedDetailsModal({ bed, onClose, onView, onTransfer, onDischarge, onChangeStatus, onMarkMaintenance }: BedDetailsModalProps) {
   if (!bed) return null
 
   return (
@@ -83,7 +90,36 @@ export function BedDetailsModal({ bed, onClose }: BedDetailsModalProps) {
               </div>
             </div>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer d-flex flex-wrap gap-2">
+            {bed.admissionId && (onView || onTransfer || onDischarge) && (
+              <>
+                {onView && (
+                  <button type="button" className="btn btn-primary" onClick={() => onView(bed)}>
+                    View
+                  </button>
+                )}
+                {onTransfer && (
+                  <button type="button" className="btn btn-info" onClick={() => onTransfer(bed)}>
+                    Transfer
+                  </button>
+                )}
+                {onDischarge && (
+                  <button type="button" className="btn btn-warning" onClick={() => onDischarge(bed)}>
+                    Discharge
+                  </button>
+                )}
+              </>
+            )}
+            {onChangeStatus && (
+              <button type="button" className="btn btn-outline-secondary" onClick={() => onChangeStatus(bed)}>
+                Status
+              </button>
+            )}
+            {onMarkMaintenance && (
+              <button type="button" className="btn btn-outline-warning" onClick={() => onMarkMaintenance(bed)}>
+                Maintenance
+              </button>
+            )}
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Close
             </button>

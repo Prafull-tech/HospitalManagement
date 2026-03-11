@@ -29,6 +29,18 @@ export const dischargeApi = {
     return apiClient.post(`${BASE}/${ipdAdmissionId}/billing-clearance`).then((res) => res.data)
   },
 
+  recordHousekeepingClearance(ipdAdmissionId: number): Promise<DischargeStatus> {
+    return apiClient.post(`${BASE}/${ipdAdmissionId}/housekeeping-clearance`).then((res) => res.data)
+  },
+
+  recordLinenClearance(ipdAdmissionId: number): Promise<DischargeStatus> {
+    return apiClient.post(`${BASE}/${ipdAdmissionId}/linen-clearance`).then((res) => res.data)
+  },
+
+  recordDietaryClearance(ipdAdmissionId: number): Promise<DischargeStatus> {
+    return apiClient.post(`${BASE}/${ipdAdmissionId}/dietary-clearance`).then((res) => res.data)
+  },
+
   recordInsuranceClearance(ipdAdmissionId: number, adminOverride = false): Promise<DischargeStatus> {
     return apiClient
       .post(`${BASE}/${ipdAdmissionId}/insurance-clearance`, null, {

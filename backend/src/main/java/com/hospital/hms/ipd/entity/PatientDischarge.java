@@ -82,6 +82,12 @@ public class PatientDischarge extends BaseIdEntity {
     @Column(name = "housekeeping_clearance", nullable = false)
     private Boolean housekeepingClearance = false;
 
+    @Column(name = "linen_clearance", nullable = false)
+    private Boolean linenClearance = false;
+
+    @Column(name = "dietary_clearance", nullable = false)
+    private Boolean dietaryClearance = false;
+
     @Size(max = 255)
     @Column(name = "doctor_cleared_by", length = 255)
     private String doctorClearedBy;
@@ -185,6 +191,10 @@ public class PatientDischarge extends BaseIdEntity {
     public void setInsuranceClearance(Boolean insuranceClearance) { this.insuranceClearance = insuranceClearance; }
     public Boolean getHousekeepingClearance() { return housekeepingClearance; }
     public void setHousekeepingClearance(Boolean housekeepingClearance) { this.housekeepingClearance = housekeepingClearance; }
+    public Boolean getLinenClearance() { return linenClearance; }
+    public void setLinenClearance(Boolean linenClearance) { this.linenClearance = linenClearance; }
+    public Boolean getDietaryClearance() { return dietaryClearance; }
+    public void setDietaryClearance(Boolean dietaryClearance) { this.dietaryClearance = dietaryClearance; }
     public String getDoctorClearedBy() { return doctorClearedBy; }
     public void setDoctorClearedBy(String doctorClearedBy) { this.doctorClearedBy = doctorClearedBy; }
     public Instant getDoctorClearedAt() { return doctorClearedAt; }

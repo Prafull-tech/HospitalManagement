@@ -198,6 +198,10 @@
   font-size: 0.9rem;
 }
 
+.summaryPreview p:last-child {
+  margin-bottom: 0;
+}
+
 .summaryForm {
   display: flex;
   flex-direction: column;
@@ -256,4 +260,102 @@
 
 .billingAlert a:hover {
   text-decoration: underline;
+}
+
+/* Print styles – hide nav, buttons, links; show discharge content only */
+@media print {
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+
+  .header .actions,
+  .actionBtn,
+  .btnSmall,
+  .formActions,
+  .billingAlert a,
+  .breadcrumb {
+    display: none !important;
+  }
+
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #333;
+    background: #fff;
+    margin-bottom: 1rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .cardTitle {
+    font-size: 1rem;
+    color: #000;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Discharge Summary – ensure readable print */
+  .summaryPreview,
+  .summaryPreview p {
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .summaryPreview p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* When form is open, show form content as plain text for print */
+  .summaryForm {
+    display: block !important;
+  }
+
+  .summaryForm label {
+    display: block;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    color: #000;
+  }
+
+  .summaryForm label:first-child {
+    margin-top: 0;
+  }
+
+  .summaryForm input,
+  .summaryForm textarea {
+    display: block;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0 0 0.5rem 0;
+    font-size: 11pt;
+    color: #000;
+    box-shadow: none;
+  }
+
+  .checkItem button {
+    display: none !important;
+  }
+
+  body,
+  .page,
+  .muted {
+    background: #fff;
+    color: #000;
+  }
+
+  .grid2 p,
+  .list,
+  .list li {
+    color: #000;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }

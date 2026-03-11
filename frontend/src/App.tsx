@@ -56,6 +56,10 @@ import { LabDashboard } from './pages/LabDashboard'
 import { LabReportsPage } from './pages/LabReportsPage'
 import { RadiologyDashboard } from './pages/RadiologyDashboard'
 import { BloodBankDashboard } from './pages/BloodBankDashboard'
+import { HousekeepingDashboard } from './pages/patient-services/HousekeepingDashboard'
+import { LaundryDashboard } from './pages/patient-services/LaundryDashboard'
+import { DietaryDashboard } from './pages/patient-services/DietaryDashboard'
+import { MealServiceDashboard } from './pages/patient-services/MealServiceDashboard'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
@@ -176,6 +180,10 @@ export default function App() {
           <Route index element={<Navigate to="/wards/general" replace />} />
           <Route path=":wardSlug" element={<WardPage />} />
         </Route>
+        <Route path="housekeeping" element={<HousekeepingDashboard />} />
+        <Route path="laundry" element={<LaundryDashboard />} />
+        <Route path="dietary" element={<DietaryDashboard />} />
+        <Route path="meals" element={<MealServiceDashboard />} />
         <Route path="admin/config" element={<Outlet />}>
           <Route index element={<Navigate to="/admin/config/roles" replace />} />
           <Route path="roles" element={<SystemConfigRolesPage />} />

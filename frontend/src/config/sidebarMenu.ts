@@ -104,6 +104,9 @@ export type HMSRole =
   | 'RADIOLOGY_TECH'
   | 'BLOOD_BANK_TECH'
   | 'IPD_MANAGER'
+  | 'HOUSEKEEPING'
+  | 'LAUNDRY'
+  | 'KITCHEN'
 
 export interface SidebarMenuItem {
   id: string
@@ -176,6 +179,17 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       { id: 'anesthesia', label: 'Anesthesia Department', route: '/anesthesia', end: true, icon: 'Activity', allowedRoles: ['ADMIN', 'DOCTOR'] },
       { id: 'physio', label: 'Physiotherapy / Rehabilitation', route: '/physiotherapy', end: true, icon: 'Activity', allowedRoles: ['ADMIN', 'DOCTOR'] },
       { id: 'dialysis', label: 'Dialysis Unit', route: '/dialysis', end: true, icon: 'Droplets', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE'] },
+    ],
+  },
+  {
+    id: 'patient-services',
+    label: 'Patient Services',
+    allowedRoles: ['ADMIN', 'NURSE', 'HOUSEKEEPING', 'LAUNDRY', 'KITCHEN'],
+    items: [
+      { id: 'housekeeping', label: 'Housekeeping', route: '/housekeeping', end: true, icon: 'Trash2', allowedRoles: ['ADMIN', 'HOUSEKEEPING', 'NURSE'] },
+      { id: 'laundry', label: 'Laundry & Linen', route: '/laundry', end: true, icon: 'Package', allowedRoles: ['ADMIN', 'LAUNDRY', 'NURSE'] },
+      { id: 'dietary', label: 'Dietary / Kitchen', route: '/dietary', end: true, icon: 'Utensils', allowedRoles: ['ADMIN', 'KITCHEN', 'NURSE'] },
+      { id: 'meals', label: 'Patient Meals', route: '/meals', end: true, icon: 'Utensils', allowedRoles: ['ADMIN', 'KITCHEN', 'NURSE'] },
     ],
   },
   ...DIAGNOSTIC_MENU_GROUPS,

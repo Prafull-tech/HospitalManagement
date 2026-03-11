@@ -60,6 +60,24 @@ public class DischargeController {
         return ResponseEntity.ok(dischargeService.recordBillingClearance(ipdAdmissionId));
     }
 
+    @PostMapping("/{ipdAdmissionId}/housekeeping-clearance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HOUSEKEEPING')")
+    public ResponseEntity<DischargeStatusDto> recordHousekeepingClearance(@PathVariable Long ipdAdmissionId) {
+        return ResponseEntity.ok(dischargeService.recordHousekeepingClearance(ipdAdmissionId));
+    }
+
+    @PostMapping("/{ipdAdmissionId}/linen-clearance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LAUNDRY')")
+    public ResponseEntity<DischargeStatusDto> recordLinenClearance(@PathVariable Long ipdAdmissionId) {
+        return ResponseEntity.ok(dischargeService.recordLinenClearance(ipdAdmissionId));
+    }
+
+    @PostMapping("/{ipdAdmissionId}/dietary-clearance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'KITCHEN')")
+    public ResponseEntity<DischargeStatusDto> recordDietaryClearance(@PathVariable Long ipdAdmissionId) {
+        return ResponseEntity.ok(dischargeService.recordDietaryClearance(ipdAdmissionId));
+    }
+
     @PostMapping("/{ipdAdmissionId}/insurance-clearance")
     @PreAuthorize("hasAnyRole('ADMIN', 'BILLING')")
     public ResponseEntity<DischargeStatusDto> recordInsuranceClearance(

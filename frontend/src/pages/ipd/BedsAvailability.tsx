@@ -6,13 +6,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { ipdBedService } from '../../services/ipdBedService'
-import { useAuth } from '../../contexts/AuthContext'
 import type { BedAvailabilityItem, BedFiltersParams, BedStatus, SummaryCounts, WardCensusRow } from '../../types/ipdBed.types'
 import { BED_STATUS_LABELS } from '../../types/ipdBed.types'
 import { computeWardCensus as computeWardCensusUtil } from '../../utils/bedCensus'
-import { BedFilters } from '../../components/ipd/BedFilters'
-import { BedTable } from '../../components/ipd/BedTable'
-import { BedDetailsModal } from '../../components/ipd/BedDetailsModal'
+import { BedLayoutView } from '../../components/ipd/BedLayoutView'
 
 function defaultFiltersFromSearchParams(searchParams: URLSearchParams): BedFiltersParams {
   return {
@@ -73,14 +70,10 @@ function filterBedsClient(beds: BedAvailabilityItem[], filters: BedFiltersParams
 export function BedsAvailability() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { user } = useAuth()
-  const userRoles = user?.roles ?? ['ADMIN']
-
   const [filters, setFilters] = useState<BedFiltersParams>(() => defaultFiltersFromSearchParams(searchParams))
   const [allBeds, setAllBeds] = useState<BedAvailabilityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [detailsBed, setDetailsBed] = useState<BedAvailabilityItem | null>(null)
   const [statusModal, setStatusModal] = useState<{ bed: BedAvailabilityItem } | null>(null)
   const [maintenanceModal, setMaintenanceModal] = useState<BedAvailabilityItem | null>(null)
   const [updating, setUpdating] = useState(false)
@@ -114,7 +107,6 @@ export function BedsAvailability() {
   const filteredBeds = filterBedsClient(allBeds, filters)
   const summary = computeSummary(filteredBeds)
   const wardCensus = computeWardCensus(filteredBeds)
-  const wardNames = [...new Set(allBeds.map((b) => b.wardName))].sort()
 
   const handleRefresh = () => fetchBeds()
 
@@ -125,7 +117,6 @@ export function BedsAvailability() {
       .then((updated) => {
         setAllBeds((prev) => prev.map((b) => (b.bedId === updated.bedId ? updated : b)))
         setStatusModal(null)
-        if (detailsBed?.bedId === bed.bedId) setDetailsBed(updated)
       })
       .catch((err) => {
         setError(err.response?.data?.message || 'Failed to update status')
@@ -140,7 +131,6 @@ export function BedsAvailability() {
       .then((updated) => {
         setAllBeds((prev) => prev.map((b) => (b.bedId === updated.bedId ? updated : b)))
         setMaintenanceModal(null)
-        if (detailsBed?.bedId === bed.bedId) setDetailsBed(updated)
       })
       .catch((err) => {
         setError(err.response?.data?.message || 'Failed to update status')
@@ -310,23 +300,19 @@ export function BedsAvailability() {
         </div>
       )}
 
-      {/* Filters */}
-      <BedFilters filters={filters} onChange={setFilters} wardNames={wardNames} />
-
-      {/* Beds Table */}
-      <BedTable
+      {/* Bed Layout (movie-style seat map) */}
+      <BedLayoutView
         beds={filteredBeds}
-        userRoles={userRoles}
         loading={loading}
-        onViewDetails={setDetailsBed}
+        wardTypeFilter={filters.wardType}
+        onWardTypeFilterChange={(wardType) => setFilters((f) => ({ ...f, wardType }))}
+        onAllocate={handleAllocate}
+        onViewDetails={(bed) => bed.admissionId && navigate(`/ipd/admissions/${bed.admissionId}`)}
+        onTransfer={handleTransfer}
+        onDischarge={(bed) => bed.admissionId && navigate(`/ipd/discharge/${bed.admissionId}`)}
         onChangeStatus={(bed) => setStatusModal({ bed })}
         onMarkMaintenance={setMaintenanceModal}
-        onAllocate={handleAllocate}
-        onTransfer={handleTransfer}
       />
-
-      {/* Bed Details Modal */}
-      <BedDetailsModal bed={detailsBed} onClose={() => setDetailsBed(null)} />
 
       {/* Change Status Confirmation Modal */}
       {statusModal && (
