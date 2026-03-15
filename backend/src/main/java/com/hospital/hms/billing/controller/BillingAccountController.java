@@ -3,6 +3,7 @@ package com.hospital.hms.billing.controller;
 import com.hospital.hms.billing.dto.AddBillingItemRequestDto;
 import com.hospital.hms.billing.dto.BillingAccountViewDto;
 import com.hospital.hms.billing.dto.BillingItemResponseDto;
+import com.hospital.hms.billing.dto.BillingTransactionDto;
 import com.hospital.hms.billing.dto.PaymentRequestDto;
 import com.hospital.hms.billing.entity.BillingItem;
 import com.hospital.hms.billing.service.BillingAccountService;
@@ -13,9 +14,18 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * REST API for centralized billing.
@@ -63,6 +73,21 @@ public class BillingAccountController {
     @PreAuthorize("hasAnyRole('ADMIN', 'BILLING', 'DOCTOR', 'NURSE')")
     public ResponseEntity<java.util.List<BillingItemResponseDto>> getAccountItems(@PathVariable Long ipdAdmissionId) {
         return ResponseEntity.ok(billingAccountService.getItemsByIpdAdmissionId(ipdAdmissionId));
+    }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<org.springframework.data.domain.Page<BillingTransactionDto>> listTransactions(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        if (from == null) from = LocalDate.now();
+        if (to == null) to = LocalDate.now();
+        if (from.isAfter(to)) { LocalDate t = from; from = to; to = t; }
+        Instant instantFrom = ZonedDateTime.of(from.atStartOfDay(), ZoneId.systemDefault()).toInstant();
+        Instant instantTo = ZonedDateTime.of(to.atTime(23, 59, 59, 999_999_999), ZoneId.systemDefault()).toInstant();
+        Pageable pageable = PageRequest.of(page, Math.min(size, 500));
+        return ResponseEntity.ok(billingAccountService.listTransactions(instantFrom, instantTo, pageable));
     }
 
     @PostMapping("/payment")

@@ -125,8 +125,11 @@ export function BedLayoutView({
   if (filteredBeds.length === 0) {
     return (
       <div className="card border shadow-sm">
-        <div className={`${styles.emptyState}`}>
-          <p className="mb-0">No beds found. Adjust the ward filter or ensure wards are configured.</p>
+        <div className={`card-body ${styles.emptyState}`}>
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+            <WardFilter value={wardTypeFilter} onChange={onWardTypeFilterChange} />
+          </div>
+          <p className="mb-0">No beds found. Adjust the ward filter above or ensure wards are configured.</p>
         </div>
       </div>
     )

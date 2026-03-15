@@ -142,7 +142,18 @@ public class Patient extends BaseIdEntity {
     @Column(name = "remarks", length = 1000)
     private String remarks;
 
+    @Column(name = "active")
+    private Boolean active = true;
+
     public Patient() {
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
     public String getUhid() {

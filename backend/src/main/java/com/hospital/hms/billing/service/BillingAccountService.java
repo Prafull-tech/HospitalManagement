@@ -2,6 +2,7 @@ package com.hospital.hms.billing.service;
 
 import com.hospital.hms.billing.dto.BillingAccountViewDto;
 import com.hospital.hms.billing.dto.BillingItemResponseDto;
+import com.hospital.hms.billing.dto.BillingTransactionDto;
 import com.hospital.hms.billing.dto.PaymentRequestDto;
 import com.hospital.hms.billing.entity.BillingItem;
 import com.hospital.hms.billing.entity.PatientBillingAccount;
@@ -19,14 +20,20 @@ import com.hospital.hms.reception.repository.PatientRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.hospital.hms.ipd.entity.IPDAdmission;
 
 /**
  * Billing account view and finalize. Used by dashboard and discharge.
@@ -88,6 +95,35 @@ public class BillingAccountService {
         dto.setEmiActive(emiPlanRepository.existsByBillingAccountIdAndStatus(account.getId(), com.hospital.hms.billing.entity.EMIPlan.EMIPlanStatus.ACTIVE));
         dto.setHasGstSplit(items.stream().anyMatch(bi -> bi.getCgst() != null && bi.getCgst().compareTo(BigDecimal.ZERO) > 0));
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BillingTransactionDto> listTransactions(Instant from, Instant to, Pageable pageable) {
+        Page<Payment> payments = paymentRepository.findByCreatedAtBetween(from, to, pageable);
+        List<Payment> content = payments.getContent();
+        if (content.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+        List<Long> admissionIds = content.stream().map(Payment::getIpdAdmissionId).distinct().toList();
+        Map<Long, IPDAdmission> admissionMap = admissionRepository.findAllById(admissionIds).stream()
+                .collect(Collectors.toMap(IPDAdmission::getId, a -> a));
+        List<BillingTransactionDto> dtos = content.stream().map(p -> {
+            BillingTransactionDto dto = new BillingTransactionDto();
+            dto.setId(p.getId());
+            dto.setIpdAdmissionId(p.getIpdAdmissionId());
+            dto.setAmount(p.getAmount());
+            dto.setMode(p.getMode());
+            dto.setCreatedAt(p.getCreatedAt());
+            dto.setService("IPD Payment");
+            IPDAdmission adm = admissionMap.get(p.getIpdAdmissionId());
+            if (adm != null) {
+                dto.setAdmissionNumber(adm.getAdmissionNumber());
+                dto.setPatientName(adm.getPatient() != null ? adm.getPatient().getFullName() : null);
+                dto.setPatientUhid(adm.getPatient() != null ? adm.getPatient().getUhid() : null);
+            }
+            return dto;
+        }).toList();
+        return new PageImpl<>(dtos, payments.getPageable(), payments.getTotalElements());
     }
 
     @Transactional(readOnly = true)

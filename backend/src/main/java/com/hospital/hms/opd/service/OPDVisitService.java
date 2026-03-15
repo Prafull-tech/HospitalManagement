@@ -105,18 +105,19 @@ public class OPDVisitService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OPDVisitResponseDto> search(LocalDate visitDate, Long doctorId, VisitStatus status,
+    public Page<OPDVisitResponseDto> search(LocalDate visitDate, LocalDate fromDate, LocalDate toDate,
+                                            Long doctorId, VisitStatus status,
                                             String patientUhid, String patientName, String visitNumber, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "visitDate", "tokenNumber"));
-        Page<OPDVisit> result = visitRepository.search(
-                visitDate,
-                doctorId,
-                status,
-                patientUhid != null && !patientUhid.isBlank() ? patientUhid.trim() : null,
-                patientName != null && !patientName.isBlank() ? patientName.trim() : null,
-                visitNumber != null && !visitNumber.isBlank() ? visitNumber.trim() : null,
-                pageable
-        );
+        String uhid = patientUhid != null && !patientUhid.isBlank() ? patientUhid.trim() : null;
+        String name = patientName != null && !patientName.isBlank() ? patientName.trim() : null;
+        String num = visitNumber != null && !visitNumber.isBlank() ? visitNumber.trim() : null;
+        Page<OPDVisit> result;
+        if (fromDate != null && toDate != null) {
+            result = visitRepository.searchByDateRange(fromDate, toDate, doctorId, status, uhid, name, num, pageable);
+        } else {
+            result = visitRepository.search(visitDate, doctorId, status, uhid, name, num, pageable);
+        }
         List<OPDVisitResponseDto> content = result.getContent().stream()
                 .map(v -> toResponse(v, false))
                 .collect(Collectors.toList());

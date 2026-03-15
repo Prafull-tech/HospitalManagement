@@ -20,10 +20,10 @@ export const receptionApi = {
     return apiClient.get(`${BASE}/${encodeURIComponent(uhid)}`).then((res) => res.data)
   },
 
-  /** List all patients (paginated). Default page=0, size=500. */
-  list(params?: { page?: number; size?: number }): Promise<PatientResponse[]> {
+  /** List all patients (paginated). Optional from/to filter by registration date range. */
+  list(params?: { page?: number; size?: number; from?: string; to?: string }): Promise<PatientResponse[]> {
     return apiClient
-      .get(BASE, { params: { page: params?.page ?? 0, size: params?.size ?? 500 } })
+      .get(BASE, { params: { page: params?.page ?? 0, size: params?.size ?? 500, from: params?.from, to: params?.to } })
       .then((res) => res.data)
   },
 
@@ -37,5 +37,13 @@ export const receptionApi = {
     return apiClient
       .get(`${BASE}/search`, { params })
       .then((res) => res.data)
+  },
+
+  disable(id: number): Promise<PatientResponse> {
+    return apiClient.patch(`${BASE}/by-id/${id}/disable`).then((res) => res.data)
+  },
+
+  enable(id: number): Promise<PatientResponse> {
+    return apiClient.patch(`${BASE}/by-id/${id}/enable`).then((res) => res.data)
   },
 }

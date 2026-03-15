@@ -14,15 +14,27 @@ export const DEV_TOOLS_ROUTES: DevRoute[] = [
   { label: 'Dashboard', path: '/', group: 'Home' },
 
   // Front Office
-  { label: 'Reception', path: '/reception', group: 'Front Office' },
-  { label: 'Patient Register', path: '/reception/register', group: 'Front Office' },
-  { label: 'Patient Search', path: '/reception/search', group: 'Front Office' },
-  { label: 'Appointments', path: '/appointments', group: 'Front Office' },
+  { label: 'Patient Registration', path: '/front-office/register', group: 'Front Office' },
+  { label: 'Appointments', path: '/front-office/appointments', group: 'Front Office' },
+  { label: 'Walk-in', path: '/front-office/walkin', group: 'Front Office' },
+  { label: 'Enquiry Desk', path: '/front-office/enquiry', group: 'Front Office' },
+  { label: 'Token Management', path: '/front-office/tokens', group: 'Front Office' },
   { label: 'Emergency', path: '/emergency', group: 'Front Office' },
   { label: 'Helpdesk', path: '/helpdesk', group: 'Front Office' },
   { label: 'Ambulance', path: '/ambulance', group: 'Front Office' },
 
-  // OPD
+  // Patient Flow
+  { label: 'OPD Visits', path: '/patient-flow/opd', group: 'Patient Flow' },
+  { label: 'Doctor Consultation', path: '/patient-flow/consultation', group: 'Patient Flow' },
+  { label: 'Lab Orders', path: '/patient-flow/lab-orders', group: 'Patient Flow' },
+  { label: 'Radiology Orders', path: '/patient-flow/radiology-orders', group: 'Patient Flow' },
+  { label: 'Pharmacy Orders', path: '/patient-flow/pharmacy-orders', group: 'Patient Flow' },
+  { label: 'Admission', path: '/patient-flow/admission', group: 'Patient Flow' },
+  { label: 'Bed Allocation', path: '/patient-flow/bed-allocation', group: 'Patient Flow' },
+  { label: 'Billing', path: '/patient-flow/billing', group: 'Patient Flow' },
+  { label: 'Discharge', path: '/patient-flow/discharge', group: 'Patient Flow' },
+
+  // OPD (Legacy)
   { label: 'OPD', path: '/opd', group: 'OPD' },
   { label: 'Register Visit', path: '/opd/register', group: 'OPD' },
   { label: 'OPD Queue', path: '/opd/queue', group: 'OPD' },

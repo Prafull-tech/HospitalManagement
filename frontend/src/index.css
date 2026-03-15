@@ -273,3 +273,16 @@ textarea:focus {
 @keyframes app-loader-spin {
   to { transform: rotate(360deg); }
 }
+
+/* Print: hide UI chrome; show only content */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+.print-only {
+  display: none;
+}

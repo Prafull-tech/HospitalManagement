@@ -66,17 +66,22 @@ public class DischargeService {
 
     @Transactional(readOnly = true)
     public DischargeStatusDto getStatus(Long ipdAdmissionId) {
-        IPDAdmission admission = admissionRepository.findById(ipdAdmissionId)
+        IPDAdmission admission = admissionRepository.findByIdWithPatient(ipdAdmissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + ipdAdmissionId));
+
+        var patient = admission.getPatient();
+        if (patient == null) {
+            throw new ResourceNotFoundException("IPD admission " + ipdAdmissionId + " has no patient linked.");
+        }
 
         PatientDischarge discharge = dischargeRepository.findByIpdAdmissionId(ipdAdmissionId).orElse(null);
 
         DischargeStatusDto dto = new DischargeStatusDto();
         dto.setIpdAdmissionId(admission.getId());
         dto.setAdmissionNumber(admission.getAdmissionNumber());
-        dto.setPatientId(admission.getPatient().getId());
-        dto.setUhid(admission.getPatient().getUhid());
-        dto.setPatientName(admission.getPatient().getFullName());
+        dto.setPatientId(patient.getId());
+        dto.setUhid(patient.getUhid());
+        dto.setPatientName(patient.getFullName());
         dto.setAdmittedDate(admission.getAdmissionDateTime());
         dto.setDischargeDate(admission.getDischargeDateTime());
         dto.setAdmissionStatus(admission.getAdmissionStatus().name());
@@ -108,18 +113,33 @@ public class DischargeService {
             dto.setDischargeType(DischargeType.NORMAL);
         }
 
-        List<com.hospital.hms.ipd.dto.DischargePendingItemDto> pendingPharmacy = medicationOrderService.getPendingByIpdAdmissionId(ipdAdmissionId);
-        List<com.hospital.hms.ipd.dto.DischargePendingItemDto> pendingLab = testOrderService.getPendingByIpdAdmissionId(ipdAdmissionId);
-        dto.setPendingPharmacy(pendingPharmacy);
-        dto.setPendingLab(pendingLab);
-        dto.setPendingPharmacyCount(pendingPharmacy.size());
-        dto.setPendingLabCount(pendingLab.size());
+        try {
+            List<com.hospital.hms.ipd.dto.DischargePendingItemDto> pendingPharmacy = medicationOrderService.getPendingByIpdAdmissionId(ipdAdmissionId);
+            List<com.hospital.hms.ipd.dto.DischargePendingItemDto> pendingLab = testOrderService.getPendingByIpdAdmissionId(ipdAdmissionId);
+            dto.setPendingPharmacy(pendingPharmacy != null ? pendingPharmacy : List.of());
+            dto.setPendingLab(pendingLab != null ? pendingLab : List.of());
+            dto.setPendingPharmacyCount(pendingPharmacy != null ? pendingPharmacy.size() : 0);
+            dto.setPendingLabCount(pendingLab != null ? pendingLab.size() : 0);
+        } catch (Exception e) {
+            log.warn("Failed to load pending pharmacy/lab for discharge status ipdAdmissionId={}: {}", ipdAdmissionId, e.getMessage());
+            dto.setPendingPharmacy(List.of());
+            dto.setPendingLab(List.of());
+            dto.setPendingPharmacyCount(0);
+            dto.setPendingLabCount(0);
+        }
 
         // Use PatientBillingAccount as source of truth for billing totals (NABH compliant)
-        var account = billingAccountService.getAccountViewByIpdAdmissionId(ipdAdmissionId);
-        BigDecimal total = account.getTotalAmount();
-        BigDecimal pending = account.getPendingAmount();
-        boolean billingClear = billingAccountService.canDischarge(ipdAdmissionId);
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal pending = BigDecimal.ZERO;
+        boolean billingClear = false;
+        try {
+            var account = billingAccountService.getAccountViewByIpdAdmissionId(ipdAdmissionId);
+            total = account.getTotalAmount() != null ? account.getTotalAmount() : BigDecimal.ZERO;
+            pending = account.getPendingAmount() != null ? account.getPendingAmount() : BigDecimal.ZERO;
+            billingClear = billingAccountService.canDischarge(ipdAdmissionId);
+        } catch (Exception e) {
+            log.warn("Failed to load billing account for discharge status ipdAdmissionId={}: {}", ipdAdmissionId, e.getMessage());
+        }
         dto.setBillingTotal(total);
         dto.setBillingPendingAmount(pending);
         dto.setBillingPaid(billingClear);

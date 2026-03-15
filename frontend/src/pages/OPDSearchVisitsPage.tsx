@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { opdApi } from '../api/opd'
 import { doctorsApi } from '../api/doctors'
 import type { OPDVisitResponse, VisitStatus } from '../types/opd'
@@ -34,6 +34,9 @@ function statusClass(s: VisitStatus): string {
 }
 
 export function OPDSearchVisitsPage() {
+  const [searchParams] = useSearchParams()
+  const urlFrom = searchParams.get('from') ?? ''
+  const urlTo = searchParams.get('to') ?? ''
   const [doctors, setDoctors] = useState<DoctorResponse[]>([])
   const [visitDate, setVisitDate] = useState(today)
   const [doctorId, setDoctorId] = useState<number | ''>('')
@@ -43,6 +46,8 @@ export function OPDSearchVisitsPage() {
   const [visitNumber, setVisitNumber] = useState('')
   const [page, setPage] = useState(0)
   const size = 20
+
+  const useDateRange = Boolean(urlFrom && urlTo)
 
   /* Applied filters: search runs when these or page change (submit or pagination). */
   const [applied, setApplied] = useState({
@@ -72,8 +77,7 @@ export function OPDSearchVisitsPage() {
   useEffect(() => {
     setLoading(true)
     setError('')
-    const params = {
-      visitDate: applied.visitDate || undefined,
+    const params: Parameters<typeof opdApi.search>[0] = {
       doctorId: applied.doctorId || undefined,
       status: applied.status || undefined,
       patientUhid: applied.patientUhid.trim() || undefined,
@@ -81,6 +85,12 @@ export function OPDSearchVisitsPage() {
       visitNumber: applied.visitNumber.trim() || undefined,
       page,
       size,
+    }
+    if (useDateRange) {
+      params.fromDate = urlFrom
+      params.toDate = urlTo
+    } else {
+      params.visitDate = applied.visitDate || undefined
     }
     opdApi
       .search(params)
@@ -97,7 +107,7 @@ export function OPDSearchVisitsPage() {
         setResult(null)
       })
       .finally(() => setLoading(false))
-  }, [applied.visitDate, applied.doctorId, applied.status, applied.patientUhid, applied.patientName, applied.visitNumber, page])
+  }, [applied.visitDate, applied.doctorId, applied.status, applied.patientUhid, applied.patientName, applied.visitNumber, page, useDateRange, urlFrom, urlTo])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()

@@ -20,12 +20,12 @@ import java.util.List;
 public class SystemDataLoader {
 
     private static final String[] ROLE_CODES = {
-            "ADMIN", "SUPER_ADMIN", "RECEPTIONIST", "DOCTOR", "NURSE", "LAB_TECH",
+            "ADMIN", "SUPER_ADMIN", "RECEPTIONIST", "FRONT_DESK", "DOCTOR", "NURSE", "LAB_TECH",
             "PHARMACIST", "BILLING", "HR", "IT_ADMIN", "HELP_DESK"
     };
 
     private static final String[] ROLE_NAMES = {
-            "Administrator", "Super Admin", "Receptionist", "Doctor", "Nurse", "Lab Technician",
+            "Administrator", "Super Admin", "Receptionist", "Front Desk", "Doctor", "Nurse", "Lab Technician",
             "Pharmacist", "Billing", "Human Resources", "IT Admin", "Help Desk"
     };
 

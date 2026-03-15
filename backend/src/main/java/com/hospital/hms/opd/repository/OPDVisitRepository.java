@@ -41,5 +41,21 @@ public interface OPDVisitRepository extends JpaRepository<OPDVisit, Long> {
                           @Param("visitNumber") String visitNumber,
                           Pageable pageable);
 
+    @EntityGraph(attributePaths = {"patient", "doctor", "department"})
+    @Query("SELECT v FROM OPDVisit v WHERE v.visitDate >= :fromDate AND v.visitDate <= :toDate " +
+           "AND (:doctorId IS NULL OR v.doctor.id = :doctorId) " +
+           "AND (:status IS NULL OR v.visitStatus = :status) " +
+           "AND (:patientUhid IS NULL OR v.patient.uhid = :patientUhid) " +
+           "AND (:patientName IS NULL OR LOWER(v.patient.fullName) LIKE LOWER(CONCAT('%', :patientName, '%'))) " +
+           "AND (:visitNumber IS NULL OR v.visitNumber = :visitNumber)")
+    Page<OPDVisit> searchByDateRange(@Param("fromDate") LocalDate fromDate,
+                                    @Param("toDate") LocalDate toDate,
+                                    @Param("doctorId") Long doctorId,
+                                    @Param("status") VisitStatus status,
+                                    @Param("patientUhid") String patientUhid,
+                                    @Param("patientName") String patientName,
+                                    @Param("visitNumber") String visitNumber,
+                                    Pageable pageable);
+
     long countByVisitDateBetween(LocalDate start, LocalDate end);
 }

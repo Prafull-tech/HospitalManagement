@@ -11,7 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,6 +65,7 @@ public class PatientService {
         patient.setOrganisationType(request.getOrganisationType() != null ? request.getOrganisationType().trim() : null);
         patient.setOrganisationName(request.getOrganisationName() != null ? request.getOrganisationName().trim() : null);
         patient.setRemarks(request.getRemarks() != null ? request.getRemarks().trim() : null);
+        patient.setActive(true);
         patient = patientRepository.save(patient);
         return toResponse(patient);
     }
@@ -70,6 +73,15 @@ public class PatientService {
     public PatientResponseDto getById(Long id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
+        return toResponse(patient);
+    }
+
+    @Transactional
+    public PatientResponseDto setActive(Long id, boolean active) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
+        patient.setActive(active);
+        patient = patientRepository.save(patient);
         return toResponse(patient);
     }
 
@@ -179,7 +191,7 @@ public class PatientService {
             List<PatientResponseDto> byPhone = patientRepository.findByPhone(trimmed)
                     .stream()
                     .map(this::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
             return java.util.stream.Stream.concat(byId.stream(), byPhone.stream())
                     .collect(Collectors.toMap(PatientResponseDto::getId, p -> p, (a, b) -> a))
                     .values().stream()
@@ -189,12 +201,15 @@ public class PatientService {
             return patientRepository.findByPhone(trimmed)
                     .stream()
                     .map(this::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         List<Patient> byUhid = patientRepository.findByUhid(trimmed).stream().toList();
         List<Patient> byName = patientRepository.findByFullNameContainingIgnoreCase(trimmed);
-        return java.util.stream.Stream.concat(byUhid.stream(), byName.stream())
+        List<Patient> byIdProof = patientRepository.findByIdProofNumber(trimmed);
+        return java.util.stream.Stream.of(byUhid.stream(), byName.stream(), byIdProof.stream())
+                .flatMap(s -> s)
                 .distinct()
+                .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -203,18 +218,21 @@ public class PatientService {
         if (uhid != null && !uhid.isBlank()) {
             return patientRepository.findByUhid(uhid.trim())
                     .stream()
+                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .collect(Collectors.toList());
         }
         if (phone != null && !phone.isBlank()) {
             return patientRepository.findByPhone(phone.trim())
                     .stream()
+                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         if (name != null && !name.isBlank()) {
             return patientRepository.findByFullNameContainingIgnoreCase(name.trim())
                     .stream()
+                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .collect(Collectors.toList());
         }
@@ -223,13 +241,22 @@ public class PatientService {
 
     /**
      * List all patients with pagination (for reception search page "all patients below").
-     * Default size 500 if not specified.
+     * If fromDate and toDate are provided, filters by registration date range.
      */
     @Transactional(readOnly = true)
-    public List<PatientResponseDto> list(int page, int size) {
+    public List<PatientResponseDto> list(int page, int size, LocalDate fromDate, LocalDate toDate) {
         int safeSize = size <= 0 ? 500 : Math.min(size, 2000);
         Pageable pageable = PageRequest.of(Math.max(0, page), safeSize);
+        if (fromDate != null && toDate != null) {
+            LocalDateTime start = fromDate.atStartOfDay();
+            LocalDateTime end = toDate.atTime(LocalTime.MAX);
+            return patientRepository.findByRegistrationDateBetween(start, end, pageable).stream()
+                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
         return patientRepository.findAll(pageable).stream()
+                .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -265,6 +292,7 @@ public class PatientService {
         dto.setOrganisationType(p.getOrganisationType());
         dto.setOrganisationName(p.getOrganisationName());
         dto.setRemarks(p.getRemarks());
+        dto.setActive(p.getActive());
         dto.setCreatedAt(p.getCreatedAt());
         dto.setUpdatedAt(p.getUpdatedAt());
         return dto;

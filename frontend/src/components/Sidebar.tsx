@@ -139,6 +139,11 @@ export function Sidebar({ userRoles, collapsed }: SidebarProps) {
                   aria-controls={`nav-group-${group.id}`}
                   title={group.label}
                 >
+                  {group.groupIcon && (
+                    <span className={styles.navGroupIcon}>
+                      <SidebarIcon name={group.groupIcon} />
+                    </span>
+                  )}
                   <span className={styles.navGroupLabel}>{group.label}</span>
                   <span className={`${styles.navGroupChevron} ${isOpen ? styles.navGroupChevronOpen : ''}`} aria-hidden>
                     <ChevronIcon />

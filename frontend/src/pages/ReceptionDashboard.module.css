@@ -132,3 +132,21 @@
   color: var(--hms-text-muted);
   line-height: 1.4;
 }
+
+/* Clickable dashboard statistic cards */
+.clickableCard {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.clickableCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Print: hide print button and make cards look good */
+@media print {
+  .printPageBtn {
+    display: none !important;
+  }
+}

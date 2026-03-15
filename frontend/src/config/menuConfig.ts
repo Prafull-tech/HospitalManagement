@@ -45,6 +45,7 @@ export type HMSRole =
   | 'IT_ADMIN'
   | 'PHLEBOTOMIST'
   | 'IPD_MANAGER'
+  | 'FRONT_DESK'
 
 export interface SubMenuItem {
   id: string
@@ -133,6 +134,9 @@ export const MODULE_MENU_CONFIG: ModuleMenuConfig[] = [
  * Used by RoleProtectedRoute to block unauthorized URL access.
  */
 export const ROUTE_PERMISSIONS: Record<string, HMSRole[]> = {
+  '/front-office': ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'BILLING'],
+  '/appointments': ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'DOCTOR'],
+  '/patient-flow': ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER', 'BILLING'],
   '/reception': ['ADMIN', 'RECEPTIONIST', 'HELP_DESK', 'DOCTOR', 'NURSE'],
   '/billing': ['ADMIN', 'BILLING'],
   '/billing/ipd': ['ADMIN', 'BILLING'],
@@ -203,8 +207,8 @@ export function filterModulesByRole(
   })
 }
 
-/** Default dashboards in priority order for redirect (module-specific first, then reception). */
-const DEFAULT_DASHBOARD_ORDER = ['/pharmacy', '/lab', '/radiology', '/bloodbank', '/reception']
+/** Default dashboards in priority order for redirect (module-specific first, then front office, reception). */
+const DEFAULT_DASHBOARD_ORDER = ['/pharmacy', '/lab', '/radiology', '/bloodbank', '/front-office/register', '/reception']
 
 /**
  * Get the first dashboard route the user has access to.

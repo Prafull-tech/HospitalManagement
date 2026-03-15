@@ -42,6 +42,8 @@ public class OPDVisitController {
     @GetMapping
     public ResponseEntity<Page<OPDVisitResponseDto>> search(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate visitDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(required = false) Long doctorId,
             @RequestParam(required = false) VisitStatus status,
             @RequestParam(required = false) String patientUhid,
@@ -49,7 +51,7 @@ public class OPDVisitController {
             @RequestParam(required = false) String visitNumber,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<OPDVisitResponseDto> result = visitService.search(visitDate, doctorId, status, patientUhid, patientName, visitNumber, page, size);
+        Page<OPDVisitResponseDto> result = visitService.search(visitDate, fromDate, toDate, doctorId, status, patientUhid, patientName, visitNumber, page, size);
         return ResponseEntity.ok(result);
     }
 

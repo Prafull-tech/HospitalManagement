@@ -80,6 +80,7 @@ export type MenuIconKey =
   | 'ShoppingCart'
   | 'AlertTriangle'
   | 'Sparkles'
+  | 'GitBranch'
 
 export type HMSRole =
   | 'ADMIN'
@@ -107,6 +108,7 @@ export type HMSRole =
   | 'HOUSEKEEPING'
   | 'LAUNDRY'
   | 'KITCHEN'
+  | 'FRONT_DESK'
 
 export interface SidebarMenuItem {
   id: string
@@ -121,6 +123,8 @@ export interface SidebarMenuItem {
 export interface SidebarMenuGroup {
   id: string
   label: string
+  /** Optional icon for group header (e.g. Users for Front Office, GitBranch for Patient Flow) */
+  groupIcon?: MenuIconKey
   allowedRoles: HMSRole[]
   items: SidebarMenuItem[]
 }
@@ -128,26 +132,43 @@ export interface SidebarMenuGroup {
 export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
   {
     id: 'front-office',
-    label: 'Front Office & Patient Flow',
-    allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'HELP_DESK'],
+    label: 'Front Office',
+    groupIcon: 'Users',
+    allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'BILLING'],
     items: [
-      { id: 'reception-dash', label: 'Reception / Front Desk', route: '/reception', end: true, icon: 'LayoutDashboard', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'HELP_DESK'] },
-      { id: 'patient-reg', label: 'Patient Registration (UHID)', route: '/reception/register', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'RECEPTIONIST'] },
-      { id: 'patient-search', label: 'Patient Search', route: '/reception/search', end: false, icon: 'Search', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'HELP_DESK'] },
-      { id: 'appointment', label: 'Appointment Scheduling', route: '/appointments', end: true, icon: 'Calendar', allowedRoles: ['ADMIN', 'RECEPTIONIST'] },
-      { id: 'opd', label: 'OPD', route: '/opd', end: true, icon: 'ClipboardList', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
-      { id: 'opd-register', label: 'Register OPD Visit', route: '/opd/register', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
-      { id: 'opd-queue', label: 'OPD Queue', route: '/opd/queue', end: false, icon: 'Queue', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
-      { id: 'opd-visits', label: 'Search OPD Visits', route: '/opd/visits', end: true, icon: 'Search', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
-      { id: 'ipd', label: 'IPD', route: '/ipd', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] },
-      { id: 'ipd-admission-mgmt', label: 'IPD Admission Management', route: '/ipd/admission-management', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
-      { id: 'ipd-admit', label: 'Admit Patient', route: '/ipd/admit', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'] },
-      { id: 'ipd-beds', label: 'Bed Availability', route: '/ipd/beds', end: false, icon: 'Bed', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] },
-      { id: 'ipd-hospital-beds', label: 'Hospital Bed Availability', route: '/ipd/hospital-beds', end: false, icon: 'Building2', allowedRoles: ['ADMIN', 'SUPER_ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'HELP_DESK'] },
-      { id: 'ipd-admissions', label: 'IPD Admissions', route: '/ipd/admissions', end: true, icon: 'ClipboardList', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] },
-      { id: 'emergency', label: 'Emergency / Casualty', route: '/emergency', end: true, icon: 'AlertCircle', allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] },
-      { id: 'helpdesk', label: 'Patient Relations / Helpdesk', route: '/helpdesk', end: true, icon: 'HelpCircle', allowedRoles: ['ADMIN', 'HELP_DESK'] },
-      { id: 'ambulance', label: 'Ambulance / Transport', route: '/ambulance', end: true, icon: 'Ambulance', allowedRoles: ['ADMIN', 'RECEPTIONIST'] },
+      { id: 'fo-reception', label: 'Reception', route: '/reception', end: true, icon: 'LayoutDashboard', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'BILLING'] },
+      { id: 'fo-register', label: 'Patient Registration', route: '/front-office/register', end: true, icon: 'UserPlus', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      { id: 'fo-appointments', label: 'Appointments', route: '/front-office/appointments', end: false, icon: 'Calendar', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      { id: 'fo-appointments-book', label: 'Book Appointment', route: '/front-office/appointments/book', end: true, icon: 'UserPlus', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      { id: 'fo-appointments-queue', label: 'Appointment Queue', route: '/front-office/appointments/queue', end: true, icon: 'Queue', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      { id: 'fo-appointments-search', label: 'Search Appointments', route: '/front-office/appointments/search', end: true, icon: 'Search', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      { id: 'fo-walkin', label: 'Walk-in', route: '/front-office/walkin', end: false, icon: 'UserPlus', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'], children: [
+        { id: 'fo-walkin-dash', label: 'Walk-in Dashboard', route: '/front-office/walkin', end: true, icon: 'UserPlus', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+        { id: 'fo-walkin-register', label: 'Register Walk-in', route: '/front-office/walkin/register', end: true, icon: 'UserPlus', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      ]},
+      { id: 'fo-enquiry', label: 'Enquiry Desk', route: '/front-office/enquiry', end: true, icon: 'HelpCircle', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      { id: 'fo-tokens', label: 'Token Management', route: '/front-office/tokens', end: false, icon: 'Queue', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'], children: [
+        { id: 'fo-tokens-dash', label: 'Token Dashboard', route: '/front-office/tokens', end: true, icon: 'Queue', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+        { id: 'fo-tokens-queue', label: 'Token Queue', route: '/front-office/tokens/queue', end: true, icon: 'Queue', allowedRoles: ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST'] },
+      ]},
+    ],
+  },
+  {
+    id: 'patient-flow',
+    label: 'Patient Flow',
+    groupIcon: 'GitBranch',
+    allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER', 'BILLING'],
+    items: [
+      { id: 'pf-opd', label: 'OPD Visits', route: '/patient-flow/opd', end: true, icon: 'ClipboardList', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-token-panel', label: 'Doctor Token Panel', route: '/opd/tokens', end: true, icon: 'Queue', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-consultation', label: 'Doctor Consultation', route: '/patient-flow/consultation', end: true, icon: 'Stethoscope', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-lab', label: 'Lab Orders', route: '/patient-flow/lab-orders', end: true, icon: 'FlaskConical', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-radiology', label: 'Radiology Orders', route: '/patient-flow/radiology-orders', end: true, icon: 'ScanLine', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-pharmacy', label: 'Pharmacy Orders', route: '/patient-flow/pharmacy-orders', end: true, icon: 'Pill', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-admission', label: 'Admission', route: '/patient-flow/admission', end: true, icon: 'UserPlus', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-beds', label: 'Bed Allocation', route: '/patient-flow/bed-allocation', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
+      { id: 'pf-billing', label: 'Billing', route: '/patient-flow/billing', end: true, icon: 'DollarSign', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER', 'BILLING'] },
+      { id: 'pf-discharge', label: 'Discharge', route: '/patient-flow/discharge', end: true, icon: 'FileText', allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER'] },
     ],
   },
   {

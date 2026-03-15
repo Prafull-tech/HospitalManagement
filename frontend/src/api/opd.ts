@@ -23,6 +23,8 @@ export const opdApi = {
 
   search(params: {
     visitDate?: string
+    fromDate?: string
+    toDate?: string
     doctorId?: number
     status?: VisitStatus
     patientUhid?: string

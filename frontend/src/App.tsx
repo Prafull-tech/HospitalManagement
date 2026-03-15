@@ -9,8 +9,10 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { RoleProtectedRoute } from './components/RoleProtectedRoute'
 import { DashboardRedirect } from './components/DashboardRedirect'
 import { ReceptionDashboard } from './pages/ReceptionDashboard'
+import { ReceptionPatientsListPage } from './pages/reception/ReceptionPatientsListPage'
 import { PatientRegisterPage } from './pages/PatientRegisterPage'
 import { PatientSearchPage } from './pages/PatientSearchPage'
+import { PatientViewPage } from './pages/PatientViewPage'
 import { DoctorListPage } from './pages/DoctorListPage'
 import { DoctorFormPage } from './pages/DoctorFormPage'
 import { DoctorAvailabilityPage } from './pages/DoctorAvailabilityPage'
@@ -37,6 +39,7 @@ import { InsurancePage } from './pages/billing/InsurancePage'
 import { OnlinePaymentPage } from './pages/billing/OnlinePaymentPage'
 import { OpdGroupBillingPage } from './pages/billing/OpdGroupBillingPage'
 import { PaymentsPage } from './pages/billing/PaymentsPage'
+import { BillingTransactionsPage } from './pages/billing/BillingTransactionsPage'
 import { RefundsPage } from './pages/billing/RefundsPage'
 import { NursingDashboard } from './pages/NursingDashboard'
 import { NursingStaffPage } from './pages/NursingStaffPage'
@@ -71,6 +74,17 @@ import { MealServiceDashboard } from './pages/patient-services/MealServiceDashbo
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
+import { PlaceholderPage } from './pages/PlaceholderPage'
+import { AppointmentDashboard } from './pages/appointments/AppointmentDashboard'
+import { AppointmentBookingPage } from './pages/appointments/AppointmentBookingPage'
+import { AppointmentQueuePage } from './pages/appointments/AppointmentQueuePage'
+import { AppointmentSearchPage } from './pages/appointments/AppointmentSearchPage'
+import { TokenDashboard } from './pages/tokens/TokenDashboard'
+import { TokenQueuePage } from './pages/tokens/TokenQueuePage'
+import { TokenDisplayScreen } from './pages/tokens/TokenDisplayScreen'
+import { DoctorTokenPanel } from './pages/tokens/DoctorTokenPanel'
+import { WalkinDashboard } from './pages/walkin/WalkinDashboard'
+import { WalkinRegistrationForm } from './pages/walkin/WalkinRegistrationForm'
 
 const AUTH_BYPASS = false // Set true to isolate: render "App Loaded" and skip auth
 
@@ -110,10 +124,49 @@ export default function App() {
         }
       >
         <Route index element={<DashboardRedirect />} />
+        {/* Front Office – role: FRONT_DESK, RECEPTIONIST, BILLING, ADMIN */}
+        <Route path="front-office" element={<ProtectedRoute allowedRoles={['FRONT_DESK', 'RECEPTIONIST', 'BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
+          <Route path="register" element={<PatientRegisterPage />} />
+          <Route path="appointments" element={<Outlet />}>
+            <Route index element={<AppointmentDashboard />} />
+            <Route path="book" element={<AppointmentBookingPage />} />
+            <Route path="queue" element={<AppointmentQueuePage />} />
+            <Route path="search" element={<AppointmentSearchPage />} />
+          </Route>
+          <Route path="walkin" element={<Outlet />}>
+            <Route index element={<WalkinDashboard />} />
+            <Route path="register" element={<WalkinRegistrationForm />} />
+          </Route>
+          <Route path="enquiry" element={<PlaceholderPage title="Enquiry Desk" description="Handle patient enquiries and information requests. Coming in a future release." />} />
+          <Route path="tokens" element={<Outlet />}>
+            <Route index element={<TokenDashboard />} />
+            <Route path="queue" element={<TokenQueuePage />} />
+            <Route path="dashboard" element={<TokenDashboard />} />
+          </Route>
+          <Route path="visitors" element={<PlaceholderPage title="Visitor Pass" description="Issue and manage visitor passes. Coming in a future release." />} />
+          <Route path="billing" element={<Navigate to="/billing" replace />} />
+          <Route path="patients" element={<PatientSearchPage />} />
+        </Route>
+        {/* Patient Flow – role: DOCTOR, NURSE, RECEPTIONIST, FRONT_DESK, IPD_MANAGER, BILLING, ADMIN */}
+        <Route path="patient-flow" element={<ProtectedRoute allowedRoles={['DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER', 'BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
+          <Route path="opd" element={<Navigate to="/opd" replace />} />
+          <Route path="consultation" element={<Navigate to="/opd/queue" replace />} />
+          <Route path="lab-orders" element={<Navigate to="/lab" replace />} />
+          <Route path="radiology-orders" element={<Navigate to="/radiology" replace />} />
+          <Route path="pharmacy-orders" element={<Navigate to="/pharmacy" replace />} />
+          <Route path="admission" element={<Navigate to="/ipd/admission-management" replace />} />
+          <Route path="bed-allocation" element={<Navigate to="/ipd/beds" replace />} />
+          <Route path="treatment" element={<Navigate to="/nursing" replace />} />
+          <Route path="billing" element={<Navigate to="/billing" replace />} />
+          <Route path="discharge" element={<Navigate to="/ipd/admissions" replace />} />
+        </Route>
         <Route path="reception" element={<Outlet />}>
           <Route index element={<ReceptionDashboard />} />
+          <Route path="patients" element={<ReceptionPatientsListPage />} />
           <Route path="register" element={<PatientRegisterPage />} />
           <Route path="search" element={<PatientSearchPage />} />
+          <Route path="patient/:id" element={<PatientViewPage />} />
+          <Route path="patient/:id/edit" element={<PatientRegisterPage />} />
         </Route>
         <Route path="pharmacy" element={<RoleProtectedRoute><PharmacyDashboard /></RoleProtectedRoute>} />
         <Route path="lab" element={<RoleProtectedRoute><Outlet /></RoleProtectedRoute>}>
@@ -155,8 +208,12 @@ export default function App() {
           <Route index element={<OPDDashboard />} />
           <Route path="register" element={<OPDRegisterVisitPage />} />
           <Route path="queue" element={<OPDQueuePage />} />
+          <Route path="tokens" element={<DoctorTokenPanel />} />
           <Route path="visits" element={<OPDSearchVisitsPage />} />
           <Route path="visits/:id" element={<OPDVisitDetailPage />} />
+        </Route>
+        <Route path="display" element={<Outlet />}>
+          <Route path="tokens" element={<TokenDisplayScreen />} />
         </Route>
         {/* Explicit discharge route so /ipd/discharge/:id is matched reliably */}
         <Route path="ipd/discharge/:id" element={<DischargePage />} />
@@ -167,11 +224,14 @@ export default function App() {
           <Route path="beds" element={<BedsAvailability />} />
           <Route path="hospital-beds" element={<HospitalBedAvailability />} />
           <Route path="admissions" element={<IPDAdmissionsListPage />} />
+          <Route path="discharges" element={<IPDAdmissionsListPage />} />
+          <Route path="current" element={<IPDAdmissionsListPage />} />
           <Route path="admissions/:id" element={<ViewAdmission />} />
           <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
         </Route>
-        <Route path="billing" element={<ProtectedRoute allowedRoles={['BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
+        <Route path="billing" element={<ProtectedRoute allowedRoles={['BILLING', 'ADMIN', 'RECEPTIONIST']}><Outlet /></ProtectedRoute>}>
           <Route index element={<BillingDashboard />} />
+          <Route path="transactions" element={<BillingTransactionsPage />} />
           <Route path="ipd" element={<IpdBillingPage />} />
           <Route path="account/:id" element={<BillingAccountPage />} />
           <Route path="corporate" element={<CorporateAccountsPage />} />

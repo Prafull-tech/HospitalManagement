@@ -56,6 +56,7 @@ export interface PatientResponse {
   organisationType?: string
   organisationName?: string
   remarks?: string
+  active?: boolean
   createdAt: string
   updatedAt: string
 }

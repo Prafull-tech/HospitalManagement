@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { receptionApi } from '../api/reception'
 import type { PatientRequest } from '../types/patient'
 import type { ApiError } from '../types/patient'
@@ -40,39 +40,86 @@ function calculateAgeFromDOB(dateOfBirth: string): { years: number; months: numb
   return { years, months, days }
 }
 
+const emptyForm: PatientRequest = {
+  fullName: '',
+  idProofType: '',
+  idProofNumber: '',
+  dateOfBirth: '',
+  age: 0,
+  ageYears: undefined,
+  ageMonths: undefined,
+  ageDays: undefined,
+  gender: 'Male',
+  weightKg: undefined,
+  heightCm: undefined,
+  phone: '',
+  address: '',
+  state: '',
+  city: '',
+  district: '',
+  fatherHusbandName: '',
+  referredBy: '',
+  referredName: '',
+  referredPhone: '',
+  consultantName: '',
+  specialization: '',
+  organisationType: '',
+  organisationName: '',
+  remarks: '',
+}
+
 export function PatientRegisterPage() {
   const navigate = useNavigate()
-  const [form, setForm] = useState<PatientRequest>({
-    fullName: '',
-    idProofType: '',
-    idProofNumber: '',
-    dateOfBirth: '',
-    age: 0,
-    ageYears: undefined,
-    ageMonths: undefined,
-    ageDays: undefined,
-    gender: 'Male',
-    weightKg: undefined,
-    heightCm: undefined,
-    phone: '',
-    address: '',
-    state: '',
-    city: '',
-    district: '',
-    fatherHusbandName: '',
-    referredBy: '',
-    referredName: '',
-    referredPhone: '',
-    consultantName: '',
-    specialization: '',
-    organisationType: '',
-    organisationName: '',
-    remarks: '',
-  })
+  const { id: routeId } = useParams<{ id?: string }>()
+  const editId = routeId ? (Number(routeId) || null) : null
+  const isEdit = editId != null && !Number.isNaN(editId)
+
+  const [form, setForm] = useState<PatientRequest>({ ...emptyForm })
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState('')
   const [error, setError] = useState('')
-  const [successData, setSuccessData] = useState<{ uhid: string; registrationNumber: string } | null>(null)
+  const [successData, setSuccessData] = useState<{ id: number; uhid: string; registrationNumber: string } | null>(null)
   const [ageMode, setAgeMode] = useState<'auto' | 'manual'>('auto')
+
+  useEffect(() => {
+    if (!isEdit || !editId) return
+    setLoadError('')
+    receptionApi
+      .getById(editId)
+      .then((p) => {
+        setForm({
+          fullName: p.fullName ?? '',
+          idProofType: p.idProofType ?? '',
+          idProofNumber: p.idProofNumber ?? '',
+          dateOfBirth: p.dateOfBirth ?? '',
+          age: p.age ?? 0,
+          ageYears: p.ageYears,
+          ageMonths: p.ageMonths,
+          ageDays: p.ageDays,
+          gender: p.gender ?? 'Male',
+          weightKg: p.weightKg,
+          heightCm: p.heightCm,
+          phone: p.phone ?? '',
+          address: p.address ?? '',
+          state: p.state ?? '',
+          city: p.city ?? '',
+          district: p.district ?? '',
+          fatherHusbandName: p.fatherHusbandName ?? '',
+          referredBy: p.referredBy ?? '',
+          referredName: p.referredName ?? '',
+          referredPhone: p.referredPhone ?? '',
+          consultantName: p.consultantName ?? '',
+          specialization: p.specialization ?? '',
+          organisationType: p.organisationType ?? '',
+          organisationName: p.organisationName ?? '',
+          remarks: p.remarks ?? '',
+        })
+      })
+      .catch((err: unknown) => {
+        const ax = err as { response?: { data?: ApiError } }
+        setLoadError(ax.response?.data?.message || 'Failed to load patient.')
+      })
+  }, [isEdit, editId])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -144,35 +191,14 @@ export function PatientRegisterPage() {
         organisationName: form.organisationName?.trim() || undefined,
         remarks: form.remarks?.trim() || undefined,
       }
-      const created = await receptionApi.register(payload)
-      setSuccessData({ uhid: created.uhid, registrationNumber: created.registrationNumber })
-      setForm({
-        fullName: '',
-        idProofType: '',
-        idProofNumber: '',
-        dateOfBirth: '',
-        age: 0,
-        ageYears: undefined,
-        ageMonths: undefined,
-        ageDays: undefined,
-        gender: 'Male',
-        weightKg: undefined,
-        heightCm: undefined,
-        phone: '',
-        address: '',
-        state: '',
-        city: '',
-        district: '',
-        fatherHusbandName: '',
-        referredBy: '',
-        referredName: '',
-        referredPhone: '',
-        consultantName: '',
-        specialization: '',
-        organisationType: '',
-        organisationName: '',
-        remarks: '',
-      })
+      if (isEdit && editId != null) {
+        const updated = await receptionApi.update(editId, payload)
+        setSuccessData({ id: updated.id, uhid: updated.uhid, registrationNumber: updated.registrationNumber })
+      } else {
+        const created = await receptionApi.register(payload)
+        setSuccessData({ id: created.id, uhid: created.uhid, registrationNumber: created.registrationNumber })
+        setForm(emptyForm)
+      }
     } catch (err: unknown) {
       const ax = err as { response?: { data?: ApiError; status?: number } }
       const data = ax.response?.data
@@ -189,15 +215,19 @@ export function PatientRegisterPage() {
   return (
     <div className={styles.page}>
       <form onSubmit={handleSubmit} className={styles.form}>
+        {loadError && <div className={styles.error}>{loadError}</div>}
         {error && <div className={styles.error}>{error}</div>}
         {successData && (
           <div className={styles.success}>
-            Patient registered successfully.
+            {isEdit ? 'Patient updated successfully.' : 'Patient registered successfully.'}
             <div style={{ width: '100%', marginTop: '0.5rem' }}>
               <strong>UHID:</strong> {successData.uhid} | <strong>Registration No:</strong> {successData.registrationNumber}
             </div>
-            <button type="button" onClick={() => navigate(`/reception/search?uhid=${successData.uhid}`)}>
+            <button type="button" onClick={() => navigate(`/reception/patient/${successData.id}`)}>
               View patient
+            </button>
+            <button type="button" onClick={() => navigate('/reception/search')} className={styles.cancel}>
+              Back to Search
             </button>
           </div>
         )}
@@ -535,10 +565,10 @@ export function PatientRegisterPage() {
         <div className={styles.actions}>
           <button type="submit" disabled={loading} className={styles.submit}>
             <span className={styles.submitIcon}><UserPlusIcon /></span>
-            {loading ? 'Registering…' : 'Register'}
+            {loading ? (isEdit ? 'Updating…' : 'Registering…') : (isEdit ? 'Update' : 'Register')}
           </button>
-          <button type="button" onClick={() => navigate('/reception')} className={styles.cancel}>
-            Exit
+          <button type="button" onClick={() => isEdit && editId ? navigate(`/reception/patient/${editId}`) : navigate('/reception')} className={styles.cancel}>
+            {isEdit ? 'Cancel' : 'Exit'}
           </button>
         </div>
       </form>

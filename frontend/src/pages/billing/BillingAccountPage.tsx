@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { billingApi } from '../../api/billing'
-import type { BillingAccountView, PaymentRequest } from '../../types/billing'
+import type { BillingAccountView, BillingItemResponse, PaymentRequest } from '../../types/billing'
 import styles from './BillingAccountPage.module.css'
+
+/** Hospital details for NABH bill header/footer (configurable via env or app config later) */
+const HOSPITAL_BILL = {
+  name: 'Hope Haven Hospital',
+  address: '855 Howard Street, Dutton, MI 49316',
+  phone: '(123) 456-1238',
+  email: 'hopedutton@hopehaven.com',
+  nabhLabel: 'NABH Accredited',
+  gstin: '', // e.g. '29AAAAA0000A1Z5' when applicable
+}
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('en-IN', {
@@ -20,6 +30,125 @@ function formatDateTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+/** Build NABH-compliant patient bill HTML for printing */
+function buildNabhBillHtml(data: BillingAccountView, formatCurr: (n: number) => string): string {
+  const billDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const hospital = HOSPITAL_BILL
+  const items = data.items || []
+
+  const rows = items
+    .map(
+      (item: BillingItemResponse, i: number) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${formatDate(item.createdAt)}</td>
+      <td>${escapeHtml(item.serviceName)}${item.cgst != null && item.cgst > 0 ? `<br/><small>CGST + SGST</small>` : ''}</td>
+      <td class="text-end">${item.quantity}</td>
+      <td class="text-end">${formatCurr(item.unitPrice)}</td>
+      <td class="text-end">${formatCurr(item.totalPrice)}</td>
+    </tr>`
+    )
+    .join('')
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Patient Bill - ${escapeHtml(data.patientName)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; padding: 16px; max-width: 800px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #0d9488; }
+    .hospital-name { font-size: 18px; font-weight: 700; color: #0d9488; margin: 0 0 4px 0; }
+    .nabh-badge { font-size: 10px; font-weight: 600; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+    .hospital-details { text-align: right; font-size: 11px; color: #444; line-height: 1.4; }
+    .bill-title { text-align: center; font-size: 16px; font-weight: 700; margin: 14px 0 8px 0; text-transform: uppercase; letter-spacing: 0.03em; }
+    .bill-meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 11px; color: #555; }
+    .patient-block { margin-bottom: 14px; padding: 8px 10px; background: #f8fafc; border-radius: 6px; font-size: 11px; }
+    .patient-block strong { display: block; margin-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { padding: 6px 8px; text-align: left; border: 1px solid #e2e8f0; }
+    th { background: #0d9488; color: #fff; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .text-end { text-align: right; }
+    .totals { margin-top: 12px; margin-left: auto; width: 280px; font-size: 12px; }
+    .totals tr { border: none; }
+    .totals td { border: none; padding: 4px 0; }
+    .totals td:first-child { color: #555; }
+    .totals td:last-child { text-align: right; font-weight: 600; }
+    .balance-row td:last-child { font-size: 14px; color: #b45309; }
+    .declaration { margin-top: 16px; padding: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 10px; color: #166534; }
+    .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <p class="hospital-name">${escapeHtml(hospital.name)}</p>
+      ${hospital.nabhLabel ? `<p class="nabh-badge">${escapeHtml(hospital.nabhLabel)}</p>` : ''}
+    </div>
+    <div class="hospital-details">
+      <div>${escapeHtml(hospital.address)}</div>
+      <div>Phone: ${escapeHtml(hospital.phone)}</div>
+      <div>Email: ${escapeHtml(hospital.email)}</div>
+      ${hospital.gstin ? `<div>GSTIN: ${escapeHtml(hospital.gstin)}</div>` : ''}
+    </div>
+  </div>
+  <h1 class="bill-title">Patient Bill / Invoice</h1>
+  <div class="bill-meta">
+    <span>Bill Date: ${billDate}</span>
+    <span>Admission No: ${escapeHtml(data.admissionNumber || data.uhid)}</span>
+  </div>
+  <div class="patient-block">
+    <strong>Patient: ${escapeHtml(data.patientName)}</strong>
+    UHID: ${escapeHtml(data.uhid)}
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Particulars</th>
+        <th class="text-end">Qty</th>
+        <th class="text-end">Rate (₹)</th>
+        <th class="text-end">Amount (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows || '<tr><td colspan="6" class="text-end">No line items</td></tr>'}
+    </tbody>
+  </table>
+  <table class="totals">
+    <tr><td>Total Bill Amount</td><td>${formatCurr(data.totalAmount)}</td></tr>
+    <tr><td>Less: Payment Received</td><td>${formatCurr(data.paidAmount)}</td></tr>
+    <tr class="balance-row"><td>Balance Payable</td><td>${formatCurr(data.pendingAmount)}</td></tr>
+  </table>
+  <div class="declaration">
+    This bill is issued in compliance with NABH standards. All charges are as per hospital tariff. For queries contact the billing desk.
+  </div>
+  <div class="footer">
+    ${escapeHtml(hospital.name)} | ${escapeHtml(hospital.address)}
+  </div>
+  <script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`
+}
+
+function escapeHtml(s: string | undefined): string {
+  if (s == null || s === '') return ''
+  const el = document.createElement('div')
+  el.textContent = s
+  return el.innerHTML
 }
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -126,6 +255,18 @@ export function BillingAccountPage() {
           </p>
         </div>
         <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.actionBtn}
+            onClick={() => {
+              const win = window.open('', '_blank')
+              if (!win) return
+              win.document.write(buildNabhBillHtml(data, formatCurrency))
+              win.document.close()
+            }}
+          >
+            Print Bill (NABH)
+          </button>
           <Link to={`/ipd/admissions/${ipdId}`} className={styles.actionBtn}>
             Back to Admission
           </Link>

@@ -57,4 +57,26 @@ export const billingApi = {
   refund(request: RefundRequest): Promise<BillingAccountView> {
     return apiClient.post(`${BASE}/refund`, request).then((res) => res.data)
   },
+
+  /** GET /api/billing/transactions — list payments in date range (for reception dashboard). */
+  listTransactions(params: { from?: string; to?: string; page?: number; size?: number }): Promise<{
+    content: BillingTransactionItem[]
+    totalElements: number
+    totalPages: number
+    number: number
+  }> {
+    return apiClient.get(`${BASE}/transactions`, { params }).then((res) => res.data)
+  },
+}
+
+export interface BillingTransactionItem {
+  id: number
+  ipdAdmissionId: number
+  admissionNumber?: string
+  patientName?: string
+  patientUhid?: string
+  service?: string
+  amount: number
+  mode: string
+  createdAt: string
 }

@@ -1,5 +1,6 @@
 package com.hospital.hms.dashboard.service;
 
+import com.hospital.hms.billing.repository.PaymentRepository;
 import com.hospital.hms.dashboard.dto.DashboardStatsDto;
 import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.repository.IPDAdmissionRepository;
@@ -11,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,13 +32,16 @@ public class DashboardStatsService {
     private final PatientRepository patientRepository;
     private final OPDVisitRepository opdVisitRepository;
     private final IPDAdmissionRepository ipdAdmissionRepository;
+    private final PaymentRepository paymentRepository;
 
     public DashboardStatsService(PatientRepository patientRepository,
                                  OPDVisitRepository opdVisitRepository,
-                                 IPDAdmissionRepository ipdAdmissionRepository) {
+                                 IPDAdmissionRepository ipdAdmissionRepository,
+                                 PaymentRepository paymentRepository) {
         this.patientRepository = patientRepository;
         this.opdVisitRepository = opdVisitRepository;
         this.ipdAdmissionRepository = ipdAdmissionRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +62,11 @@ public class DashboardStatsService {
         long totalDischarged = ipdAdmissionRepository.countByDischargeDateTimeBetween(start, end);
         long totalCurrentlyAdmitted = ipdAdmissionRepository.countByAdmissionStatusIn(ACTIVE_ADMISSION_STATUSES);
 
+        ZoneId zone = ZoneId.systemDefault();
+        java.time.Instant instantFrom = ZonedDateTime.of(start, zone).toInstant();
+        java.time.Instant instantTo = ZonedDateTime.of(end, zone).toInstant();
+        double totalCollection = paymentRepository.sumAmountByCreatedAtBetween(instantFrom, instantTo).doubleValue();
+
         DashboardStatsDto dto = new DashboardStatsDto();
         dto.setFromDate(fromDate);
         dto.setToDate(toDate);
@@ -64,7 +75,7 @@ public class DashboardStatsService {
         dto.setTotalAdmitted(totalAdmitted);
         dto.setTotalDischarged(totalDischarged);
         dto.setTotalCurrentlyAdmitted(totalCurrentlyAdmitted);
-        dto.setTotalCollection(0.0); // integrate with billing when available
+        dto.setTotalCollection(totalCollection);
         return dto;
     }
 }

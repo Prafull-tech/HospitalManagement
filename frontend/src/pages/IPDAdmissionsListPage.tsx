@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { ipdApi } from '../api/ipd'
 import type { IPDAdmissionResponse, AdmissionStatus } from '../types/ipd'
 import styles from './IPDAdmissionsListPage.module.css'
@@ -102,18 +102,32 @@ function openPrintWindow(result: { content: IPDAdmissionResponse[]; totalElement
 }
 
 export function IPDAdmissionsListPage() {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const urlStatus = searchParams.get('status') as '' | AdmissionStatus | null
+  const urlFrom = searchParams.get('from') ?? ''
+  const urlTo = searchParams.get('to') ?? ''
+  const pathStatus: '' | AdmissionStatus =
+    location.pathname.includes('/ipd/discharges') ? 'DISCHARGED'
+    : location.pathname.includes('/ipd/current') ? 'ACTIVE'
+    : ''
+  const initialStatus = (urlStatus || pathStatus) as '' | AdmissionStatus
   const [admissionNumber, setAdmissionNumber] = useState('')
   const [patientUhid, setPatientUhid] = useState('')
   const [patientName, setPatientName] = useState('')
-  const [status, setStatus] = useState<'' | AdmissionStatus>('')
+  const [status, setStatus] = useState<'' | AdmissionStatus>(initialStatus)
   const [page, setPage] = useState(0)
   const size = 20
   const [applied, setApplied] = useState({
     admissionNumber: '',
     patientUhid: '',
     patientName: '',
-    status: '' as '' | AdmissionStatus,
+    status: initialStatus,
   })
+  useEffect(() => {
+    setStatus(initialStatus)
+    setApplied((prev) => ({ ...prev, status: initialStatus }))
+  }, [initialStatus])
   const [result, setResult] = useState<{
     content: IPDAdmissionResponse[]
     totalElements: number
@@ -127,12 +141,16 @@ export function IPDAdmissionsListPage() {
   useEffect(() => {
     setLoading(true)
     setError('')
+    const fromDate = urlFrom ? `${urlFrom}T00:00:00` : undefined
+    const toDate = urlTo ? `${urlTo}T23:59:59` : undefined
     ipdApi
       .search({
         admissionNumber: applied.admissionNumber || undefined,
         patientUhid: applied.patientUhid || undefined,
         patientName: applied.patientName.trim() || undefined,
         status: applied.status || undefined,
+        fromDate,
+        toDate,
         page,
         size,
       })
@@ -156,7 +174,7 @@ export function IPDAdmissionsListPage() {
         setResult(null)
       })
       .finally(() => setLoading(false))
-  }, [applied.admissionNumber, applied.patientUhid, applied.patientName, applied.status, page])
+  }, [applied.admissionNumber, applied.patientUhid, applied.patientName, applied.status, page, urlFrom, urlTo])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()

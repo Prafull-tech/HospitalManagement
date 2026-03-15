@@ -18,6 +18,10 @@ import java.util.Optional;
  */
 public interface IPDAdmissionRepository extends JpaRepository<IPDAdmission, Long> {
 
+    @EntityGraph(attributePaths = { "patient" })
+    @Query("SELECT a FROM IPDAdmission a WHERE a.id = :id")
+    Optional<IPDAdmission> findByIdWithPatient(@Param("id") Long id);
+
     Optional<IPDAdmission> findByAdmissionNumber(String admissionNumber);
 
     @Query("SELECT a FROM IPDAdmission a WHERE a.patient.id = :patientId " +

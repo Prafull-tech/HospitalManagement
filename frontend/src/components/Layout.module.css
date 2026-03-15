@@ -94,6 +94,15 @@
   color: var(--hms-nav-text);
 }
 
+.navGroupIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  opacity: 0.8;
+}
+
 .navGroupLabel {
   flex: 1;
   white-space: nowrap;

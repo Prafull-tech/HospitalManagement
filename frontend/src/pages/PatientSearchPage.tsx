@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { receptionApi } from '../api/reception'
 import type { PatientResponse } from '../types/patient'
 import type { ApiError } from '../types/patient'
@@ -14,6 +14,7 @@ function SearchIcon() {
 }
 
 export function PatientSearchPage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialUhid = searchParams.get('uhid') ?? ''
   const [uhid, setUhid] = useState(initialUhid)
@@ -27,6 +28,31 @@ export function PatientSearchPage() {
   const [allPatients, setAllPatients] = useState<PatientResponse[]>([])
   const [allLoading, setAllLoading] = useState(true)
   const [allError, setAllError] = useState('')
+  const [disablingId, setDisablingId] = useState<number | null>(null)
+  const resultsPrintRef = useRef<HTMLDivElement>(null)
+
+  const refreshAllPatients = () => {
+    setAllLoading(true)
+    receptionApi
+      .list({ page: 0, size: 500 })
+      .then(setAllPatients)
+      .catch(() => setAllError('Failed to refresh list.'))
+      .finally(() => setAllLoading(false))
+  }
+
+  const handleDisable = async (p: PatientResponse) => {
+    if (!window.confirm(`Disable patient "${p.fullName}" (${p.uhid})? They will no longer appear in search/list.`)) return
+    setDisablingId(p.id)
+    try {
+      await receptionApi.disable(p.id)
+      setResults((prev) => prev.filter((x) => x.id !== p.id))
+      refreshAllPatients()
+    } catch {
+      setError('Failed to disable patient.')
+    } finally {
+      setDisablingId(null)
+    }
+  }
 
   useEffect(() => {
     setUhid(initialUhid)
@@ -52,6 +78,43 @@ export function PatientSearchPage() {
       })
     return () => { cancelled = true }
   }, [])
+
+  function PatientsTable({ patients }: { patients: PatientResponse[] }) {
+    return (
+      <div className="table-responsive">
+        <table className="table table-sm table-hover table-striped align-middle mb-0">
+          <thead className="table-light">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Number</th>
+              <th scope="col">Gender</th>
+              <th scope="col" className="text-end no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {patients.map((p) => (
+              <tr key={p.id}>
+                <td>
+                  <Link to={`/reception/patient/${p.id}`} className="fw-semibold text-primary text-decoration-none">{p.uhid}</Link>
+                </td>
+                <td>{p.fullName}</td>
+                <td>{p.phone ?? '—'}</td>
+                <td>{p.gender ?? '—'}</td>
+                <td className="text-end no-print">
+                  <div className="d-flex gap-1 justify-content-end">
+                    <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => navigate(`/reception/patient/${p.id}`)}>View</button>
+                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => navigate(`/reception/patient/${p.id}/edit`)}>Edit</button>
+                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDisable(p)} disabled={disablingId === p.id}>{disablingId === p.id ? 'Disabling…' : 'Disable'}</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,18 +151,59 @@ export function PatientSearchPage() {
     setSearchParams({})
   }
 
+  const handlePrintPage = () => {
+    const prevTitle = document.title
+    document.title = 'Search Patient - Hospital Management System'
+    window.print()
+    document.title = prevTitle
+  }
+
+  const handlePrintResults = () => {
+    if (!resultsPrintRef.current) return
+    const prevTitle = document.title
+    document.title = `Patient Search Results - ${results.length} patient(s) found`
+    const printContent = resultsPrintRef.current.innerHTML
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>${document.title}</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+          <style>body { padding: 1rem; font-size: 14px; } table { width: 100%; } a { color: #0d6efd; text-decoration: none; }</style>
+        </head>
+        <body>
+          <h5 class="text-primary mb-3">${results.length} patient(s) found</h5>
+          ${printContent}
+          <script>window.print(); window.close();</script>
+        </body>
+      </html>
+    `)
+    win.document.close()
+    document.title = prevTitle
+  }
+
   return (
     <div className="d-flex flex-column gap-3">
-      <nav aria-label="Breadcrumb">
+      <h1 className="print-only h5 mb-2">Patient List – Search Patient</h1>
+      <nav aria-label="Breadcrumb" className="no-print">
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item"><a href="/reception">Reception</a></li>
           <li className="breadcrumb-item active" aria-current="page">Search Patient</li>
         </ol>
       </nav>
 
-      <div className="card shadow-sm">
-        <div className="card-header">
+      <div className="card shadow-sm no-print">
+        <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
           <h2 className="h6 mb-0 fw-bold">Search</h2>
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={handlePrintPage}
+            aria-label="Print full page"
+          >
+            Print page
+          </button>
         </div>
         <div className="card-body">
           <form onSubmit={handleSearch} className="d-flex flex-column gap-3">
@@ -153,28 +257,19 @@ export function PatientSearchPage() {
 
       {searched && !loading && (
         <div className="card shadow-sm">
-          <div className="card-header bg-primary text-white">
+          <div className="card-header bg-primary text-white d-flex align-items-center justify-content-between flex-wrap gap-2">
             <h2 className="h6 mb-0 fw-bold">
               {results.length === 0 ? 'No patients found' : `${results.length} patient(s) found`}
             </h2>
+            {results.length > 0 && (
+              <button type="button" className="btn btn-light btn-sm no-print" onClick={handlePrintResults} aria-label="Print search results">
+                Print results
+              </button>
+            )}
           </div>
           {results.length > 0 && (
-            <div className="card-body">
-              <ul className="list-group list-group-flush list-group-numbered">
-                {results.map((p) => (
-                  <li key={p.id} className="list-group-item d-flex flex-column gap-1">
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="fw-semibold text-primary">{p.uhid}</span>
-                      <span className="fw-medium">{p.fullName}</span>
-                    </div>
-                    <small className="text-muted">
-                      {p.age} yrs · {p.gender}
-                      {p.phone && ` · ${p.phone}`}
-                    </small>
-                    {p.address && <small className="text-muted">{p.address}</small>}
-                  </li>
-                ))}
-              </ul>
+            <div className="card-body" ref={resultsPrintRef}>
+              <PatientsTable patients={results} />
             </div>
           )}
         </div>
@@ -194,21 +289,7 @@ export function PatientSearchPage() {
             <p className="text-muted mb-0">No patients registered yet.</p>
           )}
           {!allLoading && !allError && allPatients.length > 0 && (
-            <ul className="list-group list-group-flush list-group-numbered">
-              {allPatients.map((p) => (
-                <li key={p.id} className="list-group-item d-flex flex-column gap-1">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="fw-semibold text-primary">{p.uhid}</span>
-                    <span className="fw-medium">{p.fullName}</span>
-                  </div>
-                  <small className="text-muted">
-                    {p.age} yrs · {p.gender}
-                    {p.phone && ` · ${p.phone}`}
-                  </small>
-                  {p.address && <small className="text-muted">{p.address}</small>}
-                </li>
-              ))}
-            </ul>
+            <PatientsTable patients={allPatients} />
           )}
         </div>
       </div>

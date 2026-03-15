@@ -19,6 +19,7 @@ public enum UserRole {
     RADIOLOGY_TECH,
     BLOOD_BANK_TECH,
     RECEPTIONIST,
+    FRONT_DESK,
     HELP_DESK,
     HOUSEKEEPING
 }

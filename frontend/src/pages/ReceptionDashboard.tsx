@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { dashboardApi } from '../api/dashboard'
 import type { DashboardStatsDto } from '../types/dashboard'
+import styles from './ReceptionDashboard.module.css'
 
 function UserPlusIcon() {
   return (
@@ -49,14 +50,77 @@ function ClipboardIcon() {
 
 const today = new Date().toISOString().slice(0, 10)
 
+type RangeType = 'custom' | 'thisYear' | 'previousYear' | 'monthYear'
+
+function getThisYearRange(): { from: string; to: string } {
+  const y = new Date().getFullYear()
+  return { from: `${y}-01-01`, to: today }
+}
+
+function getPreviousYearRange(): { from: string; to: string } {
+  const y = new Date().getFullYear() - 1
+  return { from: `${y}-01-01`, to: `${y}-12-31` }
+}
+
+function getMonthYearRange(month: number, year: number): { from: string; to: string } {
+  const lastDay = new Date(year, month, 0).getDate()
+  const from = `${year}-${String(month).padStart(2, '0')}-01`
+  const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { from, to }
+}
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+
 export function ReceptionDashboard() {
+  const navigate = useNavigate()
   const { user, hasRole } = useAuth()
   const canRegister = !user || hasRole('ADMIN', 'RECEPTIONIST')
+  const currentYear = new Date().getFullYear()
+  const [rangeType, setRangeType] = useState<RangeType>('custom')
   const [fromDate, setFromDate] = useState(today)
   const [toDate, setToDate] = useState(today)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(currentYear)
   const [stats, setStats] = useState<DashboardStatsDto | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const applyPreset = (preset: RangeType, month?: number, year?: number) => {
+    if (preset === 'thisYear') {
+      const { from, to } = getThisYearRange()
+      setFromDate(from)
+      setToDate(to)
+    } else if (preset === 'previousYear') {
+      const { from, to } = getPreviousYearRange()
+      setFromDate(from)
+      setToDate(to)
+    } else if (preset === 'monthYear' && month != null && year != null) {
+      const { from, to } = getMonthYearRange(month, year)
+      setFromDate(from)
+      setToDate(to)
+    }
+  }
+
+  const handleRangeTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as RangeType
+    setRangeType(value)
+    if (value === 'thisYear') applyPreset('thisYear')
+    else if (value === 'previousYear') applyPreset('previousYear')
+    else if (value === 'monthYear') applyPreset('monthYear', selectedMonth, selectedYear)
+  }
+
+  const handleMonthYearChange = (month: number, year: number) => {
+    setSelectedMonth(month)
+    setSelectedYear(year)
+    if (rangeType === 'monthYear') {
+      const { from, to } = getMonthYearRange(month, year)
+      setFromDate(from)
+      setToDate(to)
+    }
+  }
 
   useEffect(() => {
     setError('')
@@ -76,13 +140,11 @@ export function ReceptionDashboard() {
           setError('')
         }
       })
-      .catch((err) => {
-        if (cancelled) return
-        const msg = err.response?.data?.message || err.code === 'ECONNABORTED'
-          ? 'Request timed out. Is the backend running at http://localhost:8080?'
-          : 'Failed to load stats. Is the backend running?'
-        setError(msg)
-        setStats(null)
+      .catch(() => {
+        if (!cancelled) {
+          setError('Unable to load dashboard data.')
+          setStats(null)
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -143,11 +205,23 @@ export function ReceptionDashboard() {
     URL.revokeObjectURL(url)
   }
 
+  const handlePrintPage = () => {
+    const prevTitle = document.title
+    document.title = 'Reception - Hospital Management System'
+    window.print()
+    document.title = prevTitle
+  }
+
   return (
     <div className="d-flex flex-column gap-3">
-      <div>
-        <h2 className="h5 mb-1 fw-bold">Reception</h2>
-        <p className="text-muted small mb-0">Patient registration and lookup</p>
+      <div className="d-flex align-items-start justify-content-between flex-wrap gap-2">
+        <div>
+          <h2 className="h5 mb-1 fw-bold">Reception</h2>
+          <p className="text-muted small mb-0">Patient registration and lookup</p>
+        </div>
+        <button type="button" className={`btn btn-outline-secondary btn-sm ${styles.printPageBtn}`} onClick={handlePrintPage} aria-label="Print full reception page">
+          Print page
+        </button>
       </div>
 
       <div className="card shadow-sm">
@@ -155,25 +229,80 @@ export function ReceptionDashboard() {
           <h3 className="h6 mb-0 fw-bold">Date range &amp; report</h3>
         </div>
         <div className="card-body">
-          <div className="row g-2 align-items-end flex-wrap">
+          <div className="row g-3 align-items-end flex-wrap">
             <div className="col-auto">
-              <label className="form-label small mb-0">From</label>
-              <input
-                type="date"
-                className="form-control form-control-sm"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-              />
+              <label className="form-label small mb-0">Range</label>
+              <select
+                className="form-select form-select-sm"
+                value={rangeType}
+                onChange={handleRangeTypeChange}
+                aria-label="Date range type"
+              >
+                <option value="custom">Custom (From – To)</option>
+                <option value="thisYear">This year</option>
+                <option value="previousYear">Previous year</option>
+                <option value="monthYear">Month &amp; year</option>
+              </select>
             </div>
-            <div className="col-auto">
-              <label className="form-label small mb-0">To</label>
-              <input
-                type="date"
-                className="form-control form-control-sm"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-              />
-            </div>
+            {rangeType === 'custom' && (
+              <>
+                <div className="col-auto">
+                  <label className="form-label small mb-0">From</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                  />
+                </div>
+                <div className="col-auto">
+                  <label className="form-label small mb-0">To</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+            {rangeType === 'monthYear' && (
+              <>
+                <div className="col-auto">
+                  <label className="form-label small mb-0">Month</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={selectedMonth}
+                    onChange={(e) => handleMonthYearChange(Number(e.target.value), selectedYear)}
+                    aria-label="Month"
+                  >
+                    {MONTHS.map((name, i) => (
+                      <option key={name} value={i + 1}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-auto">
+                  <label className="form-label small mb-0">Year</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={selectedYear}
+                    onChange={(e) => handleMonthYearChange(selectedMonth, Number(e.target.value))}
+                    aria-label="Year"
+                  >
+                    {[currentYear, currentYear - 1, currentYear - 2, currentYear - 3].map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+            {(rangeType === 'thisYear' || rangeType === 'previousYear' || rangeType === 'monthYear') && (
+              <div className="col-auto text-muted small">
+                <span className="d-inline-block me-1">{fromDate}</span>
+                <span aria-hidden>–</span>
+                <span className="d-inline-block ms-1">{toDate}</span>
+              </div>
+            )}
             <div className="col-auto">
               <button type="button" className="btn btn-outline-secondary btn-sm" onClick={handlePrint} disabled={!stats}>
                 Print
@@ -191,7 +320,14 @@ export function ReceptionDashboard() {
 
       <div className="row g-3">
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100">
+          <div
+            className={`card shadow-sm h-100 ${styles.clickableCard}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/reception/patients?from=${fromDate}&to=${toDate}`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/reception/patients?from=${fromDate}&to=${toDate}`)}
+            aria-label="View patients registered in date range"
+          >
             <div className="card-body d-flex align-items-start gap-3">
               <div className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
                 <UsersIcon />
@@ -204,7 +340,14 @@ export function ReceptionDashboard() {
           </div>
         </div>
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100">
+          <div
+            className={`card shadow-sm h-100 ${styles.clickableCard}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/opd/visits?from=${fromDate}&to=${toDate}`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/opd/visits?from=${fromDate}&to=${toDate}`)}
+            aria-label="View OPD visits in date range"
+          >
             <div className="card-body d-flex align-items-start gap-3">
               <div className="rounded-3 bg-success bg-opacity-10 p-2 text-success">
                 <ClipboardIcon />
@@ -217,7 +360,14 @@ export function ReceptionDashboard() {
           </div>
         </div>
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100">
+          <div
+            className={`card shadow-sm h-100 ${styles.clickableCard}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/ipd/admissions?from=${fromDate}&to=${toDate}&status=ADMITTED`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/ipd/admissions?from=${fromDate}&to=${toDate}&status=ADMITTED`)}
+            aria-label="View total admitted in date range"
+          >
             <div className="card-body d-flex align-items-start gap-3">
               <div className="rounded-3 bg-info bg-opacity-10 p-2 text-info">
                 <UsersIcon />
@@ -230,7 +380,14 @@ export function ReceptionDashboard() {
           </div>
         </div>
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100">
+          <div
+            className={`card shadow-sm h-100 ${styles.clickableCard}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/ipd/discharges?from=${fromDate}&to=${toDate}&status=DISCHARGED`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/ipd/discharges?from=${fromDate}&to=${toDate}&status=DISCHARGED`)}
+            aria-label="View total discharged"
+          >
             <div className="card-body d-flex align-items-start gap-3">
               <div className="rounded-3 bg-warning bg-opacity-10 p-2 text-warning">
                 <ClipboardIcon />
@@ -243,7 +400,14 @@ export function ReceptionDashboard() {
           </div>
         </div>
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100">
+          <div
+            className={`card shadow-sm h-100 ${styles.clickableCard}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/ipd/current?status=ACTIVE`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/ipd/current?status=ACTIVE`)}
+            aria-label="View currently admitted"
+          >
             <div className="card-body d-flex align-items-start gap-3">
               <div className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
                 <UsersIcon />
@@ -256,7 +420,14 @@ export function ReceptionDashboard() {
           </div>
         </div>
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100">
+          <div
+            className={`card shadow-sm h-100 ${styles.clickableCard}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/billing/transactions?from=${fromDate}&to=${toDate}`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/billing/transactions?from=${fromDate}&to=${toDate}`)}
+            aria-label="View total collection / billing transactions"
+          >
             <div className="card-body d-flex align-items-start gap-3">
               <div className="rounded-3 bg-success bg-opacity-10 p-2 text-success">
                 <ClipboardIcon />
