@@ -12,12 +12,13 @@ async function wait() {
   while (Date.now() - start < MAX_WAIT_MS) {
     try {
       const ctrl = new AbortController()
-const t = setTimeout(() => ctrl.abort(), 3000)
-const res = await fetch(BACKEND_URL, { signal: ctrl.signal })
-clearTimeout(t)
+      const t = setTimeout(() => ctrl.abort(), 3000)
+      const res = await fetch(BACKEND_URL, { signal: ctrl.signal })
+      clearTimeout(t)
       if (res.ok) {
+        await res.text().catch(() => {})
         console.log('Backend is ready!')
-        setTimeout(() => process.exit(0), 50)
+        setTimeout(() => process.exit(0), 300)
         return
       }
     } catch {
