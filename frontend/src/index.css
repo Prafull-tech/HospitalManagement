@@ -1,4 +1,6 @@
-/* macOS-style system font: San Francisco on Apple, Segoe UI on Windows, native elsewhere */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
+/* Global reset */
 * {
   box-sizing: border-box;
 }
@@ -6,69 +8,74 @@
 /* ========== HMS Design System – use these tokens everywhere ========== */
 /* Primary actions: --hms-cta. Links/focus: --hms-accent. Cards: --hms-radius-card. */
 
-/* ========== macOS-style typography ========== */
+/* ========== Typography ========== */
 :root,
 [data-theme="light"],
 [data-theme="dark"] {
-  /* San Francisco on macOS/iOS, Segoe UI on Windows, system UI elsewhere */
-  --hms-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --hms-font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --hms-heading-font: "Syne", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
 }
 
 /* ========== Day (Light) theme ========== */
 :root,
 [data-theme="light"] {
-  --hms-primary: #2A428C;
-  --hms-primary-dark: #1e3070;
-  --hms-accent: #3D6AF0;
-  --hms-accent-hover: #2d5ae0;
-  --hms-bg: #F0F4F8;
-  --hms-bg-elevated: #E8ECF1;
-  --hms-card: #FFFFFF;
-  --hms-card-border: #E5E7EB;
+  --hms-primary: #5B4FCF;
+  --hms-primary-dark: #4438b8;
+  --hms-accent: #9B8FF5;
+  --hms-accent-hover: #7B6FE8;
+  --hms-bg: #F4F3FF;
+  --hms-bg-elevated: #F9F8FF;
+  --hms-card: #ffffff;
+  --hms-card-border: #E4E2F8;
   --hms-light-blue: #AFC0D6;
-  --hms-text: #1a1a2e;
-  --hms-text-secondary: #374151;
-  --hms-text-muted: #6b7280;
+  --hms-text: #1A1535;
+  --hms-text-secondary: #433B57;
+  --hms-text-muted: #6B647A;
   --hms-text-inverse: #ffffff;
-  --hms-accent-magenta: #DD4EDD;
-  --hms-accent-pink: #F2B6B6;
-  --hms-accent-purple: #DBC0E0;
-  --hms-accent-orange: #F2C994;
-  --hms-success: #059669;
-  --hms-error: #dc2626;
-  --hms-border: #E5E7EB;
-  --hms-border-focus: #3D6AF0;
-  --hms-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --hms-shadow-card: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --hms-accent-magenta: #9B8FF5;
+  --hms-accent-pink: #F9A8D4;
+  --hms-accent-purple: #7B6FE8;
+  --hms-accent-orange: #F59E0B;
+  --hms-success: #22C55E;
+  --hms-error: #EF4444;
+  --hms-border: #E4E2F8;
+  --hms-border-focus: #5B4FCF;
+  --hms-shadow: 0 2px 12px rgba(91, 79, 207, 0.08);
+  --hms-shadow-card: 0 4px 20px rgba(91, 79, 207, 0.08);
   --hms-radius: 10px;
   --hms-radius-card: 12px;
   --hms-radius-badge: 6px;
   --hms-input-bg: #FFFFFF;
   --hms-input-padding: 0.75rem 1rem;
   --hms-btn-padding: 0.75rem 1.5rem;
-  --hms-focus-ring: rgba(61, 106, 240, 0.15);
-  --hms-error-bg: #fef2f2;
-  --hms-error-border: #fecaca;
-  --hms-success-bg: #f0fdf4;
-  --hms-success-border: #bbf7d0;
-  --hms-sidebar-bg: #1e3a5f;
-  --hms-sidebar-text: rgba(255, 255, 255, 0.9);
-  --hms-sidebar-text-muted: rgba(255, 255, 255, 0.7);
-  --hms-sidebar-active: rgba(255, 255, 255, 0.15);
-  --hms-form-input-bg: #f3f4f6;
-  --hms-form-input-border: #e5e7eb;
+  --hms-focus-ring: rgba(91, 79, 207, 0.18);
+  --hms-error-bg: #FEF2F2;
+  --hms-error-border: #FECACA;
+  --hms-success-bg: #DCFCE7;
+  --hms-success-border: #BBF7D0;
+  --hms-sidebar-bg: #5B4FCF;
+  --hms-sidebar-surface: #4E44B8;
+  --hms-sidebar-text: rgba(255, 255, 255, 0.88);
+  --hms-sidebar-text-muted: rgba(255, 255, 255, 0.55);
+  --hms-sidebar-active: rgba(255, 255, 255, 0.18);
+  --hms-form-input-bg: #F9F8FF;
+  --hms-form-input-border: #E4E2F8;
   --hms-form-placeholder: #9ca3af;
-  --hms-cta: #0d9488;
-  --hms-cta-hover: #0f766e;
-  /* Enterprise light sidebar (admin nav) */
-  --hms-nav-bg: #f8fafc;
-  --hms-nav-border: #e2e8f0;
-  --hms-nav-text: #334155;
-  --hms-nav-text-muted: #64748b;
-  --hms-nav-hover: #f1f5f9;
-  --hms-nav-active-bg: #e0f2fe;
-  --hms-nav-active-text: #0369a1;
-  --hms-nav-active-border: #0ea5e9;
+  --hms-cta: #5B4FCF;
+  --hms-cta-hover: #4438b8;
+  /* Sidebar / nav — neutral dark surface (Linear-style, always dark) */
+  --hms-nav-bg: #5B4FCF;
+  --hms-nav-border: rgba(255, 255, 255, 0.12);
+  --hms-nav-text: rgba(255, 255, 255, 0.88);
+  --hms-nav-text-muted: rgba(255, 255, 255, 0.55);
+  --hms-nav-hover: rgba(255, 255, 255, 0.12);
+  --hms-nav-active-bg: rgba(255, 255, 255, 0.18);
+  --hms-nav-active-ring: transparent;
+  --hms-nav-active-text: #FFFFFF;
+  --hms-nav-active-border: #ffffff;
+  --hms-nav-section-label: rgba(255, 255, 255, 0.50);
+  --hms-sidebar-badge-bg: #EF4444;
+  --hms-sidebar-badge-text: #FFFFFF;
 }
 
 /* ========== Night (Dark) theme ========== */
@@ -107,24 +114,89 @@
   --hms-error-border: rgba(248, 113, 113, 0.35);
   --hms-success-bg: rgba(52, 211, 153, 0.12);
   --hms-success-border: rgba(52, 211, 153, 0.35);
-  --hms-sidebar-bg: #0f172a;
-  --hms-sidebar-text: rgba(255, 255, 255, 0.95);
-  --hms-sidebar-text-muted: rgba(255, 255, 255, 0.65);
-  --hms-sidebar-active: rgba(96, 165, 250, 0.2);
+  --hms-sidebar-bg: #4338a8;
+  --hms-sidebar-text: rgba(255, 255, 255, 0.92);
+  --hms-sidebar-text-muted: rgba(255, 255, 255, 0.55);
+  --hms-sidebar-active: rgba(255, 255, 255, 0.18);
   --hms-form-input-bg: #1e293b;
   --hms-form-input-border: #334155;
   --hms-form-placeholder: #64748b;
   --hms-cta: #14b8a6;
   --hms-cta-hover: #0d9488;
-  /* Sidebar stays light in both themes (enterprise pattern) */
-  --hms-nav-bg: #f8fafc;
-  --hms-nav-border: #e2e8f0;
-  --hms-nav-text: #334155;
-  --hms-nav-text-muted: #64748b;
-  --hms-nav-hover: #f1f5f9;
-  --hms-nav-active-bg: #e0f2fe;
-  --hms-nav-active-text: #0369a1;
-  --hms-nav-active-border: #0ea5e9;
+  /* Sidebar follows deep purple in night mode */
+  --hms-nav-bg: #4338a8;
+  --hms-nav-border: rgba(255, 255, 255, 0.12);
+  --hms-nav-text: rgba(255, 255, 255, 0.88);
+  --hms-nav-text-muted: rgba(255, 255, 255, 0.55);
+  --hms-nav-hover: rgba(255, 255, 255, 0.12);
+  --hms-nav-active-bg: rgba(255, 255, 255, 0.18);
+  --hms-nav-active-ring: transparent;
+  --hms-nav-active-text: #ffffff;
+  --hms-nav-active-border: #ffffff;
+  --hms-nav-section-label: rgba(255, 255, 255, 0.50);
+}
+
+/* ========== Night mode: Bootstrap component overrides ========== */
+[data-theme="dark"] .card {
+  background-color: var(--hms-card);
+  border-color: var(--hms-card-border);
+  color: var(--hms-text);
+}
+[data-theme="dark"] .card-header:not(.bg-primary) {
+  background-color: var(--hms-bg-elevated);
+  border-color: var(--hms-card-border);
+  color: var(--hms-text);
+}
+[data-theme="dark"] .card-body {
+  color: var(--hms-text);
+}
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: var(--hms-input-bg);
+  color: var(--hms-text);
+  border-color: var(--hms-border);
+}
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  border-color: var(--hms-border-focus);
+  box-shadow: 0 0 0 2px var(--hms-focus-ring);
+  color: var(--hms-text);
+}
+[data-theme="dark"] .btn-outline-secondary {
+  background-color: transparent;
+  border-color: var(--hms-border);
+  color: var(--hms-text-secondary);
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--hms-bg-elevated);
+  border-color: var(--hms-accent);
+  color: var(--hms-accent);
+}
+[data-theme="dark"] .btn-outline-primary {
+  border-color: var(--hms-accent);
+  color: var(--hms-accent);
+}
+[data-theme="dark"] .btn-outline-primary:hover {
+  background-color: var(--hms-focus-ring);
+  border-color: var(--hms-accent-hover);
+  color: var(--hms-accent);
+}
+[data-theme="dark"] .bg-light {
+  background-color: var(--hms-bg-elevated) !important;
+  color: var(--hms-text);
+}
+[data-theme="dark"] .list-group-item {
+  background-color: var(--hms-card);
+  border-color: var(--hms-border);
+  color: var(--hms-text);
+}
+[data-theme="dark"] .badge.bg-light {
+  background-color: var(--hms-bg-elevated) !important;
+  color: var(--hms-text) !important;
+}
+[data-theme="dark"] thead.table-light th {
+  background-color: var(--hms-bg-elevated);
+  color: var(--hms-text-muted);
 }
 
 body {
@@ -154,12 +226,11 @@ tbody td {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Table styles: match OPD visits (http://localhost:3000/opd/visits) */
+/* Table styles (match hms-admin-panel.html look) */
 table,
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
 }
 
 .table-responsive {
@@ -168,21 +239,35 @@ table,
 }
 
 table th,
-table td,
-.table th,
-.table td {
-  padding: 0.6rem 0.75rem;
+.table th {
+  padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--hms-border);
-}
-
-table thead th,
-.table thead th,
-thead.table-light th,
-.table thead.table-light th {
+  font-size: 11px;
   font-weight: 600;
   color: var(--hms-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
   background: var(--hms-bg-elevated);
+}
+
+table td,
+.table td {
+  padding: 13px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--hms-bg);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+table tbody tr:last-child td,
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table tbody tr:hover td,
+.table tbody tr:hover td {
+  background: var(--hms-bg);
 }
 
 table tbody td,

@@ -14,6 +14,7 @@ import type {
   ModuleVisibility,
 } from '../../types/system'
 import { ACTION_TYPES, VISIBILITY_OPTIONS } from './permissionConstants'
+import { apiErrorWithNetworkHint } from '../../utils/apiNetworkError'
 import styles from './SystemConfigShared.module.css'
 import shared from '../../styles/Dashboard.module.css'
 
@@ -45,7 +46,9 @@ export function SystemConfigPermissionsPage() {
         setModules(m)
         if (r.length > 0 && !selectedRoleId) setSelectedRoleId(r[0].id)
       })
-      .catch(() => setLoadError('Failed to load roles or modules.'))
+      .catch((err: unknown) =>
+        setLoadError(apiErrorWithNetworkHint('Failed to load roles or modules.', err))
+      )
       .finally(() => setLoading(false))
   }, [])
 
@@ -81,7 +84,9 @@ export function SystemConfigPermissionsPage() {
         })
         setMatrix(rows)
       })
-      .catch(() => setLoadError('Failed to load permissions for role.'))
+      .catch((err: unknown) =>
+        setLoadError(apiErrorWithNetworkHint('Failed to load permissions for role.', err))
+      )
       .finally(() => setLoading(false))
   }, [selectedRoleId, modules])
 
@@ -191,7 +196,9 @@ export function SystemConfigPermissionsPage() {
                     })
                     setMatrix(rows)
                   })
-                  .catch(() => setLoadError('Failed to load permissions for role.'))
+                  .catch((err: unknown) =>
+                    setLoadError(apiErrorWithNetworkHint('Failed to load permissions for role.', err))
+                  )
                   .finally(() => setLoading(false))
               }
             }}

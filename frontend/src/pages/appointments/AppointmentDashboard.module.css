@@ -1,0 +1,99 @@
+.scheduleSlot {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hms-bg-elevated);
+}
+
+.scheduleSlot:last-child {
+  border-bottom: none;
+}
+
+.scheduleTime {
+  width: 70px;
+  font-size: 12px;
+  color: var(--hms-text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.scheduleEvent {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border-left: 3px solid var(--hms-primary);
+  background: rgba(91, 79, 207, 0.1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scheduleEvent.green {
+  border-color: var(--hms-success);
+  background: var(--hms-success-bg);
+}
+
+.green {}
+
+.scheduleEvent.amber {
+  border-color: var(--hms-accent-orange);
+  background: #FEF3C7;
+}
+
+.amber {}
+
+.scheduleEvent.red {
+  border-color: var(--hms-error);
+  background: #FEF2F2;
+}
+
+.red {}
+
+.scheduleMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheduleName {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.scheduleSub {
+  font-size: 11px;
+  color: var(--hms-text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scheduleRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.scheduleActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.waitPatient {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.waitPatientSub {
+  font-size: 11px;
+  color: var(--hms-text-muted);
+}
+

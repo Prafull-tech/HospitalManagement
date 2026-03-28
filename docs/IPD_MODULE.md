@@ -33,7 +33,7 @@ IPD manages admitted patients from OPD referral, Emergency, or direct admission.
 | RECEPTIONIST  | ✓ (admission only) | ✓ | —         | —         |
 | HELP_DESK     | ✗     | ✓ (view only) | ✗        | ✗         |
 
-*Auth is currently disabled; re-enable and apply `@PreAuthorize` per endpoint when ready.*
+**Authentication:** The API uses JWT bearer tokens (`Authorization: Bearer …`). IPD endpoints enforce roles via Spring Security (`@PreAuthorize` / method security) where configured on each controller.
 
 ---
 

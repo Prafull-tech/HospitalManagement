@@ -24,7 +24,7 @@ export function PharmacyTable({
   const colSpan = emptyColSpan ?? headers.length
   return (
     <div className="table-responsive" style={{ maxHeight, overflowY: 'auto' }}>
-      <table className="table table-bordered table-hover table-sm align-middle">
+      <table className="table table-hover table-sm align-middle">
         <thead>
           <tr>{headers.map((h, i) => (typeof h === 'string' ? <th key={i}>{h}</th> : <th key={i}>{h}</th>))}</tr>
         </thead>

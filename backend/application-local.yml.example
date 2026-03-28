@@ -1,0 +1,13 @@
+# Copy this file to application-local.yml (gitignored) and fill in your local values.
+# This file is imported automatically by application.yml via spring.config.import.
+
+spring:
+  datasource:
+    username: root
+    password: your-local-mysql-password
+
+# Uncomment to override JWT secret locally
+# hms:
+#   security:
+#     jwt:
+#       secret: my-local-dev-secret

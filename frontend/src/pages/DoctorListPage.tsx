@@ -12,6 +12,13 @@ const STATUS_OPTIONS: { value: DoctorStatus | ''; label: string }[] = [
   { value: 'ON_LEAVE', label: 'On Leave' },
 ]
 
+function doctorStatusBadge(status: DoctorStatus | '') {
+  if (status === 'ACTIVE') return { label: 'Active', className: 'bg-success' }
+  if (status === 'INACTIVE') return { label: 'Inactive', className: 'bg-danger' }
+  if (status === 'ON_LEAVE') return { label: 'On Leave', className: 'bg-warning' }
+  return { label: status || '—', className: 'bg-secondary' }
+}
+
 export function DoctorListPage() {
   const [doctors, setDoctors] = useState<DoctorResponse[]>([])
   const [departments, setDepartments] = useState<DepartmentResponse[]>([])
@@ -199,8 +206,8 @@ export function DoctorListPage() {
         <>
           <div className="card shadow-sm">
             <div className="table-responsive">
-              <table className="table table-striped mb-0">
-                <thead>
+              <table className="table table-sm table-hover table-striped align-middle mb-0">
+                <thead className="table-light">
                   <tr>
                     <th>Code</th>
                     <th>Name</th>
@@ -208,7 +215,7 @@ export function DoctorListPage() {
                     <th>Type</th>
                     <th>Status</th>
                     <th>On Call</th>
-                    <th>Actions</th>
+                    <th className="text-nowrap">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -225,11 +232,16 @@ export function DoctorListPage() {
                         <td>{d.fullName}</td>
                         <td>{d.departmentName}</td>
                         <td>{d.doctorType}</td>
-                        <td>{d.status}</td>
+                        <td>
+                          <span className={`badge ${doctorStatusBadge(d.status).className}`}>
+                            {doctorStatusBadge(d.status).label}
+                          </span>
+                        </td>
                         <td>{d.onCall ? 'Yes' : 'No'}</td>
                         <td>
-                          <Link to={`/doctors/${d.id}/edit`} className="text-decoration-none me-2">Edit</Link>
-                          <Link to={`/doctors/${d.id}/availability`} className="text-decoration-none">Availability</Link>
+                          <Link to={`/doctors/${d.id}/edit`} className="btn btn-sm btn-outline-secondary">
+                            View
+                          </Link>
                         </td>
                       </tr>
                     ))

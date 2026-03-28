@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { systemModulesApi } from '../../api/system'
+import { apiErrorWithNetworkHint } from '../../utils/apiNetworkError'
 import type { ModuleResponse, ModuleRequest } from '../../types/system'
 import { MODULE_CATEGORY_LABELS } from './moduleCategoryLabels'
 import styles from './SystemConfigShared.module.css'
@@ -36,7 +37,7 @@ export function SystemConfigModulesPage() {
     systemModulesApi
       .list(!showDisabled)
       .then(setModules)
-      .catch(() => setError('Failed to load modules.'))
+      .catch((err: unknown) => setError(apiErrorWithNetworkHint('Failed to load modules.', err)))
       .finally(() => setLoading(false))
   }
 

@@ -86,7 +86,7 @@ public class LabController {
     }
 
     @GetMapping("/test-masters")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize(LabRoleAccess.VIEW_ORDERS_AND_RESULTS_ROLES)
     public List<TestMasterResponseDto> listTestMasters(@RequestParam(required = false) Boolean active) {
         if (active != null && active) {
             return testMasterService.listActive();
@@ -95,7 +95,7 @@ public class LabController {
     }
 
     @GetMapping("/test-masters/{id}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize(LabRoleAccess.VIEW_ORDERS_AND_RESULTS_ROLES)
     public TestMasterResponseDto getTestMaster(@PathVariable Long id) {
         return testMasterService.findById(id);
     }
@@ -119,7 +119,7 @@ public class LabController {
     }
 
     @GetMapping("/test-masters/panels/{panelCode}/expand")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize(LabRoleAccess.VIEW_ORDERS_AND_RESULTS_ROLES)
     public List<String> expandPanel(@PathVariable String panelCode) {
         return testMasterService.expandPanel(panelCode);
     }
@@ -137,7 +137,7 @@ public class LabController {
     }
 
     @GetMapping("/tests")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize(LabRoleAccess.VIEW_ORDERS_AND_RESULTS_ROLES)
     public List<TestMasterResponseDto> listTests(@RequestParam(required = false) Boolean active) {
         if (active != null && active) {
             return testMasterService.listActive();
@@ -146,7 +146,7 @@ public class LabController {
     }
 
     @GetMapping("/tests/{id}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize(LabRoleAccess.VIEW_ORDERS_AND_RESULTS_ROLES)
     public TestMasterResponseDto getTest(@PathVariable Long id) {
         return testMasterService.findById(id);
     }
@@ -209,7 +209,7 @@ public class LabController {
     }
 
     @GetMapping("/orders/opd/{opdVisitId}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize(LabRoleAccess.VIEW_ORDERS_AND_RESULTS_ROLES)
     public List<TestOrderResponseDto> getOrdersByOpdVisit(@PathVariable Long opdVisitId) {
         return testOrderService.findByOpdVisitId(opdVisitId);
     }

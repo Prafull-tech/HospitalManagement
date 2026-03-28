@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { queryClient } from './lib/queryClient'
 import { AppBootstrap } from './components/AppBootstrap'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -17,11 +19,13 @@ function FullApp() {
     <AppErrorBoundary>
       <AppBootstrap>
         <BrowserRouter>
-          <ThemeProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
         </BrowserRouter>
       </AppBootstrap>
     </AppErrorBoundary>

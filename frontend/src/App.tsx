@@ -4,12 +4,12 @@ import { useAuth } from './contexts/AuthContext'
 import { useAppBootstrap } from './components/AppBootstrap'
 import { setAuthRedirect } from './api/authRedirect'
 import { PermissionsProvider } from './contexts/PermissionsContext'
+import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext'
 import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { RoleProtectedRoute } from './components/RoleProtectedRoute'
 import { DashboardRedirect } from './components/DashboardRedirect'
 import { ReceptionDashboard } from './pages/ReceptionDashboard'
-import { ReceptionPatientsListPage } from './pages/reception/ReceptionPatientsListPage'
 import { PatientRegisterPage } from './pages/PatientRegisterPage'
 import { PatientSearchPage } from './pages/PatientSearchPage'
 import { PatientViewPage } from './pages/PatientViewPage'
@@ -39,7 +39,6 @@ import { InsurancePage } from './pages/billing/InsurancePage'
 import { OnlinePaymentPage } from './pages/billing/OnlinePaymentPage'
 import { OpdGroupBillingPage } from './pages/billing/OpdGroupBillingPage'
 import { PaymentsPage } from './pages/billing/PaymentsPage'
-import { BillingTransactionsPage } from './pages/billing/BillingTransactionsPage'
 import { RefundsPage } from './pages/billing/RefundsPage'
 import { NursingDashboard } from './pages/NursingDashboard'
 import { NursingStaffPage } from './pages/NursingStaffPage'
@@ -85,11 +84,11 @@ import { TokenDisplayScreen } from './pages/tokens/TokenDisplayScreen'
 import { DoctorTokenPanel } from './pages/tokens/DoctorTokenPanel'
 import { WalkinDashboard } from './pages/walkin/WalkinDashboard'
 import { WalkinRegistrationForm } from './pages/walkin/WalkinRegistrationForm'
-
-const AUTH_BYPASS = false // Set true to isolate: render "App Loaded" and skip auth
+import { MarketingLandingPage } from './pages/MarketingLandingPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { ChangePasswordPage } from './pages/ChangePasswordPage'
 
 export default function App() {
-  console.log('App render')
   const { user } = useAuth()
   const roleCodes = user?.roles?.length ? user.roles : []
 
@@ -105,12 +104,9 @@ export default function App() {
     bootstrap?.setReady()
   }, [bootstrap])
 
-  if (AUTH_BYPASS) {
-    return <div>App Loaded</div>
-  }
-
   return (
     <Routes>
+      <Route path="/home" element={<MarketingLandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route
@@ -118,12 +114,17 @@ export default function App() {
         element={
           <PermissionsProvider roleCodes={roleCodes}>
             <ProtectedRoute>
-              <Layout />
+              <FeatureFlagsProvider>
+                <Layout />
+              </FeatureFlagsProvider>
             </ProtectedRoute>
           </PermissionsProvider>
         }
       >
         <Route index element={<DashboardRedirect />} />
+        <Route path="dashboard" element={<DashboardRedirect />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="profile/change-password" element={<ChangePasswordPage />} />
         {/* Front Office – role: FRONT_DESK, RECEPTIONIST, BILLING, ADMIN */}
         <Route path="front-office" element={<ProtectedRoute allowedRoles={['FRONT_DESK', 'RECEPTIONIST', 'BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
           <Route path="register" element={<PatientRegisterPage />} />
@@ -162,7 +163,6 @@ export default function App() {
         </Route>
         <Route path="reception" element={<Outlet />}>
           <Route index element={<ReceptionDashboard />} />
-          <Route path="patients" element={<ReceptionPatientsListPage />} />
           <Route path="register" element={<PatientRegisterPage />} />
           <Route path="search" element={<PatientSearchPage />} />
           <Route path="patient/:id" element={<PatientViewPage />} />
@@ -224,15 +224,13 @@ export default function App() {
           <Route path="beds" element={<BedsAvailability />} />
           <Route path="hospital-beds" element={<HospitalBedAvailability />} />
           <Route path="admissions" element={<IPDAdmissionsListPage />} />
-          <Route path="discharges" element={<IPDAdmissionsListPage />} />
-          <Route path="current" element={<IPDAdmissionsListPage />} />
           <Route path="admissions/:id" element={<ViewAdmission />} />
           <Route path="admissions/:id/edit" element={<EditAdmissionPage />} />
         </Route>
-        <Route path="billing" element={<ProtectedRoute allowedRoles={['BILLING', 'ADMIN', 'RECEPTIONIST']}><Outlet /></ProtectedRoute>}>
+        <Route path="billing" element={<ProtectedRoute allowedRoles={['BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
           <Route index element={<BillingDashboard />} />
-          <Route path="transactions" element={<BillingTransactionsPage />} />
           <Route path="ipd" element={<IpdBillingPage />} />
+          <Route path="opd/:visitId" element={<BillingAccountPage />} />
           <Route path="account/:id" element={<BillingAccountPage />} />
           <Route path="corporate" element={<CorporateAccountsPage />} />
           <Route path="emi" element={<EMIPlansPage />} />
@@ -263,6 +261,12 @@ export default function App() {
         <Route path="laundry" element={<LaundryDashboard />} />
         <Route path="dietary" element={<DietaryDashboard />} />
         <Route path="meals" element={<MealServiceDashboard />} />
+        <Route path="hr" element={<Outlet />}>
+          <Route index element={<PlaceholderPage title="HR Management" description="Employees, attendance, shifts, and payroll. Coming in a future release." />} />
+          <Route path="attendance" element={<PlaceholderPage title="Attendance" description="Employee attendance. Coming in a future release." />} />
+          <Route path="shifts" element={<PlaceholderPage title="Shift Management" description="Shift management. Coming in a future release." />} />
+          <Route path="payroll" element={<PlaceholderPage title="Payroll" description="Payroll. Coming in a future release." />} />
+        </Route>
         <Route path="admin/config" element={<Outlet />}>
           <Route index element={<Navigate to="/admin/config/roles" replace />} />
           <Route path="roles" element={<SystemConfigRolesPage />} />

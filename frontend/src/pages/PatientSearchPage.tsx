@@ -1,8 +1,39 @@
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { receptionApi } from '../api/reception'
 import type { PatientResponse } from '../types/patient'
 import type { ApiError } from '../types/patient'
+
+const PAGE_SIZE = 10
+
+/** Single-line location: city, district, or address. */
+function locationLine(p: PatientResponse): string {
+  const parts = [p.city, p.district, p.address].filter(Boolean) as string[]
+  return parts.length > 0 ? parts.join(', ') : '—'
+}
+
+function getInitials(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  const first = parts[0]?.[0] ?? ''
+  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : ''
+  return (first + last).toUpperCase() || '—'
+}
+
+function formatAdmissionDate(dateIso?: string) {
+  if (!dateIso) return '—'
+  const d = new Date(dateIso)
+  if (Number.isNaN(d.getTime())) return '—'
+  try {
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  } catch {
+    return dateIso
+  }
+}
+
+function patientStatus(p: PatientResponse) {
+  const active = p.active === undefined ? true : p.active
+  return active ? 'Active' : 'Inactive'
+}
 
 function SearchIcon() {
   return (
@@ -13,8 +44,54 @@ function SearchIcon() {
   )
 }
 
+function PaginationBar({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+}: {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  pageSize: number
+  onPageChange: (page: number) => void
+}) {
+  const start = totalItems === 0 ? 0 : (currentPage * pageSize) + 1
+  const end = Math.min((currentPage + 1) * pageSize, totalItems)
+  return (
+    <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
+      <small className="text-muted">
+        Showing {start}–{end} of {totalItems}
+      </small>
+      <nav aria-label="Pagination" className="d-flex gap-1">
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-secondary"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 0}
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
+        <span className="align-self-center px-2 small">
+          Page {currentPage + 1} of {totalPages || 1}
+        </span>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-secondary"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1}
+          aria-label="Next page"
+        >
+          Next
+        </button>
+      </nav>
+    </div>
+  )
+}
+
 export function PatientSearchPage() {
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialUhid = searchParams.get('uhid') ?? ''
   const [uhid, setUhid] = useState(initialUhid)
@@ -28,8 +105,10 @@ export function PatientSearchPage() {
   const [allPatients, setAllPatients] = useState<PatientResponse[]>([])
   const [allLoading, setAllLoading] = useState(true)
   const [allError, setAllError] = useState('')
-  const [disablingId, setDisablingId] = useState<number | null>(null)
   const resultsPrintRef = useRef<HTMLDivElement>(null)
+
+  const [resultsPage, setResultsPage] = useState(0)
+  const [allPage, setAllPage] = useState(0)
 
   const refreshAllPatients = () => {
     setAllLoading(true)
@@ -38,20 +117,6 @@ export function PatientSearchPage() {
       .then(setAllPatients)
       .catch(() => setAllError('Failed to refresh list.'))
       .finally(() => setAllLoading(false))
-  }
-
-  const handleDisable = async (p: PatientResponse) => {
-    if (!window.confirm(`Disable patient "${p.fullName}" (${p.uhid})? They will no longer appear in search/list.`)) return
-    setDisablingId(p.id)
-    try {
-      await receptionApi.disable(p.id)
-      setResults((prev) => prev.filter((x) => x.id !== p.id))
-      refreshAllPatients()
-    } catch {
-      setError('Failed to disable patient.')
-    } finally {
-      setDisablingId(null)
-    }
   }
 
   useEffect(() => {
@@ -79,47 +144,11 @@ export function PatientSearchPage() {
     return () => { cancelled = true }
   }, [])
 
-  function PatientsTable({ patients }: { patients: PatientResponse[] }) {
-    return (
-      <div className="table-responsive">
-        <table className="table table-sm table-hover table-striped align-middle mb-0">
-          <thead className="table-light">
-            <tr>
-              <th scope="col">ID</th>
-              <th scope="col">Name</th>
-              <th scope="col">Number</th>
-              <th scope="col">Gender</th>
-              <th scope="col" className="text-end no-print">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((p) => (
-              <tr key={p.id}>
-                <td>
-                  <Link to={`/reception/patient/${p.id}`} className="fw-semibold text-primary text-decoration-none">{p.uhid}</Link>
-                </td>
-                <td>{p.fullName}</td>
-                <td>{p.phone ?? '—'}</td>
-                <td>{p.gender ?? '—'}</td>
-                <td className="text-end no-print">
-                  <div className="d-flex gap-1 justify-content-end">
-                    <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => navigate(`/reception/patient/${p.id}`)}>View</button>
-                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => navigate(`/reception/patient/${p.id}/edit`)}>Edit</button>
-                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDisable(p)} disabled={disablingId === p.id}>{disablingId === p.id ? 'Disabling…' : 'Disable'}</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setResults([])
+    setResultsPage(0)
     setSearched(true)
     if (!uhid.trim() && !phone.trim() && !name.trim()) {
       setError('Enter UHID, phone, or name to search.')
@@ -146,6 +175,7 @@ export function PatientSearchPage() {
     setPhone('')
     setName('')
     setResults([])
+    setResultsPage(0)
     setError('')
     setSearched(false)
     setSearchParams({})
@@ -183,12 +213,123 @@ export function PatientSearchPage() {
     document.title = prevTitle
   }
 
+  const paginate = (items: PatientResponse[], page: number) => {
+    const start = page * PAGE_SIZE
+    return items.slice(start, start + PAGE_SIZE)
+  }
+
+  const totalPages = (total: number) => Math.max(1, Math.ceil(total / PAGE_SIZE))
+
+  function PatientsTable({
+    patients,
+    page,
+    onPageChange,
+    totalCount,
+    printRef,
+  }: {
+    patients: PatientResponse[]
+    page: number
+    onPageChange: (p: number) => void
+    totalCount: number
+    printRef?: React.RefObject<HTMLDivElement | null>
+  }) {
+    const paginated = paginate(patients, page)
+    const pages = totalPages(totalCount)
+    return (
+      <>
+        <div className="table-responsive" ref={printRef}>
+          <table className="table table-sm table-hover table-striped align-middle mb-0">
+            <thead className="table-light">
+              <tr>
+                <th>Patient</th>
+                <th>ID</th>
+                <th>Age / Gender</th>
+                <th>Condition</th>
+                <th>Ward</th>
+                <th>Admission</th>
+                <th>Status</th>
+                <th className="text-nowrap no-print">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <div className="d-flex align-items-center gap-2">
+                      <div
+                        className="rounded-circle d-flex align-items-center justify-content-center"
+                        style={{
+                          width: 26,
+                          height: 26,
+                          background: 'var(--hms-accent)',
+                          color: 'white',
+                          fontWeight: 800,
+                          fontSize: 11,
+                          flexShrink: 0,
+                        }}
+                        aria-hidden
+                      >
+                        {getInitials(p.fullName)}
+                      </div>
+                      <div>
+                        <div className="fw-semibold">{p.fullName}</div>
+                        <div className="small text-muted" style={{ lineHeight: 1.2 }}>
+                          {p.phone || p.district || p.city ? p.phone || locationLine(p) : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <Link to={`/reception/patient/${p.id}`} className="fw-semibold text-primary text-decoration-none">
+                      {p.uhid}
+                    </Link>
+                  </td>
+                  <td>{p.age} / {p.gender}</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>{formatAdmissionDate(p.registrationDate)}</td>
+                  <td>
+                    {patientStatus(p) === 'Active' ? (
+                      <span className="badge bg-success">{patientStatus(p)}</span>
+                    ) : (
+                      <span className="badge bg-danger">{patientStatus(p)}</span>
+                    )}
+                  </td>
+                  <td className="no-print">
+                    <Link
+                      to={`/reception/patient/${p.id}`}
+                      className="btn btn-sm btn-outline-secondary"
+                    >
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {totalCount > PAGE_SIZE && (
+          <div className="no-print">
+          <PaginationBar
+            currentPage={page}
+            totalPages={pages}
+            totalItems={totalCount}
+            pageSize={PAGE_SIZE}
+            onPageChange={onPageChange}
+          />
+          </div>
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="d-flex flex-column gap-3">
       <h1 className="print-only h5 mb-2">Patient List – Search Patient</h1>
       <nav aria-label="Breadcrumb" className="no-print">
         <ol className="breadcrumb mb-0">
-          <li className="breadcrumb-item"><a href="/reception">Reception</a></li>
+          <li className="breadcrumb-item"><Link to="/reception">Reception</Link></li>
           <li className="breadcrumb-item active" aria-current="page">Search Patient</li>
         </ol>
       </nav>
@@ -262,14 +403,25 @@ export function PatientSearchPage() {
               {results.length === 0 ? 'No patients found' : `${results.length} patient(s) found`}
             </h2>
             {results.length > 0 && (
-              <button type="button" className="btn btn-light btn-sm no-print" onClick={handlePrintResults} aria-label="Print search results">
+              <button
+                type="button"
+                className="btn btn-light btn-sm no-print"
+                onClick={handlePrintResults}
+                aria-label="Print search results"
+              >
                 Print results
               </button>
             )}
           </div>
           {results.length > 0 && (
-            <div className="card-body" ref={resultsPrintRef}>
-              <PatientsTable patients={results} />
+            <div className="card-body">
+              <PatientsTable
+                patients={results}
+                page={resultsPage}
+                onPageChange={setResultsPage}
+                totalCount={results.length}
+                printRef={resultsPrintRef}
+              />
             </div>
           )}
         </div>
@@ -289,7 +441,12 @@ export function PatientSearchPage() {
             <p className="text-muted mb-0">No patients registered yet.</p>
           )}
           {!allLoading && !allError && allPatients.length > 0 && (
-            <PatientsTable patients={allPatients} />
+            <PatientsTable
+              patients={allPatients}
+              page={allPage}
+              onPageChange={setAllPage}
+              totalCount={allPatients.length}
+            />
           )}
         </div>
       </div>

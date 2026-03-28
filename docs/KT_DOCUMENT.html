@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — Knowledge Transfer Document</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --primary: #1a237e;
+    --accent: #0d47a1;
+    --bg: #ffffff;
+    --text: #212121;
+    --muted: #616161;
+    --border: #e0e0e0;
+    --code-bg: #f5f5f5;
+    --table-header: #e8eaf6;
+    --table-stripe: #f9f9fb;
+    --link: #1565c0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--bg);
+    padding: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 50px;
+  }
+
+  /* Cover page */
+  .cover {
+    text-align: center;
+    padding: 120px 40px 80px;
+    page-break-after: always;
+    border-bottom: 4px solid var(--primary);
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 32pt;
+    color: var(--primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .cover .subtitle {
+    font-size: 14pt;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .cover .meta {
+    font-size: 11pt;
+    color: var(--muted);
+    line-height: 2;
+  }
+  .cover .meta strong { color: var(--text); }
+
+  /* Typography */
+  h1 {
+    font-size: 22pt;
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 6px;
+    margin: 36px 0 16px;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 17pt;
+    color: var(--primary);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 4px;
+    margin: 30px 0 14px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 13pt;
+    color: var(--accent);
+    margin: 22px 0 10px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--text);
+    margin: 16px 0 8px;
+    page-break-after: avoid;
+  }
+
+  p { margin: 8px 0; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  hr {
+    border: none;
+    border-top: 2px solid var(--border);
+    margin: 30px 0;
+  }
+
+  /* Lists */
+  ul, ol { margin: 8px 0 8px 24px; }
+  li { margin: 3px 0; }
+  li > ul, li > ol { margin: 2px 0 2px 20px; }
+
+  /* Code */
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 9.5pt;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #e0e0e0;
+  }
+
+  pre {
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-size: 9pt;
+    line-height: 1.5;
+    page-break-inside: avoid;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 9pt;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 7px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--table-header);
+    font-weight: 600;
+    color: var(--primary);
+    white-space: nowrap;
+  }
+  tr:nth-child(even) td { background: var(--table-stripe); }
+
+  /* Blockquotes */
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: #e8eaf6;
+    padding: 10px 16px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    color: var(--text);
+  }
+  blockquote p { margin: 4px 0; }
+
+  /* Mermaid diagrams */
+  .mermaid {
+    text-align: center;
+    margin: 16px 0;
+    page-break-inside: avoid;
+  }
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Print styles */
+  @media print {
+    body { font-size: 10pt; }
+    .container { padding: 20px 30px; max-width: 100%; }
+    .cover { padding: 80px 20px 60px; }
+    .cover h1 { font-size: 28pt; }
+    h1 { font-size: 18pt; }
+    h2 { font-size: 14pt; }
+    h3 { font-size: 12pt; }
+    pre { font-size: 8pt; }
+    table { font-size: 9pt; }
+    a { color: var(--text); }
+
+    .no-print { display: none !important; }
+
+    .mermaid svg {
+      max-width: 100% !important;
+      page-break-inside: avoid;
+    }
+
+    h1, h2, h3, h4 { page-break-after: avoid; }
+    table, pre, .mermaid { page-break-inside: avoid; }
+  }
+
+  /* Print button */
+  .print-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--primary);
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .print-bar span { font-size: 13pt; font-weight: 600; }
+  .print-bar button {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 8px 24px;
+    border-radius: 6px;
+    font-size: 11pt;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .print-bar button:hover { opacity: 0.85; }
+  body { padding-top: 52px; }
+
+  @media print {
+    .print-bar { display: none; }
+    body { padding-top: 0; }
+  }
+
+  /* Loading indicator */
+  #loading {
+    text-align: center;
+    padding: 80px 20px;
+    font-size: 14pt;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="print-bar no-print">
+  <span>HMS Knowledge Transfer Document</span>
+  <button onclick="window.print()">Save as PDF (Ctrl+P)</button>
+</div>
+
+<div class="container">
+  <!-- Cover Page -->
+  <div class="cover">
+    <h1 style="border:none;margin:0 0 8px;padding:0;">HMS</h1>
+    <div class="subtitle">Hospital Management System</div>
+    <div style="font-size:16pt;color:var(--primary);font-weight:600;margin-bottom:40px;">
+      Knowledge Transfer Document
+    </div>
+    <div class="meta">
+      <strong>Version:</strong> 2.0<br>
+      <strong>Date:</strong> March 2026<br>
+      <strong>Audience:</strong> New developers joining the HMS project<br>
+      <strong>Prepared by:</strong> Technical Architecture Team<br>
+      <strong>Stack:</strong> Spring Boot 3.2 + React 18 + MySQL 8 + JWT<br>
+    </div>
+  </div>
+
+  <div id="loading">Rendering document with diagrams...</div>
+  <div id="content" style="display:none;"></div>
+</div>
+
+<script>
+(async () => {
+  // Fetch the markdown source
+  const mdUrl = 'KT_DOCUMENT.md';
+  let mdText;
+  try {
+    const resp = await fetch(mdUrl);
+    if (!resp.ok) throw new Error('Could not fetch ' + mdUrl);
+    mdText = await resp.text();
+  } catch (e) {
+    // Fallback: embed a message
+    document.getElementById('loading').innerHTML =
+      '<p style="color:#c62828;">Could not load KT_DOCUMENT.md from the same folder.</p>' +
+      '<p>To generate the PDF:</p>' +
+      '<ol style="text-align:left;max-width:500px;margin:20px auto;">' +
+      '<li>Open a terminal in <code>docs/</code></li>' +
+      '<li>Run: <code>npx serve .</code> (or any local HTTP server)</li>' +
+      '<li>Open <code>http://localhost:3000/KT_DOCUMENT.html</code></li>' +
+      '<li>Click "Save as PDF" or press Ctrl+P</li>' +
+      '</ol>';
+    return;
+  }
+
+  // Strip the first 7 lines (version/date header already in cover page)
+  const lines = mdText.split('\n');
+  const startIdx = lines.findIndex(l => l.startsWith('## Table of Contents') || l.startsWith('---'));
+  const content = startIdx > 0 ? lines.slice(startIdx).join('\n') : mdText;
+
+  // Configure marked
+  const renderer = new marked.Renderer();
+  const originalCode = renderer.code;
+
+  // Collect mermaid blocks for post-render
+  let mermaidId = 0;
+  renderer.code = function({ text, lang }) {
+    if (lang === 'mermaid') {
+      mermaidId++;
+      return '<div class="mermaid" id="mermaid-' + mermaidId + '">' + text + '</div>';
+    }
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const langClass = lang ? ' class="language-' + lang + '"' : '';
+    return '<pre><code' + langClass + '>' + escaped + '</code></pre>';
+  };
+
+  marked.setOptions({
+    renderer: renderer,
+    gfm: true,
+    breaks: false
+  });
+
+  const html = marked.parse(content);
+
+  document.getElementById('loading').style.display = 'none';
+  const el = document.getElementById('content');
+  el.innerHTML = html;
+  el.style.display = 'block';
+
+  // Initialize mermaid
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true, curve: 'basis' },
+    sequence: { mirrorActors: false },
+    themeVariables: {
+      primaryColor: '#e3f2fd',
+      primaryBorderColor: '#1565c0',
+      primaryTextColor: '#212121',
+      lineColor: '#616161',
+      secondaryColor: '#fff8e1',
+      tertiaryColor: '#e8f5e9'
+    }
+  });
+
+  // Render all mermaid blocks
+  try {
+    await mermaid.run({ nodes: document.querySelectorAll('.mermaid') });
+  } catch (err) {
+    console.warn('Mermaid render error:', err);
+  }
+})();
+</script>
+
+</body>
+</html>

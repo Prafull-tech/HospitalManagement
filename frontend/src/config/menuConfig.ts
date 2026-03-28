@@ -46,6 +46,11 @@ export type HMSRole =
   | 'PHLEBOTOMIST'
   | 'IPD_MANAGER'
   | 'FRONT_DESK'
+  | 'SUPER_ADMIN'
+  | 'HOUSEKEEPING'
+  | 'HR_MANAGER'
+  | 'LAUNDRY'
+  | 'KITCHEN'
 
 export interface SubMenuItem {
   id: string
@@ -134,6 +139,8 @@ export const MODULE_MENU_CONFIG: ModuleMenuConfig[] = [
  * Used by RoleProtectedRoute to block unauthorized URL access.
  */
 export const ROUTE_PERMISSIONS: Record<string, HMSRole[]> = {
+  '/dashboard': ['ADMIN', 'SUPER_ADMIN', 'FRONT_DESK', 'DOCTOR', 'NURSE', 'PHARMACIST', 'LAB_TECH', 'RADIOLOGY_TECH', 'BILLING', 'HOUSEKEEPING', 'HR_MANAGER', 'RECEPTIONIST'],
+  '/profile': ['ADMIN', 'SUPER_ADMIN', 'FRONT_DESK', 'DOCTOR', 'NURSE', 'PHARMACIST', 'LAB_TECH', 'RADIOLOGY_TECH', 'BILLING', 'HOUSEKEEPING', 'HR_MANAGER', 'RECEPTIONIST'],
   '/front-office': ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'BILLING'],
   '/appointments': ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'DOCTOR'],
   '/patient-flow': ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK', 'IPD_MANAGER', 'BILLING'],
@@ -161,6 +168,11 @@ export const ROUTE_PERMISSIONS: Record<string, HMSRole[]> = {
   '/bloodbank/issue': ['BLOOD_BANK_TECH', 'ADMIN'],
   '/bloodbank/requests': ['BLOOD_BANK_TECH', 'ADMIN'],
   '/bloodbank/alerts': ['BLOOD_BANK_TECH', 'ADMIN'],
+  '/housekeeping': ['ADMIN', 'HOUSEKEEPING'],
+  '/laundry': ['ADMIN', 'HOUSEKEEPING', 'LAUNDRY'],
+  '/dietary': ['ADMIN', 'HOUSEKEEPING', 'KITCHEN'],
+  '/meals': ['ADMIN', 'HOUSEKEEPING', 'KITCHEN'],
+  '/hr': ['ADMIN', 'HR_MANAGER', 'HR'],
 }
 
 /**
@@ -207,8 +219,8 @@ export function filterModulesByRole(
   })
 }
 
-/** Default dashboards in priority order for redirect (module-specific first, then front office, reception). */
-const DEFAULT_DASHBOARD_ORDER = ['/pharmacy', '/lab', '/radiology', '/bloodbank', '/front-office/register', '/reception']
+/** Default dashboards in priority order for redirect (module-specific first, then reception, then front office). */
+const DEFAULT_DASHBOARD_ORDER = ['/pharmacy', '/lab', '/radiology', '/bloodbank', '/reception', '/front-office/register']
 
 /**
  * Get the first dashboard route the user has access to.
@@ -218,6 +230,10 @@ export function getDefaultDashboardForUser(userRoles: HMSRole[]): string {
   const normalized = userRoles.includes('LAB_TECHNICIAN')
     ? [...userRoles, 'LAB_TECH' as HMSRole]
     : userRoles
+  if (normalized.includes('ADMIN') || normalized.includes('SUPER_ADMIN')) {
+    // Admin should land on Reception dashboard (consistent UX; avoids always going to /pharmacy)
+    return '/reception'
+  }
   for (const route of DEFAULT_DASHBOARD_ORDER) {
     if (hasRouteAccess(normalized, route)) return route
   }

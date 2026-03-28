@@ -6,7 +6,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { systemPermissionsApi } from '../api/system'
-import type { MyPermissionsResponse, ActionType, ModuleResponse } from '../types/system'
+import type { MyPermissionsResponse, ActionType, ModuleResponse, ModuleVisibility } from '../types/system'
 
 interface PermissionsState {
   loading: boolean
@@ -16,6 +16,8 @@ interface PermissionsState {
   allowedRoutePaths: Set<string>
   /** Module code → allowed actions. */
   actionsByModule: Map<string, Set<ActionType>>
+  /** Module code → visibility from permission matrix (HIDDEN excludes from menu). */
+  visibilityByModule: Map<string, ModuleVisibility>
   /** Allowed modules by code. */
   allowedModulesByCode: Map<string, ModuleResponse>
 }
@@ -23,8 +25,12 @@ interface PermissionsState {
 interface PermissionsContextValue extends PermissionsState {
   /** True if we have permission data from API (use it for sidebar/actions). */
   hasPermissionData: boolean
+  /** True when /permissions/me returned at least one non-hidden module with VIEW — safe to apply matrix sidebar filter. */
+  hasUsablePermissionData: boolean
   /** Check if user can perform action on module (by code). */
   can: (moduleCode: string, action: ActionType) => boolean
+  /** Sidebar: module visible if not HIDDEN and user has VIEW on that module. */
+  isModuleVisibleForMenu: (moduleCode: string) => boolean
   /** Check if route is allowed (pathname starts with or equals one of allowedRoutePaths). */
   isRouteAllowed: (pathname: string) => boolean
   refetch: () => void
@@ -36,6 +42,7 @@ const defaultState: PermissionsState = {
   data: null,
   allowedRoutePaths: new Set(),
   actionsByModule: new Map(),
+  visibilityByModule: new Map(),
   allowedModulesByCode: new Map(),
 }
 
@@ -47,11 +54,13 @@ function buildState(data: MyPermissionsResponse | null): Omit<PermissionsState, 
       data: null,
       allowedRoutePaths: new Set(),
       actionsByModule: new Map(),
+      visibilityByModule: new Map(),
       allowedModulesByCode: new Map(),
     }
   }
   const allowedRoutePaths = new Set<string>()
   const actionsByModule = new Map<string, Set<ActionType>>()
+  const visibilityByModule = new Map<string, ModuleVisibility>()
   const allowedModulesByCode = new Map<string, ModuleResponse>()
   for (const m of data.allowedModules) {
     if (m.routePath) {
@@ -63,11 +72,13 @@ function buildState(data: MyPermissionsResponse | null): Omit<PermissionsState, 
   for (const p of data.permissions) {
     const set = new Set<ActionType>(p.actions)
     actionsByModule.set(p.moduleCode, set)
+    visibilityByModule.set(p.moduleCode, p.visibility ?? 'VISIBLE')
   }
   return {
     data,
     allowedRoutePaths,
     actionsByModule,
+    visibilityByModule,
     allowedModulesByCode,
   }
 }
@@ -92,7 +103,7 @@ export function PermissionsProvider({
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('timeout')), timeoutMs)
     )
-    Promise.race([systemPermissionsApi.getMyPermissions(roleCodes), timeoutPromise])
+    Promise.race([systemPermissionsApi.getMyPermissions(), timeoutPromise])
       .then((data) => {
         setState((s) => ({ ...s, loading: false, error: null, ...buildState(data) }))
       })
@@ -134,15 +145,36 @@ export function PermissionsProvider({
     [state.allowedRoutePaths]
   )
 
+  const isModuleVisibleForMenu = useCallback(
+    (moduleCode: string): boolean => {
+      const vis = state.visibilityByModule.get(moduleCode) ?? 'VISIBLE'
+      if (vis === 'HIDDEN') return false
+      const actions = state.actionsByModule.get(moduleCode)
+      return actions ? actions.has('VIEW') : false
+    },
+    [state.visibilityByModule, state.actionsByModule]
+  )
+
+  const hasUsablePermissionData = useMemo(() => {
+    if (!state.data?.permissions?.length) return false
+    return state.data.permissions.some(
+      (p) => p.visibility !== 'HIDDEN' && Array.isArray(p.actions) && p.actions.includes('VIEW')
+    )
+  }, [state.data])
+
   const value = useMemo<PermissionsContextValue>(
     () => ({
       ...state,
-      hasPermissionData: state.data != null && state.allowedRoutePaths.size > 0,
+      hasPermissionData:
+        state.data != null &&
+        (state.allowedRoutePaths.size > 0 || (state.data.permissions?.length ?? 0) > 0),
+      hasUsablePermissionData,
       can,
+      isModuleVisibleForMenu,
       isRouteAllowed,
       refetch: fetchPermissions,
     }),
-    [state, can, isRouteAllowed, fetchPermissions]
+    [state, hasUsablePermissionData, can, isModuleVisibleForMenu, isRouteAllowed, fetchPermissions]
   )
 
   return <PermissionsContext.Provider value={value}>{children}</PermissionsContext.Provider>

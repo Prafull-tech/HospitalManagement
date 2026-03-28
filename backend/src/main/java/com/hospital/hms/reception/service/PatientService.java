@@ -8,12 +8,11 @@ import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -73,15 +72,6 @@ public class PatientService {
     public PatientResponseDto getById(Long id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
-        return toResponse(patient);
-    }
-
-    @Transactional
-    public PatientResponseDto setActive(Long id, boolean active) {
-        Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
-        patient.setActive(active);
-        patient = patientRepository.save(patient);
         return toResponse(patient);
     }
 
@@ -186,9 +176,10 @@ public class PatientService {
             long id = Long.parseLong(trimmed);
             List<PatientResponseDto> byId = patientRepository.findById(id)
                     .stream()
+                    .filter(p -> Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .collect(Collectors.toList());
-            List<PatientResponseDto> byPhone = patientRepository.findByPhone(trimmed)
+            List<PatientResponseDto> byPhone = patientRepository.findByPhoneAndActiveTrue(trimmed)
                     .stream()
                     .map(this::toResponse)
                     .toList();
@@ -198,41 +189,37 @@ public class PatientService {
                     .collect(Collectors.toList());
         }
         if (trimmed.matches("^[0-9+\\-\\s]+$")) {
-            return patientRepository.findByPhone(trimmed)
+            return patientRepository.findByPhoneAndActiveTrue(trimmed)
                     .stream()
                     .map(this::toResponse)
                     .toList();
         }
-        List<Patient> byUhid = patientRepository.findByUhid(trimmed).stream().toList();
-        List<Patient> byName = patientRepository.findByFullNameContainingIgnoreCase(trimmed);
-        List<Patient> byIdProof = patientRepository.findByIdProofNumber(trimmed);
+        List<Patient> byUhid = patientRepository.findByUhidAndActiveTrue(trimmed).stream().toList();
+        List<Patient> byName = patientRepository.findByFullNameContainingIgnoreCaseAndActiveTrue(trimmed);
+        List<Patient> byIdProof = patientRepository.findByIdProofNumberAndActiveTrue(trimmed);
         return java.util.stream.Stream.of(byUhid.stream(), byName.stream(), byIdProof.stream())
                 .flatMap(s -> s)
                 .distinct()
-                .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<PatientResponseDto> search(String uhid, String phone, String name) {
         if (uhid != null && !uhid.isBlank()) {
-            return patientRepository.findByUhid(uhid.trim())
+            return patientRepository.findByUhidAndActiveTrue(uhid.trim())
                     .stream()
-                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .collect(Collectors.toList());
         }
         if (phone != null && !phone.isBlank()) {
-            return patientRepository.findByPhone(phone.trim())
+            return patientRepository.findByPhoneAndActiveTrue(phone.trim())
                     .stream()
-                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .toList();
         }
         if (name != null && !name.isBlank()) {
-            return patientRepository.findByFullNameContainingIgnoreCase(name.trim())
+            return patientRepository.findByFullNameContainingIgnoreCaseAndActiveTrue(name.trim())
                     .stream()
-                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .collect(Collectors.toList());
         }
@@ -241,24 +228,25 @@ public class PatientService {
 
     /**
      * List all patients with pagination (for reception search page "all patients below").
-     * If fromDate and toDate are provided, filters by registration date range.
+     * Default size 500 if not specified.
      */
     @Transactional(readOnly = true)
-    public List<PatientResponseDto> list(int page, int size, LocalDate fromDate, LocalDate toDate) {
+    public List<PatientResponseDto> list(int page, int size) {
         int safeSize = size <= 0 ? 500 : Math.min(size, 2000);
         Pageable pageable = PageRequest.of(Math.max(0, page), safeSize);
-        if (fromDate != null && toDate != null) {
-            LocalDateTime start = fromDate.atStartOfDay();
-            LocalDateTime end = toDate.atTime(LocalTime.MAX);
-            return patientRepository.findByRegistrationDateBetween(start, end, pageable).stream()
-                    .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
-                    .map(this::toResponse)
-                    .collect(Collectors.toList());
-        }
-        return patientRepository.findAll(pageable).stream()
-                .filter(p -> p.getActive() == null || Boolean.TRUE.equals(p.getActive()))
+        Page<Patient> pageResult = patientRepository.findAllByActiveTrue(pageable);
+        return pageResult.getContent().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public PatientResponseDto setActive(Long id, boolean active) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
+        patient.setActive(active);
+        patient = patientRepository.save(patient);
+        return toResponse(patient);
     }
 
     private PatientResponseDto toResponse(Patient p) {

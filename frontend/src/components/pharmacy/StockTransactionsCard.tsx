@@ -63,7 +63,7 @@ export function StockTransactionsCard({ refetchTrigger = 0 }: StockTransactionsC
       emptyMessage="No transactions yet. Use Purchase or Sell to record stock movements."
     >
       <div className="table-responsive" style={{ maxHeight: 420, overflowY: 'auto' }}>
-        <table className="table table-bordered table-hover table-sm align-middle">
+        <table className="table table-hover table-sm align-middle">
           <thead>
             <tr>
               <th>Date</th>

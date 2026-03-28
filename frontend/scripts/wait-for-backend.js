@@ -3,7 +3,7 @@
  * Waits for the HMS backend to be ready before starting the frontend.
  * Polls http://localhost:8080/api/actuator/health until it returns 200 or timeout.
  */
-const BACKEND_URL = 'http://localhost:8080/api/actuator/health'
+const BACKEND_URL = 'http://127.0.0.1:8080/api/actuator/health'
 const MAX_WAIT_MS = 90_000
 const POLL_INTERVAL_MS = 2_000
 

@@ -15,7 +15,10 @@ export type BillingServiceType =
   | 'OTHER'
 
 export interface PaymentRequest {
-  ipdId: number
+  /** Exactly one of ipdId, opdVisitId, or billingAccountId should be set. */
+  ipdId?: number
+  opdVisitId?: number
+  billingAccountId?: number
   amount: number
   mode: 'Cash' | 'Card' | 'UPI'
   referenceNo?: string
@@ -48,6 +51,8 @@ export interface BillingAccountView {
   ipdAdmissionId?: number
   admissionNumber?: string
   opdVisitId?: number
+  /** OPD visit number when this is an OPD bill */
+  visitNumber?: string
   billStatus: BillStatus
   totalAmount: number
   paidAmount: number

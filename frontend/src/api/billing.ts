@@ -24,9 +24,21 @@ export interface RefundRequest {
   reason?: string
 }
 
+export interface BillingDashboardSummary {
+  date: string
+  todayCollection: number
+  paymentCountToday: number
+  totalPendingActiveAccounts: number
+}
+
 export const billingApi = {
   getAccount(ipdAdmissionId: number): Promise<BillingAccountView> {
     return apiClient.get(`${BASE}/account/${ipdAdmissionId}`).then((res) => res.data)
+  },
+
+  /** GET /api/billing/account/opd/{opdVisitId} */
+  getOpdAccount(opdVisitId: number): Promise<BillingAccountView> {
+    return apiClient.get(`${BASE}/account/opd/${opdVisitId}`).then((res) => res.data)
   },
 
   /** Alias: GET /api/billing/ipd/{ipdId} */
@@ -36,6 +48,14 @@ export const billingApi = {
 
   getItems(ipdAdmissionId: number): Promise<BillingItemResponse[]> {
     return apiClient.get(`${BASE}/account/${ipdAdmissionId}/items`).then((res) => res.data)
+  },
+
+  getOpdItems(opdVisitId: number): Promise<BillingItemResponse[]> {
+    return apiClient.get(`${BASE}/account/opd/${opdVisitId}/items`).then((res) => res.data)
+  },
+
+  getDashboardSummary(date?: string): Promise<BillingDashboardSummary> {
+    return apiClient.get(`${BASE}/dashboard/summary`, { params: date ? { date } : {} }).then((res) => res.data)
   },
 
   recordPayment(request: PaymentRequest): Promise<BillingAccountView> {

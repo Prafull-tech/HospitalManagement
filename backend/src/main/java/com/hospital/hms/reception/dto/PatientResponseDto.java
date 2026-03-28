@@ -38,11 +38,19 @@ public class PatientResponseDto {
     private String organisationType;
     private String organisationName;
     private String remarks;
-    private Boolean active;
+    private Boolean active = true;
     private Instant createdAt;
     private Instant updatedAt;
 
     public PatientResponseDto() {
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
     public Long getId() {
@@ -275,14 +283,6 @@ public class PatientResponseDto {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
     }
 
     public Instant getCreatedAt() {

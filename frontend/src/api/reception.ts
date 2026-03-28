@@ -20,10 +20,10 @@ export const receptionApi = {
     return apiClient.get(`${BASE}/${encodeURIComponent(uhid)}`).then((res) => res.data)
   },
 
-  /** List all patients (paginated). Optional from/to filter by registration date range. */
-  list(params?: { page?: number; size?: number; from?: string; to?: string }): Promise<PatientResponse[]> {
+  /** List all patients (paginated). Default page=0, size=500. */
+  list(params?: { page?: number; size?: number }): Promise<PatientResponse[]> {
     return apiClient
-      .get(BASE, { params: { page: params?.page ?? 0, size: params?.size ?? 500, from: params?.from, to: params?.to } })
+      .get(BASE, { params: { page: params?.page ?? 0, size: params?.size ?? 500 } })
       .then((res) => res.data)
   },
 

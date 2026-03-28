@@ -133,6 +133,7 @@ public class MedicineImportService {
     }
 
     /** @deprecated Use generateMasterTemplate or generateStockTemplate */
+    @Deprecated
     public byte[] generateTemplate() throws IOException {
         return generateMasterTemplate();
     }
@@ -309,6 +310,7 @@ public class MedicineImportService {
     }
 
     /** @deprecated Use importMasterFromExcel or importStockFromExcel */
+    @Deprecated
     @Transactional(rollbackFor = Exception.class)
     public MedicineImportResultDto importFromExcel(MultipartFile file) throws IOException {
         return importMasterFromExcel(file);

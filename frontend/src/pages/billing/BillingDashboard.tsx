@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { billingApi, type BillingDashboardSummary } from '../../api/billing'
 import styles from './BillingDashboard.module.css'
 
 const BILLING_CARDS = [
@@ -12,8 +14,21 @@ const BILLING_CARDS = [
   { path: '/billing/refunds', title: 'Refunds', desc: 'Refund requests and processing.' },
 ] as const
 
+function formatInr(n: number): string {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
+}
+
 export function BillingDashboard() {
   const navigate = useNavigate()
+  const [summary, setSummary] = useState<BillingDashboardSummary | null>(null)
+  const [summaryError, setSummaryError] = useState('')
+
+  useEffect(() => {
+    billingApi
+      .getDashboardSummary()
+      .then(setSummary)
+      .catch(() => setSummaryError('Could not load today’s summary'))
+  }, [])
 
   return (
     <div className={styles.page}>
@@ -21,6 +36,25 @@ export function BillingDashboard() {
         <h1 className={styles.title}>Billing & Accounts</h1>
         <p className={styles.subtitle}>Centralized billing, insurance, and financials</p>
       </header>
+
+      {summaryError && <p className={styles.summaryError}>{summaryError}</p>}
+      {summary && (
+        <div className={styles.kpiRow} role="region" aria-label="Today’s billing summary">
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Today’s collection</span>
+            <span className={styles.kpiValue}>{formatInr(summary.todayCollection)}</span>
+          </div>
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Payments today</span>
+            <span className={styles.kpiValue}>{summary.paymentCountToday}</span>
+          </div>
+          <div className={styles.kpi}>
+            <span className={styles.kpiLabel}>Pending open accounts</span>
+            <span className={styles.kpiValue}>{summary.totalPendingActiveAccounts}</span>
+          </div>
+          <div className={styles.kpiMeta}>Date: {summary.date}</div>
+        </div>
+      )}
 
       <div className={styles.cards}>
         {BILLING_CARDS.map(({ path, title, desc }) => (

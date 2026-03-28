@@ -1,0 +1,251 @@
+ .page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--hms-bg);
+  color: var(--hms-text);
+}
+
+.hero {
+  padding: 3rem 1.5rem 2rem;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--hms-success-bg);
+  color: var(--hms-success);
+}
+
+.title {
+  font-size: 2rem;
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--hms-text-muted);
+  max-width: 40rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.primaryCta {
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--hms-cta);
+  color: var(--hms-text-inverse);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.primaryCta:hover {
+  background: var(--hms-cta-hover);
+  text-decoration: none;
+}
+
+.secondaryCta {
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--hms-border);
+  background: transparent;
+  color: var(--hms-text);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.secondaryCta:hover {
+  border-color: var(--hms-accent);
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}
+
+.heroMetaItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.heroStatLabel {
+  font-weight: 500;
+}
+
+.heroStatValue {
+  font-size: 0.8rem;
+}
+
+.heroRight {
+  background: var(--hms-bg-elevated);
+  border-radius: var(--hms-radius-card);
+  border: 1px solid var(--hms-card-border);
+  padding: 1.5rem;
+  box-shadow: var(--hms-shadow-card);
+}
+
+.heroRightTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.heroList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.heroListItem {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.heroBullet {
+  font-weight: 700;
+  color: var(--hms-accent);
+}
+
+.authLinks {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}
+
+.authLinks a {
+  color: var(--hms-accent);
+  text-decoration: none;
+}
+
+.authLinks a:hover {
+  text-decoration: underline;
+}
+
+.sections {
+  padding: 0 1.5rem 2.5rem;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr);
+  gap: 1.75rem;
+  align-items: flex-start;
+}
+
+.sectionHeaderTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.sectionHeaderText {
+  font-size: 0.9rem;
+  color: var(--hms-text-muted);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: var(--hms-card);
+  border-radius: var(--hms-radius-card);
+  border: 1px solid var(--hms-card-border);
+  padding: 1rem;
+  box-shadow: var(--hms-shadow);
+}
+
+.cardTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.cardText {
+  font-size: 0.85rem;
+  color: var(--hms-text-muted);
+}
+
+.ctaSection {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hms-card-border);
+  font-size: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 1rem 1.5rem 1.5rem;
+  font-size: 0.8rem;
+  color: var(--hms-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 2.25rem;
+  }
+
+  .heroRight {
+    order: -1;
+  }
+
+  .section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+

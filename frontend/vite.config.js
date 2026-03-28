@@ -9,7 +9,8 @@ export default defineConfig({
         },
         proxy: {
             '/api': {
-                target: 'http://localhost:8080',
+                // Use 127.0.0.1 to match the health-check scripts and avoid some Windows localhost/IPv6 quirks
+                target: 'http://127.0.0.1:8080',
                 changeOrigin: true,
             },
         },

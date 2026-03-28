@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { systemFeaturesApi } from '../../api/system'
+import { apiErrorWithNetworkHint } from '../../utils/apiNetworkError'
 import type { FeatureToggleResponse } from '../../types/system'
 import styles from './SystemConfigShared.module.css'
 import shared from '../../styles/Dashboard.module.css'
@@ -23,7 +24,9 @@ export function SystemConfigFeaturesPage() {
     systemFeaturesApi
       .list()
       .then(setFeatures)
-      .catch(() => setError('Failed to load feature toggles.'))
+      .catch((err: unknown) =>
+        setError(apiErrorWithNetworkHint('Failed to load feature toggles.', err))
+      )
       .finally(() => setLoading(false))
   }
 

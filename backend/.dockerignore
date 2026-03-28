@@ -1,0 +1,8 @@
+target/
+!target/hospital-management-system-*.jar
+.git
+.gitignore
+*.md
+.idea
+*.iml
+application-local.yml

@@ -227,7 +227,7 @@ public class PharmacyController {
     }
 
     @GetMapping("/medicines")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PHARMACY_MANAGER', 'STORE_INCHARGE', 'IPD_PHARMACIST', 'PHARMACIST', 'DOCTOR', 'NURSE')")
     public List<MedicineMasterResponseDto> listMedicines(@RequestParam(required = false) String q) {
         return (q != null && !q.isBlank())
                 ? medicineService.search(q)

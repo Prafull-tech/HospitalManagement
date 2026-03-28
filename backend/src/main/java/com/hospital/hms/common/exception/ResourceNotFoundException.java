@@ -1,15 +1,20 @@
 package com.hospital.hms.common.exception;
 
-/**
- * Thrown when a requested resource (e.g. patient by UHID) is not found.
- */
-public class ResourceNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class ResourceNotFoundException extends HmsBusinessException {
 
     public ResourceNotFoundException(String message) {
         super(message);
     }
 
-    public ResourceNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    @Override
+    public HttpStatus getHttpStatus() {
+        return HttpStatus.NOT_FOUND;
+    }
+
+    @Override
+    public String getErrorCode() {
+        return "HMS_NOT_FOUND";
     }
 }

@@ -74,7 +74,9 @@ export function PatientRegisterPage() {
   const editId = routeId ? (Number(routeId) || null) : null
   const isEdit = editId != null && !Number.isNaN(editId)
 
-  const [form, setForm] = useState<PatientRequest>({ ...emptyForm })
+  const [form, setForm] = useState<PatientRequest>({
+    ...emptyForm,
+  })
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [error, setError] = useState('')

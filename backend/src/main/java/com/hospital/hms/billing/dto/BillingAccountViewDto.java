@@ -18,6 +18,8 @@ public class BillingAccountViewDto {
     private Long ipdAdmissionId;
     private String admissionNumber;
     private Long opdVisitId;
+    /** OPD visit number (e.g. OPD-2025-000001) when billing an OPD encounter. */
+    private String visitNumber;
     private BillStatus billStatus;
     private BigDecimal totalAmount;
     private BigDecimal paidAmount;
@@ -47,6 +49,8 @@ public class BillingAccountViewDto {
     public void setAdmissionNumber(String admissionNumber) { this.admissionNumber = admissionNumber; }
     public Long getOpdVisitId() { return opdVisitId; }
     public void setOpdVisitId(Long opdVisitId) { this.opdVisitId = opdVisitId; }
+    public String getVisitNumber() { return visitNumber; }
+    public void setVisitNumber(String visitNumber) { this.visitNumber = visitNumber; }
     public BillStatus getBillStatus() { return billStatus; }
     public void setBillStatus(BillStatus billStatus) { this.billStatus = billStatus; }
     public BigDecimal getTotalAmount() { return totalAmount; }

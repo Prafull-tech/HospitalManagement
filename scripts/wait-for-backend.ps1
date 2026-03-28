@@ -1,5 +1,5 @@
 # Waits for HMS backend to be ready (health check)
-$BackendUrl = "http://localhost:8080/api/actuator/health"
+$BackendUrl = "http://127.0.0.1:8080/api/actuator/health"
 $MaxWaitSeconds = 90
 $PollIntervalSeconds = 2
 

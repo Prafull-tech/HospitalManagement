@@ -57,6 +57,12 @@ npm run dev
 
 **Login:** All pages require authentication. Demo logins: admin/admin123, pharm/pharm123, nurse/nurse123, doctor/doctor123
 
+### Production deployment notes
+
+- **Backend:** Run with `SPRING_PROFILES_ACTIVE=prod`. Set **`JWT_SECRET`** or **`HMS_JWT_SECRET`** to a long random value (not the dev placeholder). Set **`MYSQL_PASSWORD`** (and optionally `MYSQL_HOST`, `MYSQL_DATABASE`, `MYSQL_USER`). The app validates these on startup in `prod` (see `ProductionSecurityValidator`). Use TLS to MySQL in production (`useSSL=true` is set in the prod profile datasource URL).
+- **Frontend:** Build with `npm run build` and serve static files behind a reverse proxy that forwards `/api` to the Spring Boot service (same-origin keeps the default `baseURL` of `/api` in `client.ts`). Optional: `VITE_SHOW_STUB_SIDEBAR=true` to show sidebar links for stub modules (Radiology, HR placeholders, etc.) in production builds; default is hidden in prod.
+- **User registration:** `POST /api/auth/register` requires an **ADMIN** JWT. The `/register` page is for admins creating accounts, not public self-signup.
+
 ---
 
 ## Backend Structure

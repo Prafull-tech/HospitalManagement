@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 import { billingApi } from '../../api/billing'
 import type { BillingAccountView, BillingItemResponse, PaymentRequest } from '../../types/billing'
 import styles from './BillingAccountPage.module.css'
 
-/** Hospital details for NABH bill header/footer (configurable via env or app config later) */
 const HOSPITAL_BILL = {
   name: 'Hope Haven Hospital',
   address: '855 Howard Street, Dutton, MI 49316',
   phone: '(123) 456-1238',
   email: 'hopedutton@hopehaven.com',
   nabhLabel: 'NABH Accredited',
-  gstin: '', // e.g. '29AAAAA0000A1Z5' when applicable
+  gstin: '',
 }
 
 function formatCurrency(n: number): string {
@@ -40,12 +39,17 @@ function formatDate(iso: string): string {
   })
 }
 
-/** Build NABH-compliant patient bill HTML for printing */
+function escapeHtml(s: string | undefined): string {
+  if (s == null || s === '') return ''
+  const el = document.createElement('div')
+  el.textContent = s
+  return el.innerHTML
+}
+
 function buildNabhBillHtml(data: BillingAccountView, formatCurr: (n: number) => string): string {
   const billDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })
   const hospital = HOSPITAL_BILL
   const items = data.items || []
-
   const rows = items
     .map(
       (item: BillingItemResponse, i: number) => `
@@ -59,7 +63,6 @@ function buildNabhBillHtml(data: BillingAccountView, formatCurr: (n: number) => 
     </tr>`
     )
     .join('')
-
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -107,7 +110,7 @@ function buildNabhBillHtml(data: BillingAccountView, formatCurr: (n: number) => 
   <h1 class="bill-title">Patient Bill / Invoice</h1>
   <div class="bill-meta">
     <span>Bill Date: ${billDate}</span>
-    <span>Admission No: ${escapeHtml(data.admissionNumber || data.uhid)}</span>
+    <span>${data.visitNumber ? 'Visit No' : 'Admission No'}: ${escapeHtml(data.visitNumber || data.admissionNumber || data.uhid)}</span>
   </div>
   <div class="patient-block">
     <strong>Patient: ${escapeHtml(data.patientName)}</strong>
@@ -144,13 +147,6 @@ function buildNabhBillHtml(data: BillingAccountView, formatCurr: (n: number) => 
 </html>`
 }
 
-function escapeHtml(s: string | undefined): string {
-  if (s == null || s === '') return ''
-  const el = document.createElement('div')
-  el.textContent = s
-  return el.innerHTML
-}
-
 const SERVICE_LABELS: Record<string, string> = {
   BED: 'Bed',
   PHARMACY: 'Pharmacy',
@@ -167,8 +163,10 @@ const SERVICE_LABELS: Record<string, string> = {
 }
 
 export function BillingAccountPage() {
-  const { id } = useParams<{ id: string }>()
-  const ipdId = id ? Number(id) : null
+  const { id, visitId } = useParams<{ id?: string; visitId?: string }>()
+  const location = useLocation()
+  const isOpd = location.pathname.includes('/billing/opd/')
+  const entityId = isOpd ? (visitId ? Number(visitId) : null) : id ? Number(id) : null
 
   const [data, setData] = useState<BillingAccountView | null>(null)
   const [loading, setLoading] = useState(true)
@@ -176,39 +174,46 @@ export function BillingAccountPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentSubmitting, setPaymentSubmitting] = useState(false)
   const [paymentForm, setPaymentForm] = useState<PaymentRequest>({
-    ipdId: 0,
     amount: 0,
     mode: 'Cash',
     referenceNo: '',
   })
 
   const refreshAccount = () => {
-    if (!ipdId || Number.isNaN(ipdId)) return
-    billingApi.getAccount(ipdId).then(setData).catch(() => {})
+    if (!entityId || Number.isNaN(entityId)) return
+    if (isOpd) {
+      billingApi.getOpdAccount(entityId).then(setData).catch(() => {})
+    } else {
+      billingApi.getAccount(entityId).then(setData).catch(() => {})
+    }
   }
 
   useEffect(() => {
-    if (!ipdId || Number.isNaN(ipdId)) {
-      setError('Invalid admission ID')
+    if (!entityId || Number.isNaN(entityId)) {
+      setError(isOpd ? 'Invalid OPD visit ID' : 'Invalid admission ID')
       setLoading(false)
       return
     }
     setLoading(true)
     setError('')
-    billingApi
-      .getAccount(ipdId)
+    const req = isOpd ? billingApi.getOpdAccount(entityId) : billingApi.getAccount(entityId)
+    req
       .then(setData)
       .catch((err) => {
         setError(err.response?.data?.message || err.message || 'Failed to load billing')
       })
       .finally(() => setLoading(false))
-  }, [ipdId])
+  }, [entityId, isOpd])
 
   useEffect(() => {
-    if (ipdId && showPaymentModal) {
-      setPaymentForm((f) => ({ ...f, ipdId, amount: data?.pendingAmount ?? 0 }))
+    if (entityId && showPaymentModal) {
+      setPaymentForm((f) => ({
+        ...f,
+        ...(isOpd ? { opdVisitId: entityId } : { ipdId: entityId }),
+        amount: data?.pendingAmount ?? 0,
+      }))
     }
-  }, [ipdId, showPaymentModal, data?.pendingAmount])
+  }, [entityId, isOpd, showPaymentModal, data?.pendingAmount])
 
   if (loading) {
     return (
@@ -230,28 +235,48 @@ export function BillingAccountPage() {
         <div className={styles.error} role="alert">
           {error || 'Not found'}
         </div>
-        <Link to="/ipd/admissions" className={styles.actionBtn}>
-          Back to Admissions
+        <Link to={isOpd ? '/opd/visits' : '/ipd/admissions'} className={styles.actionBtn}>
+          {isOpd ? 'Back to OPD visits' : 'Back to Admissions'}
         </Link>
       </div>
     )
   }
 
   const byType = data.totalByServiceType || {}
+  const ipdAdmissionId = !isOpd ? (data.ipdAdmissionId ?? entityId ?? undefined) : undefined
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <h1 className={styles.title}>Billing — {data.admissionNumber || data.uhid}</h1>
+          <h1 className={styles.title}>
+            Billing —{' '}
+            {isOpd
+              ? data.visitNumber || `OPD visit #${entityId}`
+              : data.admissionNumber || data.uhid}
+          </h1>
           <p className={styles.breadcrumb}>
-            <Link to="/ipd">IPD</Link>
-            <span>→</span>
-            <Link to="/ipd/admissions">Admissions</Link>
-            <span>→</span>
-            <Link to={`/ipd/admissions/${ipdId}`}>View</Link>
-            <span>→</span>
-            Billing
+            {isOpd ? (
+              <>
+                <Link to="/billing">Billing</Link>
+                <span>→</span>
+                <Link to="/opd">OPD</Link>
+                <span>→</span>
+                <Link to={`/opd/visits/${entityId}`}>Visit</Link>
+                <span>→</span>
+                Account
+              </>
+            ) : (
+              <>
+                <Link to="/ipd">IPD</Link>
+                <span>→</span>
+                <Link to="/ipd/admissions">Admissions</Link>
+                <span>→</span>
+                <Link to={`/ipd/admissions/${ipdAdmissionId}`}>View</Link>
+                <span>→</span>
+                Billing
+              </>
+            )}
           </p>
         </div>
         <div className={styles.actions}>
@@ -267,12 +292,20 @@ export function BillingAccountPage() {
           >
             Print Bill (NABH)
           </button>
-          <Link to={`/ipd/admissions/${ipdId}`} className={styles.actionBtn}>
-            Back to Admission
-          </Link>
-          <Link to={`/ipd/discharge/${ipdId}`} className={styles.actionBtnPrimary}>
-            Discharge
-          </Link>
+          {isOpd ? (
+            <Link to={`/opd/visits/${entityId}`} className={styles.actionBtn}>
+              Back to visit
+            </Link>
+          ) : (
+            <>
+              <Link to={`/ipd/admissions/${ipdAdmissionId}`} className={styles.actionBtn}>
+                Back to Admission
+              </Link>
+              <Link to={`/ipd/discharge/${ipdAdmissionId}`} className={styles.actionBtnPrimary}>
+                Discharge
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -377,16 +410,25 @@ export function BillingAccountPage() {
             <form
               onSubmit={async (e) => {
                 e.preventDefault()
-                if (!ipdId || paymentForm.amount <= 0) return
+                if (!entityId || paymentForm.amount <= 0) return
                 setPaymentSubmitting(true)
                 setError('')
                 try {
-                  await billingApi.recordPayment({
-                    ipdId,
-                    amount: paymentForm.amount,
-                    mode: paymentForm.mode,
-                    referenceNo: paymentForm.referenceNo || undefined,
-                  })
+                  await billingApi.recordPayment(
+                    isOpd
+                      ? {
+                          opdVisitId: entityId,
+                          amount: paymentForm.amount,
+                          mode: paymentForm.mode,
+                          referenceNo: paymentForm.referenceNo || undefined,
+                        }
+                      : {
+                          ipdId: entityId,
+                          amount: paymentForm.amount,
+                          mode: paymentForm.mode,
+                          referenceNo: paymentForm.referenceNo || undefined,
+                        }
+                  )
                   refreshAccount()
                   setShowPaymentModal(false)
                 } catch (err: unknown) {

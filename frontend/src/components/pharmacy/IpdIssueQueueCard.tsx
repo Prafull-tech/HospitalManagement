@@ -182,7 +182,7 @@ export function IpdIssueQueueCard() {
                 </div>
               </div>
               <div className="table-responsive" style={{ maxHeight: 360, overflowY: 'auto' }}>
-                <table className="table table-bordered table-hover table-sm align-middle">
+                <table className="table table-hover table-sm align-middle">
                   <thead>
                     <tr>
                       <th>Medicine</th>
@@ -243,7 +243,7 @@ export function IpdIssueQueueCard() {
                 </div>
               </div>
               <div className="table-responsive" style={{ maxHeight: 360, overflowY: 'auto' }}>
-                <table className="table table-bordered table-hover table-sm align-middle">
+                <table className="table table-hover table-sm align-middle">
                   <thead>
                     <tr>
                       <th>Medicine</th>

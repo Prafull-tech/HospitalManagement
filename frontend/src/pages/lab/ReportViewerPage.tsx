@@ -94,7 +94,7 @@ export function ReportViewerPage() {
             <div className="col-md-6"><strong>Doctor:</strong> {order.doctorName}</div>
           </div>
           {results.length > 0 && (
-            <table className="table table-bordered">
+            <table className="table table-sm table-hover">
               <thead><tr><th>Parameter</th><th>Result</th><th>Unit</th><th>Reference Range</th><th>Flag</th></tr></thead>
               <tbody>
                 {results.map((r) => <tr key={r.id}><td>{r.parameterName}</td><td>{r.resultValue}</td><td>{r.unit}</td><td>{r.normalRange}</td><td>{r.flag ? <span className="badge bg-warning">{r.flag}</span> : '—'}</td></tr>)}

@@ -85,18 +85,20 @@ public class HospitalBedAvailabilityController {
     }
 
     /**
-     * List all bed availability records for the given hospital. No auth required (permitAll).
+     * List all bed availability records for the given hospital.
      */
     @GetMapping
+    @PreAuthorize(BedAvailabilityRoles.CAN_READ)
     public ResponseEntity<List<BedAvailabilityResponseDto>> list(@PathVariable Long hospitalId) {
         List<BedAvailabilityResponseDto> list = bedAvailabilityService.listByHospitalId(hospitalId);
         return ResponseEntity.ok(list);
     }
 
     /**
-     * Get a single bed availability by id within the hospital. No auth required (permitAll).
+     * Get a single bed availability by id within the hospital.
      */
     @GetMapping("/{id}")
+    @PreAuthorize(BedAvailabilityRoles.CAN_READ)
     public ResponseEntity<BedAvailabilityResponseDto> getById(
             @PathVariable Long hospitalId,
             @PathVariable Long id) {
@@ -105,9 +107,10 @@ public class HospitalBedAvailabilityController {
     }
 
     /**
-     * Read-only audit trail for a bed availability record. No auth required (permitAll).
+     * Read-only audit trail for a bed availability record.
      */
     @GetMapping("/{id}/audit")
+    @PreAuthorize(BedAvailabilityRoles.CAN_READ)
     public ResponseEntity<List<BedAvailabilityAuditLogResponseDto>> getAuditTrail(
             @PathVariable Long hospitalId,
             @PathVariable Long id) {

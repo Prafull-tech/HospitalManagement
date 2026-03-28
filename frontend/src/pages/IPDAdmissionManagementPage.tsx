@@ -537,21 +537,6 @@ export function IPDAdmissionManagementPage() {
 
             <div className={styles.row}>
               <label>
-                Charge Category
-                <select className={styles.select} disabled aria-label="Charge category (coming soon)">
-                  <option value="">Select Charge Category</option>
-                </select>
-              </label>
-              <label>
-                Charge
-                <select className={styles.select} disabled aria-label="Charge (coming soon)">
-                  <option value="">Select Charge</option>
-                </select>
-              </label>
-            </div>
-
-            <div className={styles.row}>
-              <label>
                 Reference Doctor
                 <select
                   name="referenceDoctorId"

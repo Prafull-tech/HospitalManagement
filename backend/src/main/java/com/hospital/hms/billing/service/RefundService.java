@@ -2,8 +2,10 @@ package com.hospital.hms.billing.service;
 
 import com.hospital.hms.billing.dto.BillingAccountViewDto;
 import com.hospital.hms.billing.dto.RefundRequestDto;
+import com.hospital.hms.billing.entity.PatientBillingAccount;
 import com.hospital.hms.billing.entity.Payment;
 import com.hospital.hms.billing.entity.Refund;
+import com.hospital.hms.billing.repository.PatientBillingAccountRepository;
 import com.hospital.hms.billing.repository.PaymentRepository;
 import com.hospital.hms.billing.repository.RefundRepository;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
@@ -26,13 +28,16 @@ public class RefundService {
 
     private final PaymentRepository paymentRepository;
     private final RefundRepository refundRepository;
+    private final PatientBillingAccountRepository accountRepository;
     private final BillingAccountService billingAccountService;
 
     public RefundService(PaymentRepository paymentRepository,
                         RefundRepository refundRepository,
+                        PatientBillingAccountRepository accountRepository,
                         BillingAccountService billingAccountService) {
         this.paymentRepository = paymentRepository;
         this.refundRepository = refundRepository;
+        this.accountRepository = accountRepository;
         this.billingAccountService = billingAccountService;
     }
 
@@ -49,11 +54,28 @@ public class RefundService {
         refund.setCorrelationId(MDC.get(MdcKeys.CORRELATION_ID));
         refundRepository.save(refund);
 
+        if (payment.getBillingAccountId() != null) {
+            PatientBillingAccount account = accountRepository.findById(payment.getBillingAccountId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Billing account not found: " + payment.getBillingAccountId()));
+            account.setPaidAmount(account.getPaidAmount().subtract(refund.getAmount()));
+            account.setPendingAmount(account.getPendingAmount().add(refund.getAmount()));
+            accountRepository.save(account);
+            log.info("Refund processed: accountId={}, amount={}, new paidAmount={}, new pendingAmount={}",
+                    account.getId(), refund.getAmount(), account.getPaidAmount(), account.getPendingAmount());
+        }
+
         String user = SecurityContextUserResolver.resolveUserId();
         String correlationId = MDC.get(MdcKeys.CORRELATION_ID);
         log.info("Refund requested for payment {} amount {} by {} correlationId {}",
                 request.getPaymentId(), request.getAmount(), user, correlationId);
 
-        return billingAccountService.getAccountViewByIpdAdmissionId(payment.getIpdAdmissionId());
+        if (payment.getBillingAccountId() != null) {
+            return billingAccountService.getAccountViewByBillingAccountId(payment.getBillingAccountId());
+        }
+        if (payment.getIpdAdmissionId() != null) {
+            return billingAccountService.getAccountViewByIpdAdmissionId(payment.getIpdAdmissionId());
+        }
+        throw new ResourceNotFoundException("Payment has no linked encounter");
     }
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * System Configuration / Access Control API.
  * Base path: /api/system (via apiClient baseURL /api).
  */
@@ -13,6 +13,7 @@ import type {
   PermissionAssignRequest,
   PermissionMatrixItem,
   FeatureToggleResponse,
+  EffectiveFeatureToggleResponse,
 } from '../types/system'
 
 const BASE = '/system'
@@ -48,9 +49,8 @@ export const systemModulesApi = {
 }
 
 export const systemPermissionsApi = {
-  getMyPermissions(roleCodes: string[]): Promise<MyPermissionsResponse> {
-    const headers = roleCodes.length > 0 ? { 'X-Roles': roleCodes.join(',') } : {}
-    return apiClient.get<MyPermissionsResponse>(`${BASE}/permissions/me`, { headers }).then((r) => r.data)
+  getMyPermissions(): Promise<MyPermissionsResponse> {
+    return apiClient.get(`${BASE}/permissions/me`).then((r) => r.data)
   },
   getPermissionsForRole(roleId: number): Promise<PermissionMatrixItem[]> {
     return apiClient.get(`${BASE}/permissions/role/${roleId}`).then((r) => r.data)
@@ -66,5 +66,8 @@ export const systemFeaturesApi = {
   },
   setEnabled(id: number, enabled: boolean): Promise<FeatureToggleResponse> {
     return apiClient.patch(`${BASE}/features/${id}`, null, { params: { enabled } }).then((r) => r.data)
+  },
+  listEffective(): Promise<EffectiveFeatureToggleResponse[]> {
+    return apiClient.get(`${BASE}/features/effective`).then((r) => r.data)
   },
 }

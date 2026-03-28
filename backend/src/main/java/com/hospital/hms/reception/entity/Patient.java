@@ -142,7 +142,8 @@ public class Patient extends BaseIdEntity {
     @Column(name = "remarks", length = 1000)
     private String remarks;
 
-    @Column(name = "active")
+    @NotNull
+    @Column(name = "active", nullable = false)
     private Boolean active = true;
 
     public Patient() {

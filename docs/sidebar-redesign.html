@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS Sidebar Redesign — SaaS Style</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sidebar-bg: #0f0f12;
+    --sidebar-border: rgba(255,255,255,0.07);
+    --sidebar-width: 240px;
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-muted: #52525b;
+    --accent: #6366f1;
+    --accent-soft: rgba(99,102,241,0.12);
+    --item-hover: rgba(255,255,255,0.05);
+    --item-active-bg: rgba(99,102,241,0.12);
+    --item-active-border: #6366f1;
+    --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111117;
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    flex-shrink: 0;
+    transition: width 200ms cubic-bezier(0.4,0,0.2,1);
+    overflow: hidden;
+  }
+  .sidebar.collapsed { width: 64px; }
+
+  /* Top accent glow */
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 5%, rgba(99,102,241,0.5) 50%, transparent 95%);
+  }
+
+  /* ─── LOGO ─── */
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 14px 14px;
+    border-bottom: 1px solid var(--sidebar-border);
+    flex-shrink: 0;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: white;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 4px 14px rgba(99,102,241,0.25);
+    letter-spacing: -0.02em;
+  }
+  .logo-text {
+    overflow: hidden;
+    transition: opacity var(--transition), max-width var(--transition);
+    max-width: 160px;
+  }
+  .sidebar.collapsed .logo-text { opacity: 0; max-width: 0; }
+  .logo-name { font-size: 13px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1.25; }
+  .logo-sub  { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-top: 1px; }
+
+  .collapse-btn {
+    margin-left: auto;
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background var(--transition), color var(--transition), transform 200ms ease;
+  }
+  .collapse-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+  .sidebar.collapsed .collapse-btn { transform: rotate(180deg); }
+
+  /* ─── SEARCH ─── */
+  .sidebar-search { padding: 10px 10px 6px; flex-shrink: 0; }
+  .sidebar.collapsed .sidebar-search { display: none; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 7px 10px;
+    cursor: text;
+    transition: border-color var(--transition), background var(--transition);
+  }
+  .search-box:hover { border-color: rgba(255,255,255,0.13); background: rgba(255,255,255,0.06); }
+  .search-icon { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+  .search-placeholder { font-size: 12px; color: var(--text-muted); flex: 1; }
+  .search-kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px; padding: 2px 5px;
+  }
+
+  /* ─── NAV AREA ─── */
+  .sidebar-nav {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 8px 8px;
+    scrollbar-width: none;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+
+  /* ─── SECTION LABEL ─── */
+  .nav-section { margin-bottom: 2px; }
+  .nav-section + .nav-section { margin-top: 6px; }
+  .section-header { display: flex; align-items: center; gap: 6px; padding: 6px 8px 3px; }
+  .section-label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    white-space: nowrap;
+    transition: opacity var(--transition);
+  }
+  .sidebar.collapsed .section-label { opacity: 0; }
+  .section-rule {
+    flex: 1; height: 1px;
+    background: rgba(255,255,255,0); /* invisible normally */
+    transition: background var(--transition);
+  }
+  .sidebar.collapsed .section-rule { background: rgba(255,255,255,0.07); }
+
+  /* ─── NAV ITEM ─── */
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    height: 36px;
+    margin-bottom: 1px;
+    overflow: hidden;
+    transition: background var(--transition);
+  }
+  .nav-item:hover { background: var(--item-hover); }
+  .nav-item.active { background: var(--item-active-bg); }
+  .nav-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 7px; bottom: 7px;
+    width: 3px;
+    background: var(--item-active-border);
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* Icon */
+  .nav-icon {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    position: relative;
+    transition: color var(--transition);
+  }
+  .nav-item:hover .nav-icon { color: var(--text-secondary); }
+  .nav-item.active .nav-icon { color: #818cf8; }
+
+  /* Label */
+  .nav-label {
+    font-size: 13px; font-weight: 500;
+    color: var(--text-secondary);
+    flex: 1;
+    white-space: nowrap;
+    transition: color var(--transition), opacity var(--transition), max-width var(--transition);
+    max-width: 140px; overflow: hidden;
+  }
+  .nav-item:hover .nav-label { color: var(--text-primary); }
+  .nav-item.active .nav-label { color: var(--text-primary); }
+  .sidebar.collapsed .nav-label { opacity: 0; max-width: 0; }
+
+  /* Badges */
+  .badge {
+    flex-shrink: 0;
+    font-size: 10px; font-weight: 600;
+    line-height: 1;
+    padding: 2.5px 6px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: opacity var(--transition);
+  }
+  .badge-default { background: rgba(99,102,241,0.16); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+  .badge-urgent  { background: rgba(239,68,68,0.14);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); animation: badge-pulse 2s ease-in-out infinite; }
+  @keyframes badge-pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+  .sidebar.collapsed .badge { display: none; }
+
+  /* Dot indicator (collapsed state) */
+  .icon-dot {
+    position: absolute; top: -1px; right: -1px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid var(--sidebar-bg);
+    display: none;
+  }
+  .sidebar.collapsed .icon-dot { display: block; }
+  .icon-dot.red   { background: #ef4444; }
+  .icon-dot.indigo{ background: #6366f1; }
+
+  /* Tooltip for collapsed mode */
+  .nav-tooltip {
+    position: absolute;
+    left: calc(100% + 10px); top: 50%;
+    transform: translateY(-50%);
+    background: #1c1c22;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 12px; font-weight: 500; color: var(--text-primary);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 120ms ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  .sidebar.collapsed .nav-item:hover .nav-tooltip { opacity: 1; }
+
+  /* Divider */
+  .sidebar-divider { height: 1px; background: var(--sidebar-border); margin: 6px 8px; }
+
+  /* ─── FOOTER / USER ─── */
+  .sidebar-footer {
+    padding: 8px 8px 12px;
+    border-top: 1px solid var(--sidebar-border);
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  /* Dropdown */
+  .user-dropdown {
+    position: absolute; bottom: calc(100% + 4px); left: 8px; right: 8px;
+    background: #1a1a22;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 -4px 6px rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.5);
+    opacity: 0; pointer-events: none;
+    transform: translateY(6px);
+    transition: opacity 150ms ease, transform 150ms ease;
+    z-index: 100;
+  }
+  .user-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+  .dd-head {
+    padding: 6px 8px 8px;
+    font-size: 10px; font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .dd-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    border-radius: 7px;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+  }
+  .dd-item:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+  .dd-item.danger:hover { background: rgba(239,68,68,0.1); color: #fca5a5; }
+  .dd-divider { height: 1px; background: var(--sidebar-border); margin: 4px 0; }
+
+  /* User card */
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background var(--transition);
+  }
+  .user-card:hover { background: rgba(255,255,255,0.05); }
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white;
+    flex-shrink: 0; position: relative;
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.35);
+  }
+  .online-dot {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 9px; height: 9px;
+    background: #22c55e;
+    border-radius: 50%;
+    border: 2px solid var(--sidebar-bg);
+  }
+  .user-info {
+    flex: 1; overflow: hidden;
+    transition: opacity var(--transition), max-width var(--transition);
+    max-width: 140px;
+  }
+  .sidebar.collapsed .user-info { opacity: 0; max-width: 0; }
+  .user-name  { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; line-height: 1.3; }
+  .user-role  { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+  .user-chevron {
+    color: var(--text-muted); flex-shrink: 0;
+    transition: opacity var(--transition), transform 150ms ease, color var(--transition);
+  }
+  .sidebar.collapsed .user-chevron { opacity: 0; }
+  .user-card:hover .user-chevron { color: var(--text-secondary); }
+  .user-dropdown.open ~ .user-card .user-chevron { transform: rotate(180deg); }
+
+  /* ─── RIGHT PANEL ─── */
+  .right-panel {
+    flex: 1;
+    background: #111117;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* Top bar */
+  .topbar {
+    height: 52px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center;
+    padding: 0 24px; gap: 16px;
+    flex-shrink: 0;
+  }
+  .topbar-breadcrumb { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+  .topbar-breadcrumb span { color: #71717a; }
+  .topbar-breadcrumb .sep { opacity: 0.4; }
+  .topbar-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 1px; }
+  .topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+  .tbtn {
+    height: 30px; padding: 0 11px;
+    border-radius: 7px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    font-size: 12px; font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    transition: all var(--transition);
+  }
+  .tbtn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); border-color: rgba(255,255,255,0.14); }
+  .tbtn.primary {
+    background: #6366f1; border-color: #6366f1; color: white;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+  }
+  .tbtn.primary:hover { background: #5558e8; }
+
+  /* Content + Annotations */
+  .body-area { flex: 1; display: flex; overflow: hidden; }
+
+  .content {
+    flex: 1; padding: 22px; overflow-y: auto; min-width: 0;
+    scrollbar-width: thin; scrollbar-color: #27272a transparent;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 11px; padding: 16px;
+    transition: border-color var(--transition);
+  }
+  .stat-card:hover { border-color: rgba(99,102,241,0.25); }
+  .sc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .sc-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .sc-icon.p { background: rgba(99,102,241,0.14); }
+  .sc-icon.b { background: rgba(59,130,246,0.14); }
+  .sc-icon.g { background: rgba(34,197,94,0.14); }
+  .sc-icon.a { background: rgba(245,158,11,0.14); }
+  .sc-trend { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 20px; }
+  .sc-trend.up { background: rgba(34,197,94,0.12); color: #4ade80; }
+  .sc-trend.dn { background: rgba(239,68,68,0.12); color: #f87171; }
+  .sc-val  { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1; margin-bottom: 3px; }
+  .sc-lbl  { font-size: 11px; color: #71717a; }
+
+  .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  .chart-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 11px; padding: 18px;
+  }
+  .cc-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .cc-sub   { font-size: 11px; color: #52525b; margin-top: 2px; margin-bottom: 16px; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 72px; }
+  .bar {
+    flex: 1; border-radius: 3px 3px 0 0;
+    background: rgba(99,102,241,0.18);
+    transition: background var(--transition); cursor: pointer;
+  }
+  .bar:hover { background: rgba(99,102,241,0.45); }
+  .bar.hi { background: #6366f1; box-shadow: 0 0 10px rgba(99,102,241,0.4); }
+
+  .occ-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .occ-row {}
+  .occ-meta { display: flex; justify-content: space-between; font-size: 11px; color: #71717a; margin-bottom: 4px; }
+  .occ-track { height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; }
+  .occ-fill  { height: 100%; border-radius: 3px; }
+
+  /* ─── ANNOTATIONS PANEL ─── */
+  .annotations {
+    width: 340px; flex-shrink: 0;
+    border-left: 1px solid rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.2);
+    padding: 20px 18px;
+    overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: #27272a transparent;
+  }
+
+  .ann-title {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted); margin-bottom: 18px;
+  }
+  .ann-section { margin-bottom: 22px; }
+  .ann-h {
+    font-size: 11px; font-weight: 600; color: #818cf8;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .ann-h::after { content:''; flex:1; height:1px; background:rgba(99,102,241,0.18); }
+
+  .compare-row { display: flex; gap: 10px; margin-bottom: 4px; }
+  .compare-card {
+    flex: 1; border-radius: 9px; padding: 12px;
+    border: 1px solid transparent;
+  }
+  .cc-old { background:rgba(113,113,122,0.06); border-color:rgba(113,113,122,0.14); }
+  .cc-new { background:rgba(99,102,241,0.06); border-color:rgba(99,102,241,0.18); }
+  .cc-badge {
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .cc-badge.old { color: #52525b; }
+  .cc-badge.new { color: #818cf8; }
+  .cc-point { font-size: 11px; color: #71717a; display: flex; align-items: flex-start; gap: 5px; margin-bottom: 4px; }
+  .cc-point.x { text-decoration: line-through; opacity: 0.5; }
+  .cc-point::before { content:'›'; flex-shrink:0; margin-top:-1px; }
+
+  .ann-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
+  .ann-dot { width: 5px; height: 5px; border-radius: 50%; background:#6366f1; margin-top:6px; flex-shrink:0; }
+  .ann-dot.g { background:#22c55e; }
+  .ann-dot.a { background:#f59e0b; }
+  .ann-dot.r { background:#ef4444; }
+  .ann-text { font-size: 11px; color: #71717a; line-height: 1.6; }
+  .ann-text strong { color: #a1a1aa; }
+
+  .chip {
+    display: inline-block;
+    background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); color:#818cf8;
+    font-size: 9px; font-weight: 600; font-family:'JetBrains Mono',monospace;
+    padding: 1px 5px; border-radius:4px; margin-left:3px;
+  }
+  .chip.g { background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.2); color:#4ade80; }
+  .chip.a { background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.2); color:#fbbf24; }
+  .chip.r { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2); color:#f87171; }
+
+  /* Color palette */
+  .palette { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .sw-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .swatch { width: 32px; height: 32px; border-radius: 7px; cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; }
+  .swatch:hover { transform: scale(1.12); box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+  .sw-hex { font-family:'JetBrains Mono',monospace; font-size:8px; color:#52525b; }
+
+  /* Code snippet */
+  .code-block {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #a1a1aa;
+    line-height: 1.7;
+    margin-top: 8px;
+    overflow-x: auto;
+  }
+  .code-block .kw { color: #818cf8; }
+  .code-block .str { color: #86efac; }
+  .code-block .cm { color: #52525b; font-style: italic; }
+
+  /* Toggle button */
+  #toggleBtn {
+    position: fixed; top: 16px; left: 260px;
+    background: #6366f1; color: white;
+    border: none; border-radius: 6px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer; z-index: 500;
+    transition: left 200ms cubic-bezier(0.4,0,0.2,1), background var(--transition);
+    box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+  }
+  #toggleBtn:hover { background: #5558e8; }
+  body.sidebar-collapsed #toggleBtn { left: 80px; }
+</style>
+</head>
+<body>
+
+<button id="toggleBtn" onclick="toggleSidebar()">⟨ Collapse</button>
+
+<!-- ═══ REDESIGNED SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <div class="logo-icon">HMS</div>
+    <div class="logo-text">
+      <div class="logo-name">HMS Software</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+    <button class="collapse-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="sidebar-search">
+    <div class="search-box">
+      <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span class="search-placeholder">Search anything...</span>
+      <span class="search-kbd">⌘K</span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+
+    <!-- OVERVIEW -->
+    <div class="nav-section">
+      <div class="section-header">
+        <span class="section-label">Overview</span>
+        <span class="section-rule"></span>
+      </div>
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </div>
+        <span class="nav-label">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </div>
+    </div>
+
+    <!-- CLINICAL -->
+    <div class="nav-section">
+      <div class="section-header">
+        <span class="section-label">Clinical</span>
+        <span class="section-rule"></span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <span class="nav-label">Patients</span>
+        <span class="badge badge-default">248</span>
+        <span class="nav-tooltip">Patients · 248</span>
+      </div>
+
+      <div class="nav-item active" onclick="activate(this)">
+        <div class="nav-icon">
+          <div class="icon-dot red"></div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <span class="nav-label">Appointments</span>
+        <span class="badge badge-urgent">5</span>
+        <span class="nav-tooltip">Appointments · 5 urgent</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <span class="nav-label">OPD / IPD</span>
+        <span class="nav-tooltip">OPD / IPD</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+        </div>
+        <span class="nav-label">Pharmacy</span>
+        <span class="nav-tooltip">Pharmacy</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <span class="nav-label">Laboratory</span>
+        <span class="nav-tooltip">Laboratory</span>
+      </div>
+
+    </div>
+
+    <!-- OPERATIONS -->
+    <div class="nav-section">
+      <div class="section-header">
+        <span class="section-label">Operations</span>
+        <span class="section-rule"></span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <span class="nav-label">Staff</span>
+        <span class="nav-tooltip">Staff</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <span class="nav-label">Transport</span>
+        <span class="nav-tooltip">Transport</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <span class="nav-label">Ward Management</span>
+        <span class="nav-tooltip">Ward Management</span>
+      </div>
+
+    </div>
+
+    <!-- FINANCE -->
+    <div class="nav-section">
+      <div class="section-header">
+        <span class="section-label">Finance</span>
+        <span class="section-rule"></span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <span class="nav-label">Billing</span>
+        <span class="nav-tooltip">Billing</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <span class="nav-label">Reports</span>
+        <span class="nav-tooltip">Reports</span>
+      </div>
+
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <!-- SYSTEM -->
+    <div class="nav-section">
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <div class="icon-dot indigo"></div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <span class="nav-label">Notifications</span>
+        <span class="badge badge-default">12</span>
+        <span class="nav-tooltip">Notifications · 12</span>
+      </div>
+
+      <div class="nav-item" onclick="activate(this)">
+        <div class="nav-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <span class="nav-label">Settings</span>
+        <span class="nav-tooltip">Settings</span>
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- User Footer -->
+  <div class="sidebar-footer">
+    <div class="user-dropdown" id="userDropdown">
+      <div class="dd-head">Signed in as</div>
+      <div class="dd-item">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        View Profile
+      </div>
+      <div class="dd-item">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Change Password
+      </div>
+      <div class="dd-item">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Preferences
+      </div>
+      <div class="dd-divider"></div>
+      <div class="dd-item danger">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </div>
+    </div>
+
+    <div class="user-card" onclick="toggleDropdown()" id="userCard">
+      <div class="user-avatar">
+        AD
+        <div class="online-dot"></div>
+      </div>
+      <div class="user-info">
+        <div class="user-name">Admin User</div>
+        <div class="user-role">Super Administrator</div>
+      </div>
+      <div class="user-chevron">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<div class="right-panel">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-breadcrumb"><span>HMS</span><span class="sep">/</span><span style="color:#a1a1aa">Appointments</span></div>
+      <div class="topbar-title">Appointments</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="tbtn">↓ Export</button>
+      <button class="tbtn">⚙ Filter</button>
+      <button class="tbtn primary">＋ New Appointment</button>
+    </div>
+  </div>
+
+  <div class="body-area">
+
+    <!-- Content -->
+    <div class="content">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="sc-head"><div class="sc-icon p">👤</div><span class="sc-trend up">+12%</span></div><div class="sc-val">248</div><div class="sc-lbl">Total Patients</div></div>
+        <div class="stat-card"><div class="sc-head"><div class="sc-icon b">📅</div><span class="sc-trend up">+5</span></div><div class="sc-val">32</div><div class="sc-lbl">Today's Appointments</div></div>
+        <div class="stat-card"><div class="sc-head"><div class="sc-icon g">₹</div><span class="sc-trend up">+8.2%</span></div><div class="sc-val">₹2.4L</div><div class="sc-lbl">Revenue Today</div></div>
+        <div class="stat-card"><div class="sc-head"><div class="sc-icon a">⚠</div><span class="sc-trend dn">5 urgent</span></div><div class="sc-val">5</div><div class="sc-lbl">Pending Urgent</div></div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="cc-title">Weekly Appointments</div>
+          <div class="cc-sub">Daily visit volume · last 7 days</div>
+          <div class="bars">
+            <div class="bar" style="height:42%"></div>
+            <div class="bar" style="height:63%"></div>
+            <div class="bar" style="height:51%"></div>
+            <div class="bar" style="height:78%"></div>
+            <div class="bar hi" style="height:94%"></div>
+            <div class="bar" style="height:68%"></div>
+            <div class="bar" style="height:38%"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="cc-title">Bed Occupancy</div>
+          <div class="cc-sub">Live ward status</div>
+          <div class="occ-rows">
+            <div class="occ-row"><div class="occ-meta"><span>General</span><span>82%</span></div><div class="occ-track"><div class="occ-fill" style="width:82%;background:#6366f1"></div></div></div>
+            <div class="occ-row"><div class="occ-meta"><span>ICU</span><span style="color:#f87171">91%</span></div><div class="occ-track"><div class="occ-fill" style="width:91%;background:#ef4444"></div></div></div>
+            <div class="occ-row"><div class="occ-meta"><span>Pediatric</span><span>60%</span></div><div class="occ-track"><div class="occ-fill" style="width:60%;background:#22c55e"></div></div></div>
+            <div class="occ-row"><div class="occ-meta"><span>Maternity</span><span>45%</span></div><div class="occ-track"><div class="occ-fill" style="width:45%;background:#f59e0b"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Annotations Panel -->
+    <div class="annotations">
+      <div class="ann-title">Design System Notes</div>
+
+      <!-- Before vs After -->
+      <div class="ann-section">
+        <div class="ann-h">Before → After</div>
+        <div class="compare-row">
+          <div class="compare-card cc-old">
+            <div class="cc-badge old">✗ Original</div>
+            <div class="cc-point x">Flat purple fill</div>
+            <div class="cc-point x">No spacing system</div>
+            <div class="cc-point x">Inconsistent badges</div>
+            <div class="cc-point x">No search</div>
+            <div class="cc-point x">Static only</div>
+          </div>
+          <div class="compare-card cc-new">
+            <div class="cc-badge new">✓ Redesigned</div>
+            <div class="cc-point">Dark neutral base</div>
+            <div class="cc-point">8px grid system</div>
+            <div class="cc-point">Typed badge variants</div>
+            <div class="cc-point">⌘K global search</div>
+            <div class="cc-point">Collapsible + tooltips</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colors -->
+      <div class="ann-section">
+        <div class="ann-h">Color Tokens</div>
+        <div class="palette">
+          <div class="sw-wrap"><div class="swatch" style="background:#0f0f12"></div><div class="sw-hex">#0f0f12</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#18181b"></div><div class="sw-hex">#18181b</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#27272a"></div><div class="sw-hex">#27272a</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#6366f1"></div><div class="sw-hex">#6366f1</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#818cf8"></div><div class="sw-hex">#818cf8</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#22c55e"></div><div class="sw-hex">#22c55e</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#ef4444"></div><div class="sw-hex">#ef4444</div></div>
+          <div class="sw-wrap"><div class="swatch" style="background:#f59e0b"></div><div class="sw-hex">#f59e0b</div></div>
+        </div>
+      </div>
+
+      <!-- Typography -->
+      <div class="ann-section">
+        <div class="ann-h">Typography</div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">Nav items: <strong>Inter 500, 13px</strong><span class="chip">medium</span></div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">Section labels: <strong>Inter 600, 10px uppercase</strong><span class="chip">+0.1em tracking</span></div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">Badges: <strong>JetBrains Mono, 10px</strong><span class="chip">tabular nums</span></div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">User name: <strong>Inter 600, 12px</strong> · role: 10px muted</div></div>
+      </div>
+
+      <!-- Spacing -->
+      <div class="ann-section">
+        <div class="ann-h">Spacing System (8px)</div>
+        <div class="ann-item"><div class="ann-dot g"></div><div class="ann-text">Sidebar expanded: <span class="chip g">240px</span> collapsed: <span class="chip g">64px</span></div></div>
+        <div class="ann-item"><div class="ann-dot g"></div><div class="ann-text">Nav item height: <span class="chip g">36px</span> — comfortable 44px tap zone on mobile</div></div>
+        <div class="ann-item"><div class="ann-dot g"></div><div class="ann-text">H-padding: <span class="chip g">8px</span>  Gap between icon + label: <span class="chip g">10px</span></div></div>
+        <div class="ann-item"><div class="ann-dot g"></div><div class="ann-text">Active left bar: <span class="chip g">3px</span> wide, inset 7px top/bottom — Linear.app style</div></div>
+      </div>
+
+      <!-- Menu structure -->
+      <div class="ann-section">
+        <div class="ann-h">Menu Reorganization</div>
+        <div class="ann-item"><div class="ann-dot a"></div><div class="ann-text"><span class="chip a">Overview</span> Dashboard — solo entry point</div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text"><span class="chip">Clinical</span> Patients → Appointments → OPD/IPD → Pharmacy → Lab</div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text"><span class="chip">Operations</span> Staff → Transport → Ward Mgmt</div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text"><span class="chip">Finance</span> Billing → Reports</div></div>
+        <div class="ann-item"><div class="ann-dot r"></div><div class="ann-text"><span class="chip r">Removed</span> Transport from top-level Finance; moved to Operations workflow</div></div>
+      </div>
+
+      <!-- Interactions -->
+      <div class="ann-section">
+        <div class="ann-h">Interaction Design</div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">Active: <strong>3px indigo left bar</strong> + 12% indigo background tint</div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">Hover: <strong>5% white overlay</strong>, 150ms ease — never jarring</div></div>
+        <div class="ann-item"><div class="ann-dot r"></div><div class="ann-text"><strong>Urgent badge</strong> <span class="chip r">red</span> pulses at 2s interval — draws attention without distraction</div></div>
+        <div class="ann-item"><div class="ann-dot"></div><div class="ann-text">Collapsed: icon-only + dot indicators + hover tooltips slide from right</div></div>
+        <div class="ann-item"><div class="ann-dot g"></div><div class="ann-text">Online dot: <span class="chip g">green</span> on user avatar — shows real-time status</div></div>
+      </div>
+
+      <!-- React code -->
+      <div class="ann-section">
+        <div class="ann-h">React Component API</div>
+        <div class="code-block">
+<span class="cm">// SidebarItem component</span>
+<span class="kw">interface</span> SidebarItemProps {
+  icon: ReactNode
+  label: <span class="str">string</span>
+  badge?: number
+  badgeVariant?: <span class="str">'default'</span> | <span class="str">'urgent'</span>
+  active?: boolean
+  collapsed?: boolean
+  onClick?: () => <span class="kw">void</span>
+}
+
+<span class="cm">// CSS token usage (Tailwind)</span>
+<span class="str">className</span>=<span class="str">"flex items-center gap-2.5
+  px-2 h-9 rounded-lg
+  text-sm font-medium
+  text-zinc-400 hover:text-zinc-100
+  hover:bg-white/5
+  transition-colors duration-150
+  data-[active]:bg-indigo-500/12
+  data-[active]:text-zinc-100"</span>
+        </div>
+      </div>
+
+      <!-- Tailwind tokens -->
+      <div class="ann-section">
+        <div class="ann-h">Tailwind Config Tokens</div>
+        <div class="code-block">
+<span class="cm">// tailwind.config.ts</span>
+sidebar: {
+  bg:      <span class="str">'#0f0f12'</span>,
+  border:  <span class="str">'rgba(255,255,255,0.07)'</span>,
+  accent:  <span class="str">'#6366f1'</span>,
+  hover:   <span class="str">'rgba(255,255,255,0.05)'</span>,
+  active:  <span class="str">'rgba(99,102,241,0.12)'</span>,
+}
+        </div>
+      </div>
+
+    </div><!-- /annotations -->
+  </div><!-- /body-area -->
+</div><!-- /right-panel -->
+
+<script>
+  function activate(el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  let sidebarCollapsed = false;
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+    document.body.classList.toggle('sidebar-collapsed', sidebarCollapsed);
+    document.getElementById('toggleBtn').textContent = sidebarCollapsed ? '⟩ Expand' : '⟨ Collapse';
+  }
+
+  let dropdownOpen = false;
+  function toggleDropdown() {
+    dropdownOpen = !dropdownOpen;
+    document.getElementById('userDropdown').classList.toggle('open', dropdownOpen);
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.sidebar-footer') && dropdownOpen) {
+      dropdownOpen = false;
+      document.getElementById('userDropdown').classList.remove('open');
+    }
+  });
+</script>
+</body>
+</html>

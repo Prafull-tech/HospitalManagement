@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { systemRolesApi } from '../../api/system'
+import { apiErrorWithNetworkHint } from '../../utils/apiNetworkError'
 import type { RoleResponse, RoleRequest } from '../../types/system'
 import styles from './SystemConfigShared.module.css'
 import shared from '../../styles/Dashboard.module.css'
@@ -34,7 +35,7 @@ export function SystemConfigRolesPage() {
     systemRolesApi
       .list(!showAll)
       .then(setRoles)
-      .catch(() => setError('Failed to load roles.'))
+      .catch((err: unknown) => setError(apiErrorWithNetworkHint('Failed to load roles.', err)))
       .finally(() => setLoading(false))
   }
 

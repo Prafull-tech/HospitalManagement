@@ -204,7 +204,12 @@ export function OPDVisitDetailPage() {
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h2 className={styles.cardTitle}>Visit details</h2>
-          <button type="button" onClick={handlePrint} className={styles.printBtn}>Print</button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to={`/billing/opd/${visit.id}`} className={styles.printBtn} style={{ textDecoration: 'none' }}>
+              Billing
+            </Link>
+            <button type="button" onClick={handlePrint} className={styles.printBtn}>Print</button>
+          </div>
         </div>
         <div className={styles.grid}>
           <div className={styles.field}>

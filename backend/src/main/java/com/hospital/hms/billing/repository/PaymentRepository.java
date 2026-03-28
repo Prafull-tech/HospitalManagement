@@ -19,5 +19,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.createdAt >= :from AND p.createdAt <= :to")
     BigDecimal sumAmountByCreatedAtBetween(@Param("from") Instant from, @Param("to") Instant to);
 
+    long countByCreatedAtBetween(Instant from, Instant to);
+
     Page<Payment> findByCreatedAtBetween(Instant from, Instant to, Pageable pageable);
 }

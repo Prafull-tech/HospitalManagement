@@ -1,4 +1,4 @@
-/**
+﻿/**
  * System Configuration / Access Control types.
  * Align with backend DTOs and enums.
  */
@@ -92,4 +92,11 @@ export interface FeatureToggleResponse {
   sortOrder?: number
   createdAt: string
   updatedAt: string
+}
+
+export interface EffectiveFeatureToggleResponse {
+  featureKey: string
+  enabled: boolean
+  uiMode: 'hide' | 'disabled'
+  source: 'default' | 'config' | 'database' | 'environment' | string
 }

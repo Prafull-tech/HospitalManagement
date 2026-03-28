@@ -20,5 +20,9 @@ if %errorlevel% neq 0 (
 
 :start_frontend
 echo [3/3] Starting frontend (Vite)...
+echo.
+echo IMPORTANT: Keep the "HMS Backend" window open. Closing it stops the API on port 8080
+echo            and the UI will show proxy errors (ECONNREFUSED) for /api/... requests.
+echo.
 cd /d %~dp0frontend
 npm run dev

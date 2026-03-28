@@ -1171,7 +1171,7 @@ function ExcelImportForm({
           {result.errors?.length ? (
             <>
               <div className="table-responsive" style={{ maxHeight: 200 }}>
-                <table className="table table-sm table-bordered">
+                <table className="table table-sm">
                   <thead className="table-light">
                     <tr>
                       <th>Row</th>

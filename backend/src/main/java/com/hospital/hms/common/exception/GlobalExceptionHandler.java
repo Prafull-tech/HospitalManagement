@@ -11,18 +11,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.core.env.Environment;
 import org.slf4j.MDC;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.hibernate.LazyInitializationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,6 +35,12 @@ import com.hospital.hms.lab.exception.DuplicateTestCodeException;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final Environment environment;
+
+    public GlobalExceptionHandler(Environment environment) {
+        this.environment = environment;
+    }
 
     private static void logError(HttpServletRequest request, String message, Exception ex) {
         MDC.put(MdcKeys.MODULE, "SYSTEM");
@@ -67,6 +67,15 @@ public class GlobalExceptionHandler {
         logError(request, "Validation failure: " + message, ex);
         ErrorBody body = new ErrorBody(HttpStatus.BAD_REQUEST.value(), message, Instant.now());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(HmsBusinessException.class)
+    public ResponseEntity<ErrorBody> handleBusinessException(
+            HmsBusinessException ex,
+            HttpServletRequest request) {
+        logError(request, ex.getErrorCode() + ": " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(ex.getHttpStatus().value(), ex.getMessage(), Instant.now());
+        return ResponseEntity.status(ex.getHttpStatus()).body(body);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -220,24 +229,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorBody> handleGeneric(Exception ex, HttpServletRequest request) {
         logError(request, "Unhandled exception", ex);
-        // #region agent log
-        try {
-            String stackTrace = ex.getStackTrace() != null
-                ? Stream.of(ex.getStackTrace()).limit(8).map(StackTraceElement::toString).collect(Collectors.joining(" | "))
-                : "";
-            String cls = ex.getClass().getName() != null ? ex.getClass().getName().replace("\\", "/").replace("\"", "'") : "";
-            String msg = ex.getMessage() != null ? ex.getMessage().replace("\\", "\\\\").replace("\"", "'").replace("\n", " ") : "";
-            String st = stackTrace.replace("\\", "\\\\").replace("\"", "'").replace("\n", " ");
-            String ndjson = "{\"location\":\"GlobalExceptionHandler.handleGeneric\",\"message\":\"Unhandled exception\",\"data\":{\"exceptionClass\":\"" + cls + "\",\"exceptionMessage\":\"" + msg + "\",\"stackTrace\":\"" + st + "\"},\"timestamp\":" + System.currentTimeMillis() + ",\"sessionId\":\"debug-session\",\"hypothesisId\":\"H5\"}\n";
-            Path logPath = Paths.get("p:\\genius36\\HospitalManagement\\.cursor\\debug.log");
-            Files.createDirectories(logPath.getParent());
-            Files.write(logPath, ndjson.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        } catch (Throwable t) { /* ignore */ }
-        // #endregion
+        boolean isDev = environment != null && java.util.Arrays.stream(environment.getActiveProfiles()).anyMatch("dev"::equals);
+        String userMessage = "An unexpected error occurred. Please try again or contact support.";
+        String detail = null;
+        if (isDev && ex != null) {
+            String msg = ex.getMessage();
+            String cls = ex.getClass().getSimpleName();
+            detail = (msg != null && !msg.isBlank()) ? cls + ": " + msg : cls;
+        }
         ErrorBody body = new ErrorBody(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred. Please try again or contact support.",
-                Instant.now()
+                userMessage,
+                Instant.now(),
+                detail
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
@@ -247,16 +251,26 @@ public class GlobalExceptionHandler {
         private final String message;
         private final Instant timestamp;
         private Map<String, String> errors;
+        private final String detail;
 
         public ErrorBody(int status, String message, Instant timestamp) {
+            this(status, message, timestamp, (Map<String, String>) null);
+        }
+
+        public ErrorBody(int status, String message, Instant timestamp, String detail) {
             this.status = status;
             this.message = message;
             this.timestamp = timestamp;
+            this.errors = null;
+            this.detail = detail;
         }
 
         public ErrorBody(int status, String message, Instant timestamp, Map<String, String> errors) {
-            this(status, message, timestamp);
+            this.status = status;
+            this.message = message;
+            this.timestamp = timestamp;
             this.errors = errors;
+            this.detail = null;
         }
 
         public int getStatus() {
@@ -273,6 +287,11 @@ public class GlobalExceptionHandler {
 
         public Map<String, String> getErrors() {
             return errors;
+        }
+
+        /** In dev profile only: exception class and message for debugging. */
+        public String getDetail() {
+            return detail;
         }
     }
 }

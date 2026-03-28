@@ -1,5 +1,6 @@
 package com.hospital.hms.opd.service;
 
+import com.hospital.hms.billing.service.BillingAccountService;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.entity.MedicalDepartment;
@@ -22,9 +23,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -42,19 +45,25 @@ public class OPDVisitService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final OPDVisitNumberGenerator visitNumberGenerator;
+    private final BillingAccountService billingAccountService;
+
+    @Value("${hms.billing.opd-consultation-fee:500}")
+    private BigDecimal opdConsultationFee;
 
     public OPDVisitService(OPDVisitRepository visitRepository,
                           OPDTokenRepository tokenRepository,
                           OPDClinicalNoteRepository clinicalNoteRepository,
                           PatientRepository patientRepository,
                           DoctorRepository doctorRepository,
-                          OPDVisitNumberGenerator visitNumberGenerator) {
+                          OPDVisitNumberGenerator visitNumberGenerator,
+                          BillingAccountService billingAccountService) {
         this.visitRepository = visitRepository;
         this.tokenRepository = tokenRepository;
         this.clinicalNoteRepository = clinicalNoteRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.visitNumberGenerator = visitNumberGenerator;
+        this.billingAccountService = billingAccountService;
     }
 
     @Transactional
@@ -135,13 +144,20 @@ public class OPDVisitService {
 
     @Transactional
     public OPDVisitResponseDto updateStatus(Long id, OPDStatusRequestDto request) {
-        OPDVisit visit = visitRepository.findById(id)
+        OPDVisit visit = visitRepository.findByIdWithAssociations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OPD visit not found: " + id));
+        VisitStatus previous = visit.getVisitStatus();
         visit.setVisitStatus(request.getStatus());
         if (request.getConsultationOutcome() != null) {
             visit.setConsultationOutcome(request.getConsultationOutcome());
         }
         visit = visitRepository.save(visit);
+        if (request.getStatus() == VisitStatus.COMPLETED && previous != VisitStatus.COMPLETED) {
+            billingAccountService.postOpdConsultationFeeIfAbsent(
+                    visit.getId(),
+                    opdConsultationFee != null ? opdConsultationFee : BigDecimal.valueOf(500),
+                    visit.getDoctor() != null ? visit.getDoctor().getFullName() : null);
+        }
         return toResponse(visit, true);
     }
 

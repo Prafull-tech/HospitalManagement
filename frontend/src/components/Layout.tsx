@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { getPageTitleFromPath } from '../config/pageTitle'
@@ -41,18 +41,33 @@ export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
 
   const userRoles: HMSRole[] = user?.roles?.length ? user.roles : ['ADMIN']
   const pageTitle = getPageTitleFromPath(location.pathname)
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [profileOpen])
+
   const handleLogout = () => {
+    setProfileOpen(false)
     logout()
     navigate('/login', { replace: true })
   }
 
   return (
-    <div className={styles.wrapper}>
-      <Sidebar userRoles={userRoles} collapsed={sidebarCollapsed} />
+    <div className={`${styles.wrapper} ${sidebarCollapsed ? styles.wrapperSidebarCollapsed : ''}`}>
+      <Sidebar userRoles={userRoles} collapsed={sidebarCollapsed} username={user?.username} />
 
       <div className={styles.mainWrap}>
         <header className={styles.topbar}>
@@ -78,17 +93,48 @@ export function Layout() {
               {theme === 'light' ? <MoonIcon /> : <SunIcon />}
               <span className={styles.themeLabel}>{theme === 'light' ? 'Night' : 'Day'}</span>
             </button>
-            <div className={styles.userBadge}>
-              <span className={styles.userName}>{user?.username ?? 'Guest'}</span>
-            </div>
             {user && (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className={styles.logoutBtn}
-              >
-                Logout
-              </button>
+              <div className={styles.profileWrap} ref={profileRef}>
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((o) => !o)}
+                  className={styles.profileTrigger}
+                  aria-expanded={profileOpen}
+                  aria-haspopup="true"
+                  aria-label="Profile menu"
+                >
+                  <span className={styles.userName}>{user.username}</span>
+                  <span aria-hidden>â–¼</span>
+                </button>
+                {profileOpen && (
+                  <div className={styles.profileDropdownMenu} role="menu">
+                    <Link
+                      to="/profile"
+                      className={styles.profileDropdownItem}
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      to="/profile/change-password"
+                      className={styles.profileDropdownItem}
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      Change Password
+                    </Link>
+                    <button
+                      type="button"
+                      className={`${styles.profileDropdownItem} ${styles.danger}`}
+                      role="menuitem"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </header>

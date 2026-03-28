@@ -3,7 +3,7 @@ import { getAuthRedirect, getAuthClearCallback } from './authRedirect'
 
 const baseURL = '/api'
 
-const REQUEST_TIMEOUT_MS = 10000 // 10 seconds – avoid infinite loading when backend is down
+const REQUEST_TIMEOUT_MS = 10000
 
 export const apiClient = axios.create({
   baseURL,
@@ -11,7 +11,6 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Attach JWT bearer token when available; for FormData, let browser set Content-Type with boundary
 apiClient.interceptors.request.use((config) => {
   if (config.data instanceof FormData) {
     delete (config.headers as Record<string, unknown>)['Content-Type']
@@ -31,20 +30,75 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// Redirect to login on 401 (in-app navigate when available to avoid full reload / static loader)
+let isRefreshing = false
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+
+function processQueue(error: unknown, token: string | null) {
+  failedQueue.forEach((prom) => {
+    if (token) prom.resolve(token)
+    else prom.reject(error)
+  })
+  failedQueue = []
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (err?.response?.status === 401) {
+  async (err) => {
+    const originalRequest = err.config
+    const data = err?.response?.data
+
+    if (data && typeof data.detail === 'string' && data.detail.length > 0) {
+      data.message = (data.message || 'Error') + ' [' + data.detail + ']'
+    }
+
+    if (err?.response?.status === 401 && !originalRequest._retry) {
+      const auth = localStorage.getItem('hms_auth')
+      let refreshToken: string | null = null
+      if (auth) {
+        try { refreshToken = JSON.parse(auth).refreshToken } catch { /* ignore */ }
+      }
+
+      if (refreshToken && !originalRequest.url?.includes('/auth/login') && !originalRequest.url?.includes('/auth/refresh')) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject })
+          }).then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return apiClient(originalRequest)
+          })
+        }
+
+        originalRequest._retry = true
+        isRefreshing = true
+
+        try {
+          const res = await axios.post(`${baseURL}/auth/refresh`, { refreshToken })
+          const { token: newToken, refreshToken: newRefresh, username, role, fullName } = res.data
+          localStorage.setItem('hms_auth', JSON.stringify({ username, role, fullName, token: newToken, refreshToken: newRefresh }))
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          processQueue(null, newToken)
+          return apiClient(originalRequest)
+        } catch (refreshErr) {
+          processQueue(refreshErr, null)
+          localStorage.removeItem('hms_auth')
+          getAuthClearCallback()?.()
+          if (window.location.pathname !== '/login') {
+            const go = getAuthRedirect()
+            if (typeof go === 'function') go()
+            else window.location.href = '/login'
+          }
+          return Promise.reject(refreshErr)
+        } finally {
+          isRefreshing = false
+        }
+      }
+
       localStorage.removeItem('hms_auth')
-      getAuthClearCallback()?.() // Clear auth state so LoginPage doesn't redirect back
+      getAuthClearCallback()?.()
       if (window.location.pathname !== '/login') {
         const go = getAuthRedirect()
-        if (typeof go === 'function') {
-          go()
-        } else {
-          window.location.href = '/login'
-        }
+        if (typeof go === 'function') go()
+        else window.location.href = '/login'
       }
     }
     return Promise.reject(err)

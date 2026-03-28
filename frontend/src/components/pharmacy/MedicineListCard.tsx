@@ -168,7 +168,7 @@ export function MedicineListCard({
       </div>
 
       <div className="table-responsive" style={{ maxHeight: 420, overflowY: 'auto' }}>
-        <table className="table table-bordered table-hover table-sm align-middle">
+        <table className="table table-hover table-sm align-middle">
           <thead>
             <tr>
               <th>Code</th>

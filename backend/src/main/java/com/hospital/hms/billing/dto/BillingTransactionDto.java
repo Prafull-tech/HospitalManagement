@@ -6,8 +6,11 @@ import java.time.Instant;
 /** DTO for payment/transaction list (reception dashboard). */
 public class BillingTransactionDto {
     private Long id;
+    private Long billingAccountId;
     private Long ipdAdmissionId;
+    private Long opdVisitId;
     private String admissionNumber;
+    private String visitNumber;
     private String patientName;
     private String patientUhid;
     private String service;
@@ -17,10 +20,16 @@ public class BillingTransactionDto {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getBillingAccountId() { return billingAccountId; }
+    public void setBillingAccountId(Long billingAccountId) { this.billingAccountId = billingAccountId; }
     public Long getIpdAdmissionId() { return ipdAdmissionId; }
     public void setIpdAdmissionId(Long ipdAdmissionId) { this.ipdAdmissionId = ipdAdmissionId; }
+    public Long getOpdVisitId() { return opdVisitId; }
+    public void setOpdVisitId(Long opdVisitId) { this.opdVisitId = opdVisitId; }
     public String getAdmissionNumber() { return admissionNumber; }
     public void setAdmissionNumber(String s) { this.admissionNumber = s; }
+    public String getVisitNumber() { return visitNumber; }
+    public void setVisitNumber(String visitNumber) { this.visitNumber = visitNumber; }
     public String getPatientName() { return patientName; }
     public void setPatientName(String s) { this.patientName = s; }
     public String getPatientUhid() { return patientUhid; }

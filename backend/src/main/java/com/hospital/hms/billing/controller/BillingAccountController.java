@@ -2,6 +2,7 @@ package com.hospital.hms.billing.controller;
 
 import com.hospital.hms.billing.dto.AddBillingItemRequestDto;
 import com.hospital.hms.billing.dto.BillingAccountViewDto;
+import com.hospital.hms.billing.dto.BillingDashboardSummaryDto;
 import com.hospital.hms.billing.dto.BillingItemResponseDto;
 import com.hospital.hms.billing.dto.BillingTransactionDto;
 import com.hospital.hms.billing.dto.PaymentRequestDto;
@@ -75,7 +76,27 @@ public class BillingAccountController {
         return ResponseEntity.ok(billingAccountService.getItemsByIpdAdmissionId(ipdAdmissionId));
     }
 
+    @GetMapping("/account/opd/{opdVisitId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK')")
+    public ResponseEntity<BillingAccountViewDto> getAccountByOpdVisit(@PathVariable Long opdVisitId) {
+        return ResponseEntity.ok(billingAccountService.getAccountViewByOpdVisitId(opdVisitId));
+    }
+
+    @GetMapping("/account/opd/{opdVisitId}/items")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'FRONT_DESK')")
+    public ResponseEntity<java.util.List<BillingItemResponseDto>> getAccountItemsByOpd(@PathVariable Long opdVisitId) {
+        return ResponseEntity.ok(billingAccountService.getItemsByOpdVisitId(opdVisitId));
+    }
+
+    @GetMapping("/dashboard/summary")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING')")
+    public ResponseEntity<BillingDashboardSummaryDto> dashboardSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(billingAccountService.getDashboardSummary(date));
+    }
+
     @GetMapping("/transactions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BILLING', 'RECEPTIONIST', 'FRONT_DESK')")
     public ResponseEntity<org.springframework.data.domain.Page<BillingTransactionDto>> listTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to,

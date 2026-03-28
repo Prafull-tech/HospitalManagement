@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${TESTCONTAINERS_MYSQL_HOST:localhost}:${TESTCONTAINERS_MYSQL_PORT:3306}/hms_test
+    username: root
+    password: test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    enabled: false
+
+hms:
+  security:
+    jwt:
+      secret: test-jwt-secret-for-unit-tests-only
+      expiry-minutes: 5
+      refresh-expiry-days: 1
+    cors:
+      allowed-origins: http://localhost:3000
+    rate-limit:
+      login-attempts-per-minute: 100
+
+server:
+  port: 0
+  servlet:
+    context-path: /api

@@ -1,3 +1,6 @@
+/**
+ * Admin-only user provisioning: calls POST /api/auth/register (requires ADMIN JWT).
+ */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../api/client'

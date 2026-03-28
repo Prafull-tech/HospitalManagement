@@ -25,9 +25,13 @@ import java.time.Instant;
 )
 public class Payment extends BaseIdEntity {
 
-    @NotNull
-    @Column(name = "ipd_admission_id", nullable = false)
+    /** Set for IPD payments; null for pure OPD payments (use billing_account_id). */
+    @Column(name = "ipd_admission_id")
     private Long ipdAdmissionId;
+
+    /** Primary link for audit and OPD/IPD reporting (set for all new payments). */
+    @Column(name = "billing_account_id")
+    private Long billingAccountId;
 
     @NotNull
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
@@ -59,6 +63,8 @@ public class Payment extends BaseIdEntity {
 
     public Long getIpdAdmissionId() { return ipdAdmissionId; }
     public void setIpdAdmissionId(Long ipdAdmissionId) { this.ipdAdmissionId = ipdAdmissionId; }
+    public Long getBillingAccountId() { return billingAccountId; }
+    public void setBillingAccountId(Long billingAccountId) { this.billingAccountId = billingAccountId; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public String getMode() { return mode; }
