@@ -16,6 +16,9 @@ import java.util.List;
 /**
  * Seeds development/test users when running with 'dev' profile.
  * NEVER active in production.
+ * <p>
+ * If a user already exists but the stored BCrypt hash does not match the expected dev password,
+ * the hash is reset so demo logins (e.g. admin / admin123) work after DB drift.
  */
 @Configuration
 @Profile("dev")
@@ -47,7 +50,28 @@ public class DevUserDataLoader {
 
             for (DevUser u : users) {
                 repo.findByUsernameIgnoreCase(u.username()).ifPresentOrElse(existing -> {
-                    // keep existing; do not overwrite passwords
+                    boolean changed = false;
+                    if (!encoder.matches(u.rawPassword(), existing.getPasswordHash())) {
+                        existing.setPasswordHash(encoder.encode(u.rawPassword()));
+                        changed = true;
+                        log.warn("Dev: reset password hash for username={} (did not match demo password)", u.username());
+                    }
+                    if (existing.getRole() != u.role()) {
+                        existing.setRole(u.role());
+                        changed = true;
+                    }
+                    if (!u.fullName().equals(existing.getFullName())) {
+                        existing.setFullName(u.fullName());
+                        changed = true;
+                    }
+                    if (!Boolean.TRUE.equals(existing.getActive())) {
+                        existing.setActive(true);
+                        changed = true;
+                    }
+                    if (changed) {
+                        repo.save(existing);
+                        log.info("Dev: updated user username={} role={}", u.username(), existing.getRole());
+                    }
                 }, () -> {
                     AppUser user = new AppUser();
                     user.setUsername(u.username());
@@ -64,4 +88,3 @@ public class DevUserDataLoader {
 
     private record DevUser(String username, String fullName, String rawPassword, UserRole role) {}
 }
-

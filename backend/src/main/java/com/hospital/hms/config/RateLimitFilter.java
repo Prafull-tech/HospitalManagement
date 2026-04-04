@@ -36,7 +36,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !"/api/auth/login".equals(request.getRequestURI()) || !"POST".equalsIgnoreCase(request.getMethod());
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        // With server.servlet.context-path=/api, getRequestURI() is typically /api/auth/login; avoid brittle exact matches.
+        String uri = request.getRequestURI();
+        return uri == null || !uri.endsWith("/auth/login");
     }
 
     @Override
