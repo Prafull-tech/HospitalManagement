@@ -50,11 +50,115 @@ function ClipboardIcon() {
   )
 }
 
+function CalendarIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M3 10h18" />
+    </svg>
+  )
+}
+
+function QueueIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 6h16" />
+      <path d="M4 12h10" />
+      <path d="M4 18h16" />
+      <path d="m16 10 4 2-4 2" />
+    </svg>
+  )
+}
+
+function HelpCircleIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.1 9a3 3 0 1 1 5.8 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  )
+}
+
+type LauncherSection = {
+  title: string
+  subtitle: string
+  accent: 'blue' | 'green' | 'amber' | 'rose'
+  items: Array<{
+    label: string
+    hint: string
+    to: string
+    icon: 'user' | 'search' | 'calendar' | 'queue' | 'users' | 'help' | 'clipboard'
+  }>
+}
+
+function LauncherGlyph({ icon }: { icon: LauncherSection['items'][number]['icon'] }) {
+  if (icon === 'user') return <UserPlusIcon />
+  if (icon === 'search') return <SearchIcon />
+  if (icon === 'calendar') return <CalendarIcon />
+  if (icon === 'queue') return <QueueIcon />
+  if (icon === 'help') return <HelpCircleIcon />
+  if (icon === 'clipboard') return <ClipboardIcon />
+  return <UsersIcon />
+}
+
 const today = new Date().toISOString().slice(0, 10)
+
+const launcherSections: LauncherSection[] = [
+  {
+    title: 'Patient Desk',
+    subtitle: 'Registration and search tools used at the counter.',
+    accent: 'blue',
+    items: [
+      { label: 'Register Patient', hint: 'Create UHID and patient profile', to: '/reception/register', icon: 'user' },
+      { label: 'Search Patient', hint: 'Find by UHID, mobile, or name', to: '/reception/search', icon: 'search' },
+      { label: 'Patient Register', hint: 'Open reception patient listing', to: '/reception/patients', icon: 'clipboard' },
+    ],
+  },
+  {
+    title: 'Appointments',
+    subtitle: 'Daily scheduling, booking, and queue handling.',
+    accent: 'green',
+    items: [
+      { label: 'Appointment Dashboard', hint: 'Weekly calendar and schedule view', to: '/front-office/appointments', icon: 'calendar' },
+      { label: 'Book Appointment', hint: 'Reserve a doctor slot', to: '/front-office/appointments/book', icon: 'user' },
+      { label: 'Appointment Queue', hint: 'Manage waiting sequence', to: '/front-office/appointments/queue', icon: 'queue' },
+      { label: 'Search Appointments', hint: 'Find existing bookings fast', to: '/front-office/appointments/search', icon: 'search' },
+    ],
+  },
+  {
+    title: 'Walk-ins & Tokens',
+    subtitle: 'Handle same-day entries and live token flow.',
+    accent: 'amber',
+    items: [
+      { label: 'Walk-in Dashboard', hint: 'Monitor walk-in activity', to: '/front-office/walkin', icon: 'users' },
+      { label: 'Register Walk-in', hint: 'Create a walk-in visit', to: '/front-office/walkin/register', icon: 'user' },
+      { label: 'Token Dashboard', hint: 'Track active token counters', to: '/front-office/tokens', icon: 'queue' },
+      { label: 'Token Queue', hint: 'View and control token order', to: '/front-office/tokens/queue', icon: 'clipboard' },
+    ],
+  },
+  {
+    title: 'Support Desk',
+    subtitle: 'Public desk services and visitor-facing operations.',
+    accent: 'rose',
+    items: [
+      { label: 'Enquiry Desk', hint: 'Guide patients and attendants', to: '/front-office/enquiry', icon: 'help' },
+      { label: 'Visitor Management', hint: 'Track visitor access and movement', to: '/front-office/visitors', icon: 'users' },
+    ],
+  },
+]
 
 export function ReceptionDashboard() {
   const { user, hasRole } = useAuth()
-  const canRegister = !user || hasRole('ADMIN', 'RECEPTIONIST')
+  const canRegister = !user || hasRole('ADMIN', 'FRONT_DESK', 'RECEPTIONIST')
+  const visibleLauncherSections = launcherSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => canRegister || item.to !== '/reception/register'),
+    }))
+    .filter((section) => section.items.length > 0)
   const [fromDate, setFromDate] = useState(today)
   const [toDate, setToDate] = useState(today)
   const [rangePreset, setRangePreset] = useState<'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_YEAR' | 'PREVIOUS_YEAR'>('LAST_7_DAYS')
@@ -249,6 +353,56 @@ export function ReceptionDashboard() {
           </div>
         </div>
       </div>
+
+      <section className={styles.launcherHero}>
+        <div className={styles.launcherHeroCopy}>
+          <span className={styles.launcherEyebrow}>Reception Command Center</span>
+          <h2 className={styles.launcherTitle}>Open any reception workflow from one screen.</h2>
+          <p className={styles.launcherText}>
+            Designed for counter staff: large targets, grouped actions, and direct access to patient, appointment,
+            walk-in, token, and support tools.
+          </p>
+        </div>
+        <div className={styles.launcherHeroMeta}>
+          <div className={styles.heroStatPill}>
+            <span>{visibleLauncherSections.reduce((count, section) => count + section.items.length, 0)}</span>
+            Action Buttons
+          </div>
+          <div className={styles.heroStatPillMuted}>
+            <span>{new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+            Live Desk Time
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.launcherGrid} aria-label="Reception menu launcher">
+        {visibleLauncherSections.map((section) => (
+          <div key={section.title} className={`${styles.launcherSection} ${styles[`launcherSection${section.accent[0].toUpperCase()}${section.accent.slice(1)}`]}`}>
+            <div className={styles.launcherSectionHeader}>
+              <div>
+                <h3 className={styles.launcherSectionTitle}>{section.title}</h3>
+                <p className={styles.launcherSectionText}>{section.subtitle}</p>
+              </div>
+              <span className={styles.launcherCount}>{section.items.length}</span>
+            </div>
+
+            <div className={styles.launcherButtons}>
+              {section.items.map((item) => (
+                <Link key={item.to} to={item.to} className={styles.launcherButton}>
+                  <span className={styles.launcherButtonIcon}>
+                    <LauncherGlyph icon={item.icon} />
+                  </span>
+                  <span className={styles.launcherButtonBody}>
+                    <span className={styles.launcherButtonLabel}>{item.label}</span>
+                    <span className={styles.launcherButtonHint}>{item.hint}</span>
+                  </span>
+                  <span className={styles.launcherButtonArrow}>Open</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
 
       {error && <div className="alert alert-danger py-2 mb-0" role="alert">{error}</div>}
       {loading && !stats && <p className="text-muted mb-0 small">Loading stats…</p>}
@@ -575,37 +729,6 @@ export function ReceptionDashboard() {
               </div>
             )
           })()}
-        </div>
-      </div>
-
-      <div className="row g-3">
-        {canRegister && (
-          <div className="col-12 col-md-6">
-            <Link to="/reception/register" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
-              <div className="card-body d-flex align-items-center gap-3">
-                <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
-                  <UserPlusIcon />
-                </span>
-                <div>
-                  <span className="fw-bold d-block">Register Patient</span>
-                  <span className="small text-muted">Create new patient and get UHID</span>
-                </div>
-              </div>
-            </Link>
-          </div>
-        )}
-        <div className="col-12 col-md-6">
-          <Link to="/reception/search" className="card shadow-sm text-decoration-none text-body h-100 border-primary border-opacity-25">
-            <div className="card-body d-flex align-items-center gap-3">
-              <span className="rounded-3 bg-primary bg-opacity-10 p-2 text-primary">
-                <SearchIcon />
-              </span>
-              <div>
-                <span className="fw-bold d-block">Search Patient</span>
-                <span className="small text-muted">Find by UHID, phone, or name</span>
-              </div>
-            </div>
-          </Link>
         </div>
       </div>
     </div>

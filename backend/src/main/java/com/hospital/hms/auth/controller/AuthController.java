@@ -1,4 +1,4 @@
-﻿package com.hospital.hms.auth.controller;
+package com.hospital.hms.auth.controller;
 
 import com.hospital.hms.auth.entity.AppUser;
 import com.hospital.hms.auth.entity.RefreshToken;
@@ -97,6 +97,24 @@ public class AuthController {
         @Size(max = 20) private String phone;
         public String getFullName() { return fullName; }
         public void setFullName(String fullName) { this.fullName = fullName; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPhone() { return phone; }
+        public void setPhone(String phone) { this.phone = phone; }
+    }
+
+    public static class SignupRequest {
+        @NotBlank @Size(max = 255) private String fullName;
+        @NotBlank @Size(max = 50) private String username;
+        @NotBlank @Size(min = 8, max = 128) private String password;
+        @Size(max = 100) private String email;
+        @Size(max = 20) private String phone;
+        public String getFullName() { return fullName; }
+        public void setFullName(String fullName) { this.fullName = fullName; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
         public String getPhone() { return phone; }
@@ -227,6 +245,26 @@ public class AuthController {
         user.setActive(true);
         userRepository.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> signup(@RequestBody @Validated SignupRequest request) {
+        if (userRepository.findByUsernameIgnoreCase(request.getUsername()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("status", 409, "message", "Username already exists"));
+        }
+        AppUser user = new AppUser();
+        user.setUsername(request.getUsername().trim());
+        user.setFullName(request.getFullName().trim());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(UserRole.RECEPTIONIST); // Default role; admin can change later
+        if (request.getEmail() != null) user.setEmail(request.getEmail().trim());
+        if (request.getPhone() != null) user.setPhone(request.getPhone().trim());
+        user.setActive(false); // Inactive until admin approves
+        userRepository.save(user);
+        log.info("Self-registration (inactive) for user={}", user.getUsername());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Account created. An administrator will activate your account."));
     }
 
     @PostMapping("/change-password")

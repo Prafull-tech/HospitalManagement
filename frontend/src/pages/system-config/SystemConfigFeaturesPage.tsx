@@ -65,6 +65,7 @@ export function SystemConfigFeaturesPage() {
       </div>
 
       <nav className={styles.tabs}>
+        <Link to="/admin/config/company-profile" className={styles.tab}>Company Profile</Link>
         <Link to="/admin/config/roles" className={styles.tab}>Roles</Link>
         <Link to="/admin/config/modules" className={styles.tab}>Modules</Link>
         <Link to="/admin/config/permissions" className={styles.tab}>Permissions</Link>

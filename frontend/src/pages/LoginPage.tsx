@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { BrandIdentity } from '../components/BrandIdentity'
+import styles from './LoginPage.module.css'
 
 export function LoginPage() {
   const [username, setUsername] = useState('')
@@ -22,8 +24,8 @@ export function LoginPage() {
   // Don't render login form if already authenticated (redirect in progress)
   if (isAuthenticated) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center">
-        <p className="text-muted">Redirecting…</p>
+      <div className={styles.redirectState}>
+        <p className={styles.redirectText}>Redirecting…</p>
       </div>
     )
   }
@@ -48,128 +50,84 @@ export function LoginPage() {
   }
 
   return (
-    <div
-      className="min-vh-100 d-flex align-items-center justify-content-center"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(15,23,42,0.65), rgba(15,23,42,0.8)), url(https://images.pexels.com/photos/2387418/pexels-photo-2387418.jpeg?auto=compress&cs=tinysrgb&w=1600)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      <div
-        className="card shadow-lg border-0"
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          background: 'rgba(15,23,42,0.9)',
-          color: '#f9fafb',
-          borderRadius: 24,
-        }}
-      >
-        <div className="card-body p-4 p-md-5">
-          <div className="text-center mb-4">
-            <h1 className="h5 mb-1 fw-bold">HMS Login</h1>
-            <p
-              className="small mb-0"
-              style={{ color: 'rgba(248,250,252,0.78)' }}
-            >
-              Have an account? Sign in to continue.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
-            {error && (
-              <div className="alert alert-danger py-2 mb-0 small" role="alert">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="form-label small">Username</label>
-              <input
-                type="text"
-                className="form-control form-control-sm bg-transparent text-light"
-                style={{ borderRadius: 9999, borderColor: 'rgba(148,163,184,0.6)' }}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                placeholder="e.g. pharm, nurse"
-              />
-            </div>
-            <div>
-              <label className="form-label small">Password</label>
-              <input
-                type="password"
-                className="form-control form-control-sm bg-transparent text-light"
-                style={{ borderRadius: 9999, borderColor: 'rgba(148,163,184,0.6)' }}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-sm mt-2"
-              style={{
-                borderRadius: 9999,
-                background:
-                  'linear-gradient(90deg, rgba(249,115,22,0.95), rgba(248,150,30,0.95))',
-                border: 'none',
-                fontWeight: 600,
-              }}
-              disabled={loading}
-            >
-              {loading ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
-
-          <div className="d-flex justify-content-between align-items-center mt-3 small">
-            <div className="form-check">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                className="form-check-input"
-                defaultChecked
-              />
-              <label
-                className="form-check-label"
-                htmlFor="rememberMe"
-                style={{ color: 'rgba(248,250,252,0.72)' }}
-              >
-                Remember me
-              </label>
-            </div>
-            <button
-              className="btn btn-link btn-sm p-0"
-              type="button"
-              style={{ color: 'rgba(248,250,252,0.72)' }}
-            >
-              Forgot password
-            </button>
-          </div>
-
-          <hr className="border-secondary my-3" />
-
-          <div
-            className="text-center small"
-            style={{ color: 'rgba(248,250,252,0.78)' }}
-          >
-            New to HMS?{' '}
-            <Link to="/register" className="link-light text-decoration-underline">
-              Request access
-            </Link>
-          </div>
-
-          <p
-            className="small mt-3 mb-0"
-            style={{ color: 'rgba(248,250,252,0.8)' }}
-          >
-            Dev users (profile=dev): admin/admin123, pharm/pharm123, pharmacist/pharm123, store/store123, ipdph/ipdph123, labtech/lab123, labsup/lab123, radtech/rad123, bloodtech/blood123, doctor/doctor123, nurse/nurse123, reception/rec123
+    <div className={styles.page}>
+      <div className={styles.shell}>
+        <section className={styles.introPanel}>
+          <BrandIdentity to="" />
+          <span className={styles.kicker}>Secure hospital workspace access</span>
+          <h1 className={styles.title}>Sign in to continue the operational day.</h1>
+          <p className={styles.subtitle}>
+            Move back into reception, nursing, pharmacy, lab, and billing workflows with the same shared patient context.
           </p>
-        </div>
+          <div className={styles.bulletList}>
+            <div>
+              <strong>Role-based access</strong>
+              <span>Department teams land directly in the part of the system they work in most.</span>
+            </div>
+            <div>
+              <strong>Continuous workflow</strong>
+              <span>Admissions, care updates, and financial closure stay connected after sign-in.</span>
+            </div>
+            <div>
+              <strong>Public to private path</strong>
+              <span>Use the public site for discovery, then step into the live operational workspace.</span>
+            </div>
+          </div>
+          <p className={styles.devHint}>
+            Dev users: admin/admin123, superadmin/super123, pharm/pharm123, pharmacist/pharm123, store/store123, ipdph/ipdph123, labtech/lab123, labsup/lab123, radtech/rad123, bloodtech/blood123, doctor/doctor123, nurse/nurse123, reception/rec123
+          </p>
+        </section>
+
+        <section className={styles.formPanel}>
+          <div className={styles.formCard}>
+            <div className={styles.formHeader}>
+              <h2>Login</h2>
+              <p>Have an account? Sign in to continue.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className={styles.form}>
+              {error ? <div className={styles.error}>{error}</div> : null}
+
+              <label className={styles.field}>
+                <span>Username</span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  placeholder="e.g. pharm, nurse"
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                />
+              </label>
+
+              <div className={styles.formMeta}>
+                <label className={styles.checkboxRow}>
+                  <input id="rememberMe" type="checkbox" defaultChecked />
+                  <span>Remember me</span>
+                </label>
+                <button className={styles.inlineButton} type="button">Forgot password</button>
+              </div>
+
+              <button type="submit" className={styles.submitButton} disabled={loading}>
+                {loading ? 'Signing in…' : 'Sign in'}
+              </button>
+            </form>
+
+            <div className={styles.footerNote}>
+              New to HMS? <Link to="/signup">Request an account</Link>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )

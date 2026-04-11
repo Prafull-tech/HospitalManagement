@@ -46,12 +46,13 @@ apiClient.interceptors.response.use(
   async (err) => {
     const originalRequest = err.config
     const data = err?.response?.data
+    const status = err?.response?.status
 
     if (data && typeof data.detail === 'string' && data.detail.length > 0) {
       data.message = (data.message || 'Error') + ' [' + data.detail + ']'
     }
 
-    if (err?.response?.status === 401 && !originalRequest._retry) {
+    if ((status === 401 || status === 403) && !originalRequest?._retry) {
       const auth = localStorage.getItem('hms_auth')
       let refreshToken: string | null = null
       if (auth) {

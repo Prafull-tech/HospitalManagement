@@ -52,7 +52,8 @@ npm run dev
 
 - `npm run dev` waits for the backend health check before starting Vite.
 - Use `npm run dev:only` to start the frontend without waiting (e.g. when backend is already running).
-- App: **http://localhost:3000**
+- `npm run dev -- --host 127.0.0.1 --port 4173` now forwards Vite flags correctly.
+- App: **http://localhost:5173**
 - Proxy: `/api` → `http://localhost:8080`
 
 **Login:** All pages require authentication. Demo logins: admin/admin123, pharm/pharm123, nurse/nurse123, doctor/doctor123

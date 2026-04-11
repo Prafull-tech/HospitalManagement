@@ -1,0 +1,157 @@
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fullSpan {
+  grid-column: 1 / -1;
+}
+
+.metricStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metricValueAccent {
+  color: #0f3cc9;
+}
+
+.ticketList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticketRow {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: #fff;
+  text-align: left;
+}
+
+.ticketRowActive {
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+}
+
+.ticketRowHeader,
+.ticketMeta,
+.detailHeader,
+.timelineRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticketMeta {
+  flex-wrap: wrap;
+  color: var(--hms-text-muted);
+  font-size: 12px;
+}
+
+.ticketBadges,
+.actionRow,
+.filterGrid,
+.detailForms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filterGrid {
+  align-items: end;
+}
+
+.filterField {
+  flex: 1 1 150px;
+  min-width: 140px;
+}
+
+.detailCard {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--hms-card-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.98));
+}
+
+.detailMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.detailLabel {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hms-text-muted);
+  margin-bottom: 4px;
+}
+
+.detailValue {
+  font-weight: 700;
+  color: var(--hms-text);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timelineItem {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.timelineNote {
+  margin: 8px 0 0;
+  color: var(--hms-text-muted);
+  white-space: pre-wrap;
+}
+
+.emptyState {
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  color: var(--hms-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .workspace,
+  .metricStrip,
+  .detailMetaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

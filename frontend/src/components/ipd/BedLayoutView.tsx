@@ -92,6 +92,8 @@ export function BedLayoutView({
   onViewDetails,
   onTransfer,
   onDischarge,
+  onChangeStatus,
+  onMarkMaintenance,
 }: BedLayoutViewProps) {
   const [filteredBeds, grouped] = useMemo(() => {
     let list = beds

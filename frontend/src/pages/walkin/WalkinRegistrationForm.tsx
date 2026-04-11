@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { walkinApi } from '../../api/walkin'
 import { doctorsApi, departmentsApi } from '../../api/doctors'
 import { PatientSearch } from '../../components/reception/PatientSearch'
@@ -20,7 +20,6 @@ const PRIORITY_OPTIONS = [
 ]
 
 export function WalkinRegistrationForm() {
-  const navigate = useNavigate()
   const [doctors, setDoctors] = useState<DoctorResponse[]>([])
   const [departments, setDepartments] = useState<DepartmentResponse[]>([])
   const [patient, setPatient] = useState<PatientResponse | null>(null)

@@ -16,7 +16,7 @@ export function ReceptionPatientsListPage() {
     setLoading(true)
     setError('')
     receptionApi
-      .list({ page: 0, size: 1000, from, to })
+      .list({ page: 0, size: 1000 })
       .then(setList)
       .catch(() => setError('Failed to load patients.'))
       .finally(() => setLoading(false))

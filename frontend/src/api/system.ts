@@ -14,6 +14,8 @@ import type {
   PermissionMatrixItem,
   FeatureToggleResponse,
   EffectiveFeatureToggleResponse,
+  CompanyProfileResponse,
+  CompanyProfileRequest,
 } from '../types/system'
 
 const BASE = '/system'
@@ -69,5 +71,20 @@ export const systemFeaturesApi = {
   },
   listEffective(): Promise<EffectiveFeatureToggleResponse[]> {
     return apiClient.get(`${BASE}/features/effective`).then((r) => r.data)
+  },
+}
+
+export const companyProfileApi = {
+  get(): Promise<CompanyProfileResponse> {
+    return apiClient.get(`${BASE}/company-profile`).then((r) => r.data)
+  },
+  update(data: CompanyProfileRequest): Promise<CompanyProfileResponse> {
+    return apiClient.put(`${BASE}/company-profile`, data).then((r) => r.data)
+  },
+}
+
+export const publicCompanyProfileApi = {
+  get(): Promise<CompanyProfileResponse> {
+    return apiClient.get('/public/company-profile').then((r) => r.data)
   },
 }

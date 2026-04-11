@@ -143,6 +143,7 @@ export function SystemConfigPermissionsPage() {
       </div>
 
       <nav className={styles.tabs}>
+        <Link to="/admin/config/company-profile" className={styles.tab}>Company Profile</Link>
         <Link to="/admin/config/roles" className={styles.tab}>Roles</Link>
         <Link to="/admin/config/modules" className={styles.tab}>Modules</Link>
         <Link to="/admin/config/permissions" className={styles.tabActive}>Permissions</Link>

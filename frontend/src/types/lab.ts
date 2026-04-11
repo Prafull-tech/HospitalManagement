@@ -53,7 +53,6 @@ export interface TestMaster {
   isPanel: boolean
   panelTestCodes?: string
   description?: string
-  normalRange?: string
   instructions?: string
   createdByUser?: string
   createdAt: string
@@ -74,7 +73,6 @@ export interface TestMasterRequest {
   isPanel?: boolean
   panelTestCodes?: string
   description?: string
-  normalRange?: string
   instructions?: string
 }
 

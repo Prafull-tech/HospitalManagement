@@ -441,7 +441,7 @@ export function LabDashboard() {
           <div>
             <h4 className="mb-3">Pending sample collection</h4>
             <p className="text-muted small mb-2">Work queue for phlebotomists. Mark sample collected or reject with reason.</p>
-            {summary.pendingCollection.length === 0 ? (
+            {(summary?.pendingCollection ?? []).length === 0 ? (
               <div className="alert alert-light border">No pending samples. Queue is clear.</div>
             ) : (
               <div className="table-responsive">

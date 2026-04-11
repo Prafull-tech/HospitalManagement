@@ -5,6 +5,7 @@ import com.hospital.hms.system.service.FeatureToggleService;
 import com.hospital.hms.system.service.PermissionService;
 import com.hospital.hms.system.service.SystemModuleService;
 import com.hospital.hms.system.service.SystemRoleService;
+import com.hospital.hms.system.service.CompanyProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,15 +32,18 @@ public class SystemController {
     private final SystemModuleService moduleService;
     private final PermissionService permissionService;
     private final FeatureToggleService featureToggleService;
+    private final CompanyProfileService companyProfileService;
 
     public SystemController(SystemRoleService roleService,
                              SystemModuleService moduleService,
                              PermissionService permissionService,
-                             FeatureToggleService featureToggleService) {
+                             FeatureToggleService featureToggleService,
+                             CompanyProfileService companyProfileService) {
         this.roleService = roleService;
         this.moduleService = moduleService;
         this.permissionService = permissionService;
         this.featureToggleService = featureToggleService;
+        this.companyProfileService = companyProfileService;
     }
 
     /** Role codes from JWT (ROLE_* authorities). Ignores client-supplied role headers. */
@@ -145,5 +149,18 @@ public class SystemController {
     public ResponseEntity<FeatureToggleResponseDto> setFeatureEnabled(@PathVariable Long id,
                                                                       @RequestParam boolean enabled) {
         return ResponseEntity.ok(featureToggleService.setEnabled(id, enabled));
+    }
+
+    // ---------- Company profile ----------
+    @GetMapping("/company-profile")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<CompanyProfileDto> getCompanyProfile() {
+        return ResponseEntity.ok(companyProfileService.getProfile());
+    }
+
+    @PutMapping("/company-profile")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<CompanyProfileDto> updateCompanyProfile(@Valid @RequestBody CompanyProfileDto request) {
+        return ResponseEntity.ok(companyProfileService.updateProfile(request));
     }
 }

@@ -1,12 +1,15 @@
 /**
- * Appointment Dashboard – Today's appointments, upcoming, cancelled, no-show, summary cards.
+ * Appointment Dashboard – Weekly calendar view with doctor filter.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { appointmentApi } from '../../api/appointment'
 import type { AppointmentDashboard as DashboardType, AppointmentResponse } from '../../types/appointment.types'
 import styles from './AppointmentDashboard.module.css'
+
+// ── Constants ────────────────────────────────────────────────────────
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 7) // 07:00 – 19:00
 
 const STATUS_LABELS: Record<string, string> = {
   BOOKED: 'Booked',
@@ -17,10 +20,32 @@ const STATUS_LABELS: Record<string, string> = {
   NO_SHOW: 'No Show',
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  FRONT_DESK: 'Front Desk',
-  WALK_IN: 'Walk-in',
-  ONLINE: 'Online',
+// ── Helpers ──────────────────────────────────────────────────────────
+function getMonday(d: Date): string {
+  const dt = new Date(d)
+  const day = dt.getDay()
+  dt.setDate(dt.getDate() + (day === 0 ? -6 : 1 - day))
+  return dt.toISOString().slice(0, 10)
+}
+
+function addDays(iso: string, n: number): string {
+  const d = new Date(iso)
+  d.setDate(d.getDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+function formatShortDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })
+}
+
+function formatMonthYear(iso: string) {
+  const start = new Date(iso)
+  const end = new Date(iso)
+  end.setDate(end.getDate() + 6)
+  if (start.getMonth() === end.getMonth()) {
+    return start.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  }
+  return `${start.toLocaleDateString(undefined, { month: 'short' })} – ${end.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`
 }
 
 function formatTime(s: string) {
@@ -29,21 +54,21 @@ function formatTime(s: string) {
   return m ? `${m[1].padStart(2, '0')}:${m[2]}` : s
 }
 
-function formatDateLabel(isoDate?: string) {
-  if (!isoDate) return ''
+function formatDateLabel(iso?: string) {
+  if (!iso) return ''
   try {
-    const d = new Date(isoDate)
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-  } catch {
-    return isoDate
-  }
+    return new Date(iso).toLocaleDateString(undefined, {
+      weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+    })
+  } catch { return iso }
+}
+
+function slotHour(t: string) {
+  return parseInt(t?.split(':')[0] ?? '0', 10)
 }
 
 function diffDays(fromIso: string, toIso: string) {
-  const from = new Date(fromIso)
-  const to = new Date(toIso)
-  const ms = to.getTime() - from.getTime()
-  return Math.round(ms / (1000 * 60 * 60 * 24))
+  return Math.round((new Date(toIso).getTime() - new Date(fromIso).getTime()) / 86_400_000)
 }
 
 function statusThemeClass(status: AppointmentResponse['status']) {
@@ -53,278 +78,428 @@ function statusThemeClass(status: AppointmentResponse['status']) {
 }
 
 function statusToBadge(status: AppointmentResponse['status']) {
-  if (status === 'CONFIRMED' || status === 'COMPLETED') return { className: 'bg-success', label: 'Confirmed' }
-  if (status === 'PENDING_CONFIRMATION') return { className: 'bg-warning', label: 'Pending' }
-  if (status === 'BOOKED') return { className: 'bg-secondary', label: 'Booked' }
-  if (status === 'NO_SHOW') return { className: 'bg-danger', label: 'No Show' }
-  if (status === 'CANCELLED') return { className: 'bg-danger', label: 'Cancelled' }
-  return { className: 'bg-secondary', label: STATUS_LABELS[status] ?? status }
+  if (status === 'CONFIRMED' || status === 'COMPLETED') return { cls: 'bg-success', label: 'Confirmed' }
+  if (status === 'PENDING_CONFIRMATION') return { cls: 'bg-warning text-dark', label: 'Pending' }
+  if (status === 'BOOKED') return { cls: 'bg-secondary', label: 'Booked' }
+  if (status === 'NO_SHOW') return { cls: 'bg-danger', label: 'No Show' }
+  if (status === 'CANCELLED') return { cls: 'bg-danger', label: 'Cancelled' }
+  return { cls: 'bg-secondary', label: STATUS_LABELS[status] ?? status }
 }
 
-function priorityFromStatus(status: AppointmentResponse['status']) {
-  if (status === 'PENDING_CONFIRMATION') return 'High'
-  if (status === 'BOOKED') return 'Medium'
+function calApptClass(status: AppointmentResponse['status']) {
+  if (status === 'CONFIRMED' || status === 'COMPLETED') return styles.calApptGreen
+  if (status === 'PENDING_CONFIRMATION' || status === 'BOOKED') return styles.calApptAmber
+  return styles.calApptRed
+}
+
+function priorityFromStatus(s: AppointmentResponse['status']) {
+  if (s === 'PENDING_CONFIRMATION') return 'High'
+  if (s === 'BOOKED') return 'Medium'
   return 'Low'
 }
 
-function priorityBadgeClass(priority: string) {
-  if (priority === 'High') return 'bg-danger'
-  if (priority === 'Medium') return 'bg-warning text-dark'
+function priorityBadgeClass(p: string) {
+  if (p === 'High') return 'bg-danger'
+  if (p === 'Medium') return 'bg-warning text-dark'
   return 'bg-success'
 }
 
+// ── Main Component ────────────────────────────────────────────────────
 export function AppointmentDashboard() {
-  const [data, setData] = useState<DashboardType | null>(null)
+  const today = new Date().toISOString().slice(0, 10)
+
+  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
+  const [selectedDate, setSelectedDate] = useState(today)
+  const [doctorFilter, setDoctorFilter] = useState('ALL')
+  const [weekData, setWeekData] = useState<Record<string, DashboardType>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
 
-  const fetchDashboard = () => {
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart],
+  )
+
+  const fetchWeek = () => {
     setLoading(true)
     setError('')
-    appointmentApi
-      .getDashboard(date)
-      .then(setData)
-      .catch((err) => {
-        setError(err.response?.data?.message || 'Failed to load dashboard.')
-        setData(null)
+    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+    Promise.allSettled(
+      days.map((d) =>
+        appointmentApi.getDashboard(d).then((r) => [d, r] as [string, DashboardType]),
+      ),
+    )
+      .then((results) => {
+        const map: Record<string, DashboardType> = {}
+        let failCount = 0
+        results.forEach((r) => {
+          if (r.status === 'fulfilled') {
+            const [d, data] = r.value
+            map[d] = data
+          } else {
+            failCount++
+          }
+        })
+        setWeekData(map)
+        if (failCount === days.length) {
+          setError('Failed to load appointments. Please check if you are logged in.')
+        } else if (failCount > 0) {
+          setError(`Some days failed to load (${failCount}/7).`)
+        }
       })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => {
-    fetchDashboard()
-  }, [date])
+  useEffect(() => { fetchWeek() }, [weekStart]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleConvert = (id: number) => {
-    appointmentApi.convertToOpd(id).then(() => fetchDashboard()).catch(() => {})
-  }
+  const dayDash = weekData[selectedDate]
 
-  const handleNoShow = (id: number) => {
-    appointmentApi.markNoShow(id).then(() => fetchDashboard()).catch(() => {})
-  }
+  const allWeekAppts = useMemo(() => {
+    const all: (AppointmentResponse & { date: string })[] = []
+    weekDays.forEach((d) => {
+      weekData[d]?.todaysAppointments.forEach((a) => all.push({ ...a, date: d }))
+    })
+    return all
+  }, [weekData, weekDays])
 
+  const doctors = useMemo(() => {
+    const map = new Map<number, string>()
+    allWeekAppts.forEach((a) => map.set(a.doctorId, a.doctorName))
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]))
+  }, [allWeekAppts])
+
+  const filteredAppts = useMemo(
+    () =>
+      doctorFilter === 'ALL'
+        ? allWeekAppts
+        : allWeekAppts.filter((a) => a.doctorId === Number(doctorFilter)),
+    [allWeekAppts, doctorFilter],
+  )
+
+  // date → hour → appointments[]
+  const cellMap = useMemo(() => {
+    const map: Record<string, Record<number, typeof filteredAppts>> = {}
+    filteredAppts.forEach((a) => {
+      const h = slotHour(a.slotTime)
+      if (!map[a.date]) map[a.date] = {}
+      if (!map[a.date][h]) map[a.date][h] = []
+      map[a.date][h].push(a)
+    })
+    return map
+  }, [filteredAppts])
+
+  const handleConvert = (id: number) =>
+    appointmentApi.convertToOpd(id).then(() => fetchWeek()).catch(() => {})
+  const handleNoShow = (id: number) =>
+    appointmentApi.markNoShow(id).then(() => fetchWeek()).catch(() => {})
   const handleCancel = (id: number) => {
     if (window.confirm('Cancel this appointment?')) {
-      appointmentApi.cancel(id).then(() => fetchDashboard()).catch(() => {})
+      appointmentApi.cancel(id).then(() => fetchWeek()).catch(() => {})
     }
   }
 
-  if (loading && !data) {
-    return (
-      <div className="d-flex justify-content-center py-5">
-        <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading…</span></div>
-      </div>
-    )
-  }
+  const daySchedule = useMemo(() => {
+    const appts = dayDash?.todaysAppointments ?? []
+    const filtered =
+      doctorFilter === 'ALL' ? appts : appts.filter((a) => a.doctorId === Number(doctorFilter))
+    return filtered.slice().sort((a, b) => a.slotTime.localeCompare(b.slotTime))
+  }, [dayDash, doctorFilter])
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="hms-page-shell">
+      {/* Breadcrumb */}
       <nav aria-label="Breadcrumb">
         <ol className="breadcrumb mb-0">
-          <li className="breadcrumb-item"><Link to="/front-office/appointments">Appointments</Link></li>
+          <li className="breadcrumb-item">
+            <Link to="/front-office/appointments">Appointments</Link>
+          </li>
           <li className="breadcrumb-item active" aria-current="page">Dashboard</li>
         </ol>
       </nav>
 
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      {/* Header */}
+      <div className="hms-page-hero">
         <div>
-          <h1 className="h4 mb-0">Appointments</h1>
-          <div className="text-muted small">Manage all bookings, referrals, and wait lists</div>
+          <div className="hms-page-kicker">Scheduling</div>
+          <h1 className="hms-page-title">Appointments</h1>
+          <div className="hms-page-subtitle">Manage all bookings, referrals, and wait lists with the same Reception-style layout and visual rhythm.</div>
         </div>
-        <div className="d-flex gap-2 align-items-center">
-          <input
-            type="date"
-            className="form-control form-control-sm"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            style={{ width: 'auto' }}
-          />
-          <Link to="/front-office/appointments/book" className="btn btn-primary btn-sm">+ Book Appointment</Link>
+        <div className="hms-page-actions">
+          <Link to="/front-office/appointments/book" className="btn btn-primary btn-sm">
+            + Book Appointment
+          </Link>
         </div>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {data && (
-        <>
-          <div className="row g-2 g-md-3">
-            <div className="col-6 col-md">
-              <div className="card border shadow-sm h-100">
-                <div className="card-body py-2">
-                  <p className="text-muted small mb-0">Total Today</p>
-                  <p className="fw-bold mb-0">{data.totalAppointmentsToday}</p>
-                </div>
-              </div>
+      {/* Summary cards – reflect selected day */}
+      {dayDash && (
+        <div className="hms-metric-grid">
+          {[
+            { label: 'Total Today', value: dayDash.totalAppointmentsToday, color: '' },
+            { label: 'Walk-ins', value: dayDash.walkIns, color: 'success' },
+            { label: 'Online', value: dayDash.onlineBookings, color: 'info' },
+            { label: 'Completed', value: dayDash.completedConsultations, color: 'primary' },
+            { label: 'Cancelled', value: dayDash.cancelled, color: 'danger' },
+            { label: 'No Show', value: dayDash.noShow, color: 'warning' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="hms-metric-card">
+              <span className={`hms-metric-label ${color ? `text-${color}` : ''}`}>{label}</span>
+              <strong className={`hms-metric-value ${color ? `text-${color}` : ''}`}>{value}</strong>
             </div>
-            <div className="col-6 col-md">
-              <div className="card border border-success shadow-sm h-100">
-                <div className="card-body py-2">
-                  <p className="text-success small mb-0">Walk-ins</p>
-                  <p className="fw-bold text-success mb-0">{data.walkIns}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-6 col-md">
-              <div className="card border border-info shadow-sm h-100">
-                <div className="card-body py-2">
-                  <p className="text-info small mb-0">Online Bookings</p>
-                  <p className="fw-bold text-info mb-0">{data.onlineBookings}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-6 col-md">
-              <div className="card border border-primary shadow-sm h-100">
-                <div className="card-body py-2">
-                  <p className="text-primary small mb-0">Completed</p>
-                  <p className="fw-bold text-primary mb-0">{data.completedConsultations}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-6 col-md">
-              <div className="card border border-danger shadow-sm h-100">
-                <div className="card-body py-2">
-                  <p className="text-danger small mb-0">Cancelled</p>
-                  <p className="fw-bold text-danger mb-0">{data.cancelled}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-6 col-md">
-              <div className="card border border-warning shadow-sm h-100">
-                <div className="card-body py-2">
-                  <p className="text-warning small mb-0">No Show</p>
-                  <p className="fw-bold text-warning mb-0">{data.noShow}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="row g-3">
-            <div className="col-12 col-lg-7">
-              <div className="card border shadow-sm h-100">
-                <div className="card-header bg-light py-2">
-                  <h6 className="mb-0">Today&apos;s Schedule</h6>
-                  <div className="text-muted small">
-                    {formatDateLabel(date)}
-                  </div>
-                </div>
-                <div className="card-body py-2">
-                  {data.todaysAppointments.length === 0 ? (
-                    <div className="text-center text-muted py-4">No appointments for this date.</div>
-                  ) : (
-                    <div>
-                      {data.todaysAppointments
-                        .slice()
-                        .sort((a, b) => a.slotTime.localeCompare(b.slotTime))
-                        .map((a) => {
-                          const canConvert = (a.status === 'BOOKED' || a.status === 'CONFIRMED') && !a.opdVisitId
-                          const canNoShow = a.status === 'BOOKED' || a.status === 'CONFIRMED'
-                          const canCancel = a.status === 'BOOKED' || a.status === 'CONFIRMED' || a.status === 'PENDING_CONFIRMATION'
-                          const badge = statusToBadge(a.status)
-                          return (
-                            <div key={a.id} className={styles.scheduleSlot}>
-                              <div className={styles.scheduleTime}>{formatTime(a.slotTime)}</div>
-                              <div className={`${styles.scheduleEvent} ${statusThemeClass(a.status)}`}>
-                                <div className={styles.scheduleMain}>
-                                  <div className={styles.scheduleName}>{a.patientName}</div>
-                                  <div className={styles.scheduleSub}>
-                                    {a.departmentName} · {a.doctorName}
-                                  </div>
-                                  <div className="mt-2">
-                                    <span className={`badge ${badge.className}`}>{badge.label}</span>{' '}
-                                    <span className="badge bg-light text-dark">{SOURCE_LABELS[a.source] ?? a.source}</span>
-                                  </div>
-                                </div>
-
-                                <div className={styles.scheduleRight}>
-                                  {(canConvert || canNoShow || canCancel) && (
-                                    <div className={styles.scheduleActions}>
-                                      {canConvert && (
-                                        <button type="button" className="btn btn-sm btn-success" onClick={() => handleConvert(a.id)}>
-                                          Convert to OPD
-                                        </button>
-                                      )}
-                                      {canNoShow && (
-                                        <button type="button" className="btn btn-sm btn-warning" onClick={() => handleNoShow(a.id)}>
-                                          No Show
-                                        </button>
-                                      )}
-                                      {canCancel && (
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleCancel(a.id)}>
-                                          Cancel
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="col-12 col-lg-5">
-              <div className="card border shadow-sm h-100">
-                <div className="card-header bg-light py-2 d-flex align-items-center justify-content-between">
-                  <h6 className="mb-0">Wait List</h6>
-                  <span className="badge bg-light text-dark">{data.upcomingAppointments.length} patients</span>
-                </div>
-                <div className="table-responsive">
-                  <table className="table table-striped mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Patient</th>
-                        <th>For</th>
-                        <th>Wait</th>
-                        <th>Priority</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.upcomingAppointments.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="text-center text-muted py-4">No wait list.</td>
-                        </tr>
-                      ) : (
-                        data.upcomingAppointments.map((a) => {
-                          const waitDays = diffDays(date, a.appointmentDate)
-                          const waitLabel = Number.isFinite(waitDays) && waitDays >= 0 ? `${waitDays} day${waitDays === 1 ? '' : 's'}` : '—'
-                          const priority = priorityFromStatus(a.status)
-                          return (
-                            <tr key={a.id}>
-                              <td>
-                                <div className={styles.waitPatient}>
-                                  <div style={{ fontWeight: 600 }}>{a.patientName}</div>
-                                  <div className={styles.waitPatientSub}>{a.patientUhid}</div>
-                                </div>
-                              </td>
-                              <td>{a.departmentName}</td>
-                              <td>{waitLabel}</td>
-                              <td>
-                                <span className={`badge ${priorityBadgeClass(priority)}`}>{priority}</span>
-                              </td>
-                            </tr>
-                          )
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="card-body py-2">
-                  <div className="d-flex justify-content-center">
-                    <Link to="/front-office/appointments/queue" className="btn btn-outline-primary btn-sm">
-                      Manage Wait List →
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+          ))}
+        </div>
       )}
+
+      {/* Calendar toolbar */}
+      <div className="d-flex flex-wrap align-items-center gap-2">
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => setWeekStart((w) => addDays(w, -7))}
+        >
+          ‹ Prev Week
+        </button>
+        <span className="fw-semibold">{formatMonthYear(weekStart)}</span>
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => setWeekStart((w) => addDays(w, 7))}
+        >
+          Next Week ›
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm"
+          onClick={() => { setWeekStart(getMonday(new Date())); setSelectedDate(today) }}
+        >
+          Today
+        </button>
+
+        <div className="ms-auto d-flex align-items-center gap-2">
+          <label htmlFor="doc-filter" className="small text-muted mb-0 text-nowrap">
+            Doctor:
+          </label>
+          <select
+            id="doc-filter"
+            className="form-select form-select-sm"
+            style={{ minWidth: 200 }}
+            value={doctorFilter}
+            onChange={(e) => setDoctorFilter(e.target.value)}
+          >
+            <option value="ALL">All Doctors</option>
+            {doctors.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* ── Weekly Calendar Grid ── */}
+      <div className="card border shadow-sm overflow-hidden">
+        <div className={styles.calGrid}>
+          {/* Corner */}
+          <div className={styles.calCorner} />
+
+          {/* Day column headers */}
+          {weekDays.map((d) => {
+            const isToday = d === today
+            const isSelected = d === selectedDate
+            const count = cellMap[d]
+              ? Object.values(cellMap[d]).reduce((s, a) => s + a.length, 0)
+              : 0
+            return (
+              <button
+                key={d}
+                type="button"
+                className={[
+                  styles.calDayHeader,
+                  isSelected ? styles.calDaySelected : '',
+                  isToday ? styles.calDayToday : '',
+                ].join(' ')}
+                onClick={() => setSelectedDate(d)}
+              >
+                <span className={styles.calDayLabel}>{formatShortDate(d)}</span>
+                {count > 0 && <span className={styles.calDayBadge}>{count}</span>}
+              </button>
+            )
+          })}
+
+          {/* Hour rows */}
+          {HOURS.map((h) => (
+            <div key={h} className={styles.calRow}>
+              <div className={styles.calTimeLabel}>
+                {h.toString().padStart(2, '0')}:00
+              </div>
+              {weekDays.map((d) => {
+                const appts = cellMap[d]?.[h] ?? []
+                const isSelected = d === selectedDate
+                return (
+                  <div
+                    key={`${d}-${h}`}
+                    className={`${styles.calCell} ${isSelected ? styles.calCellSelected : ''}`}
+                    role="button"
+                    tabIndex={-1}
+                    onClick={() => setSelectedDate(d)}
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedDate(d)}
+                  >
+                    {appts.map((a) => (
+                      <div
+                        key={a.id}
+                        className={`${styles.calAppt} ${calApptClass(a.status)}`}
+                        title={`${formatTime(a.slotTime)} · ${a.patientName} · ${a.doctorName}`}
+                      >
+                        <span className={styles.calApptTime}>{formatTime(a.slotTime)}</span>
+                        <span className={styles.calApptName}>{a.patientName}</span>
+                        <span className={styles.calApptDoc}>{a.doctorName}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        {loading && (
+          <div className="text-center py-2 text-muted small border-top">
+            <span className="spinner-border spinner-border-sm me-1" role="status" />
+            Loading week…
+          </div>
+        )}
+      </div>
+
+      {/* ── Selected day detail + Wait List ── */}
+      <div className="row g-3">
+        <div className="col-12 col-lg-7">
+          <div className="card border shadow-sm h-100">
+            <div className="card-header bg-light py-2 d-flex align-items-center justify-content-between">
+              <h6 className="mb-0">{formatDateLabel(selectedDate)}</h6>
+              <span className="badge bg-secondary">
+                {daySchedule.length} appt{daySchedule.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="card-body py-2">
+              {daySchedule.length === 0 ? (
+                <div className="text-center text-muted py-4">No appointments for this date.</div>
+              ) : (
+                daySchedule.map((a) => {
+                  const canConvert = (a.status === 'BOOKED' || a.status === 'CONFIRMED') && !a.opdVisitId
+                  const canNoShow = a.status === 'BOOKED' || a.status === 'CONFIRMED'
+                  const canCancel =
+                    a.status === 'BOOKED' ||
+                    a.status === 'CONFIRMED' ||
+                    a.status === 'PENDING_CONFIRMATION'
+                  const badge = statusToBadge(a.status)
+                  return (
+                    <div key={a.id} className={styles.scheduleSlot}>
+                      <div className={styles.scheduleTime}>{formatTime(a.slotTime)}</div>
+                      <div className={`${styles.scheduleEvent} ${statusThemeClass(a.status)}`}>
+                        <div className={styles.scheduleMain}>
+                          <div className={styles.scheduleName}>{a.patientName}</div>
+                          <div className={styles.scheduleSub}>
+                            {a.departmentName} · {a.doctorName}
+                          </div>
+                          <div className="mt-2">
+                            <span className={`badge ${badge.cls}`}>{badge.label}</span>
+                          </div>
+                        </div>
+                        <div className={styles.scheduleRight}>
+                          <div className={styles.scheduleActions}>
+                            {canConvert && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-success"
+                                onClick={() => handleConvert(a.id)}
+                              >
+                                Convert to OPD
+                              </button>
+                            )}
+                            {canNoShow && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-warning"
+                                onClick={() => handleNoShow(a.id)}
+                              >
+                                No Show
+                              </button>
+                            )}
+                            {canCancel && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => handleCancel(a.id)}
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-lg-5">
+          <div className="card border shadow-sm h-100">
+            <div className="card-header bg-light py-2 d-flex align-items-center justify-content-between">
+              <h6 className="mb-0">Wait List</h6>
+              <span className="badge bg-light text-dark">
+                {dayDash?.upcomingAppointments?.length ?? 0} patients
+              </span>
+            </div>
+            <div className="table-responsive">
+              <table className="table table-striped mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Patient</th>
+                    <th>Department</th>
+                    <th>Wait</th>
+                    <th>Priority</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!dayDash || dayDash.upcomingAppointments.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center text-muted py-4">No wait list.</td>
+                    </tr>
+                  ) : (
+                    dayDash.upcomingAppointments.map((a) => {
+                      const waitDays = diffDays(selectedDate, a.appointmentDate)
+                      const waitLabel =
+                        Number.isFinite(waitDays) && waitDays >= 0 ? `${waitDays}d` : '—'
+                      const priority = priorityFromStatus(a.status)
+                      return (
+                        <tr key={a.id}>
+                          <td>
+                            <div className="fw-semibold">{a.patientName}</div>
+                            <div className={styles.waitPatientSub}>{a.patientUhid}</div>
+                          </td>
+                          <td>{a.departmentName}</td>
+                          <td>{waitLabel}</td>
+                          <td>
+                            <span className={`badge ${priorityBadgeClass(priority)}`}>{priority}</span>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="card-body py-2 text-center">
+              <Link to="/front-office/appointments/queue" className="btn btn-outline-primary btn-sm">
+                Manage Wait List →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

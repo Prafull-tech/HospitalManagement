@@ -1,0 +1,120 @@
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.mark {
+  position: relative;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 42%),
+    linear-gradient(145deg, var(--hms-primary) 0%, #7a6bf0 55%, #1a1535 100%);
+  color: var(--hms-text-inverse);
+  font-family: var(--hms-heading-font);
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 18px 36px rgba(91, 79, 207, 0.28);
+  flex-shrink: 0;
+}
+
+.markGlow {
+  position: absolute;
+  inset: auto -15% -35% auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  filter: blur(8px);
+}
+
+.markText {
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.08em;
+}
+
+.markImage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.textWrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kicker {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hms-text-muted);
+  line-height: 1;
+  margin-bottom: 0.16rem;
+}
+
+.brandName {
+  font-family: var(--hms-heading-font);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--hms-text);
+  line-height: 1.1;
+}
+
+.companyName {
+  font-size: 0.74rem;
+  color: var(--hms-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact .mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 24px rgba(91, 79, 207, 0.18);
+}
+
+.compact .brandName {
+  font-size: 0.95rem;
+}
+
+.compact .kicker,
+.compact .companyName {
+  display: none;
+}
+
+.staticBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .kicker,
+  .companyName {
+    display: none;
+  }
+
+  .brandName {
+    font-size: 0.95rem;
+  }
+
+  .mark {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+}

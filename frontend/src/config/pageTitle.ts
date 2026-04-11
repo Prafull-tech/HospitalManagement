@@ -46,6 +46,7 @@ const DYNAMIC_TITLES: { pattern: RegExp; title: string }[] = [
   { pattern: /^\/billing\/payments/, title: 'Payments' },
   { pattern: /^\/billing\/refunds/, title: 'Refunds' },
   { pattern: /^\/billing\/account\/\d+/, title: 'Billing Account' },
+  { pattern: /^\/admin\/config\/company-profile/, title: 'Company Profile' },
   { pattern: /^\/admin\/config\/roles/, title: 'Role Management' },
   { pattern: /^\/admin\/config\/modules/, title: 'Module Management' },
   { pattern: /^\/admin\/config\/permissions/, title: 'Permission Matrix' },

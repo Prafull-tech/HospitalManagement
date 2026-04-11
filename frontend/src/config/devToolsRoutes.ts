@@ -113,6 +113,7 @@ export const DEV_TOOLS_ROUTES: DevRoute[] = [
   { label: 'Telemedicine', path: '/telemedicine', group: 'IT & Systems' },
   { label: 'Research', path: '/research', group: 'IT & Systems' },
   { label: 'Roles', path: '/admin/config/roles', group: 'IT & Systems' },
+  { label: 'Company Profile', path: '/admin/config/company-profile', group: 'IT & Systems' },
   { label: 'Modules', path: '/admin/config/modules', group: 'IT & Systems' },
   { label: 'Permissions', path: '/admin/config/permissions', group: 'IT & Systems' },
   { label: 'Features', path: '/admin/config/features', group: 'IT & Systems' },

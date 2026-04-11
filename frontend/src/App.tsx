@@ -53,6 +53,7 @@ import { SystemConfigRolesPage } from './pages/system-config/SystemConfigRolesPa
 import { SystemConfigModulesPage } from './pages/system-config/SystemConfigModulesPage'
 import { SystemConfigPermissionsPage } from './pages/system-config/SystemConfigPermissionsPage'
 import { SystemConfigFeaturesPage } from './pages/system-config/SystemConfigFeaturesPage'
+import { SystemConfigCompanyProfilePage } from './pages/system-config/SystemConfigCompanyProfilePage'
 import { PharmacyDashboard } from './pages/PharmacyDashboard'
 import { LabDashboard } from './pages/LabDashboard'
 import { LabReportsPage } from './pages/LabReportsPage'
@@ -74,6 +75,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { EnquiryDeskPage } from './pages/enquiry/EnquiryDeskPage'
 import { AppointmentDashboard } from './pages/appointments/AppointmentDashboard'
 import { AppointmentBookingPage } from './pages/appointments/AppointmentBookingPage'
 import { AppointmentQueuePage } from './pages/appointments/AppointmentQueuePage'
@@ -87,6 +89,11 @@ import { WalkinRegistrationForm } from './pages/walkin/WalkinRegistrationForm'
 import { MarketingLandingPage } from './pages/MarketingLandingPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { PublicLayout } from './components/PublicLayout'
+import { SignupPage } from './pages/SignupPage'
+import { ContactPage } from './pages/ContactPage'
+import { BlogListPage } from './pages/blog/BlogListPage'
+import { BlogPostPage } from './pages/blog/BlogPostPage'
 
 export default function App() {
   const { user } = useAuth()
@@ -106,8 +113,15 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/home" element={<MarketingLandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      {/* Public pages with shared header/footer */}
+      <Route element={<PublicLayout />}>
+        <Route path="/home" element={<MarketingLandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
+      </Route>
       <Route path="/register" element={<RegisterPage />} />
       <Route
         path="/"
@@ -138,7 +152,7 @@ export default function App() {
             <Route index element={<WalkinDashboard />} />
             <Route path="register" element={<WalkinRegistrationForm />} />
           </Route>
-          <Route path="enquiry" element={<PlaceholderPage title="Enquiry Desk" description="Handle patient enquiries and information requests. Coming in a future release." />} />
+          <Route path="enquiry" element={<EnquiryDeskPage />} />
           <Route path="tokens" element={<Outlet />}>
             <Route index element={<TokenDashboard />} />
             <Route path="queue" element={<TokenQueuePage />} />
@@ -268,7 +282,8 @@ export default function App() {
           <Route path="payroll" element={<PlaceholderPage title="Payroll" description="Payroll. Coming in a future release." />} />
         </Route>
         <Route path="admin/config" element={<Outlet />}>
-          <Route index element={<Navigate to="/admin/config/roles" replace />} />
+          <Route index element={<Navigate to="/admin/config/company-profile" replace />} />
+          <Route path="company-profile" element={<SystemConfigCompanyProfilePage />} />
           <Route path="roles" element={<SystemConfigRolesPage />} />
           <Route path="modules" element={<SystemConfigModulesPage />} />
           <Route path="permissions" element={<SystemConfigPermissionsPage />} />
@@ -276,7 +291,7 @@ export default function App() {
         </Route>
       </Route>
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   )
 }

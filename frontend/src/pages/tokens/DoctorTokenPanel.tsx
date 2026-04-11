@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { tokenApi } from '../../api/token'
 import { doctorsApi } from '../../api/doctors'
-import type { TokenResponse, TokenDashboard } from '../../types/token.types'
+import type { TokenDashboard } from '../../types/token.types'
 import type { DoctorResponse } from '../../types/doctor'
 
 const STATUS_LABELS: Record<string, string> = {

@@ -1,0 +1,92 @@
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.25fr;
+  gap: 18px;
+}
+
+.activePanel {
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.08);
+}
+
+.actionBar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.currentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.currentCard {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 247, 255, 0.96));
+  border: 1px solid var(--hms-card-border);
+}
+
+.currentToken {
+  font-family: var(--hms-heading-font);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--hms-primary);
+}
+
+.currentName {
+  margin-top: 2px;
+  font-weight: 700;
+  color: var(--hms-text);
+}
+
+.currentMeta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--hms-text-muted);
+}
+
+.currentActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.emptyState {
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(91, 79, 207, 0.06);
+  color: var(--hms-text-muted);
+  text-align: center;
+}
+
+.rowMeta {
+  font-size: 12px;
+  color: var(--hms-text-muted);
+}
+
+.queueColumns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.columnTitle {
+  margin: 0 0 10px;
+  font-family: var(--hms-heading-font);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+@media (max-width: 1100px) {
+  .layoutGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .queueColumns {
+    grid-template-columns: 1fr;
+  }
+}

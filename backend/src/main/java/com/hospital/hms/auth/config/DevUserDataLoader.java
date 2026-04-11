@@ -31,6 +31,7 @@ public class DevUserDataLoader {
         return args -> {
             List<DevUser> users = List.of(
                     new DevUser("admin", "Admin", "admin123", UserRole.ADMIN),
+                    new DevUser("superadmin", "Super Admin", "super123", UserRole.SUPER_ADMIN),
                     new DevUser("pharm", "Pharmacy Manager", "pharm123", UserRole.PHARMACY_MANAGER),
                     new DevUser("pharmacist", "Pharmacist", "pharm123", UserRole.PHARMACIST),
                     new DevUser("store", "Store In-charge", "store123", UserRole.STORE_INCHARGE),

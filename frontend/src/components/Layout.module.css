@@ -2,12 +2,12 @@
   min-height: 100vh;
   background: var(--hms-bg);
   box-sizing: border-box;
-  padding-left: 240px;
+  padding-left: 272px;
   transition: padding-left 0.2s ease;
 }
 
 .wrapperSidebarCollapsed {
-  padding-left: 64px;
+  padding-left: 76px;
 }
 
 /* ========== Sidebar - purple SaaS shell (fixed: profile card always visible) ========== */
@@ -16,37 +16,38 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 240px;
+  width: 272px;
   z-index: 40;
   flex-shrink: 0;
-  background: var(--hms-sidebar-bg);
+  background: linear-gradient(180deg, #1d2b40 0%, #1b2940 100%);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-columns: minmax(0, 1fr);
   align-content: stretch;
-  border-right: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   transition: width 0.2s ease;
   overflow: hidden;
   max-height: 100vh;
   max-height: 100dvh;
+  box-shadow: 12px 0 36px rgba(3, 10, 24, 0.18);
 }
 
 .sidebarCollapsed {
-  width: 64px;
+  width: 76px;
 }
 
 .sidebarHeader {
-  padding: 1.1rem 1.25rem;
-  min-height: 64px;
+  padding: 1.45rem 1.5rem 1.15rem;
+  min-height: 86px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.8rem;
   text-decoration: none;
   color: #ffffff;
 }
@@ -56,19 +57,20 @@
 }
 
 .logoIcon {
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--hms-heading-font);
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #ffffff;
   flex-shrink: 0;
   letter-spacing: -0.02em;
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.28);
 }
 
 .logoMeta {
@@ -80,23 +82,23 @@
 
 .logoText {
   font-family: var(--hms-heading-font);
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  font-size: 1.28rem;
+  letter-spacing: 0.04em;
   color: #ffffff;
 }
 
 .logoSub {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.42);
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  margin-top: 1px;
+  letter-spacing: 0.18em;
+  margin-top: 4px;
 }
 
 .sidebarNav {
   min-height: 0;
-  padding: 0.6rem 0.75rem;
+  padding: 0.95rem 0.9rem 1rem;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -120,7 +122,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.95rem;
 }
 
 /* Section header - clickable to collapse/expand */
@@ -128,15 +130,15 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0.45rem 0.5rem 0.2rem;
+  padding: 0.15rem 0.6rem 0.6rem;
   margin: 0;
   border: none;
   background: transparent;
-  color: var(--hms-nav-section-label);
-  font-size: 0.65rem;
-  font-weight: 700;
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 0.66rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.1em;
   cursor: pointer;
   user-select: none;
   text-align: left;
@@ -144,7 +146,7 @@
 }
 
 .navGroupHeader:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .navGroupIcon {
@@ -163,7 +165,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.6;
+  opacity: 0.45;
   transition: transform 0.2s ease, opacity 0.15s ease;
 }
 
@@ -194,7 +196,7 @@
 .navGroupItemsInner {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
   padding: 0;
 }
 
@@ -202,15 +204,15 @@
 .navSubsectionHeader {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.55rem 0.75rem 0.35rem;
-  margin-top: 0.25rem;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  gap: 0.75rem;
+  padding: 0.9rem 0.9rem 0.5rem;
+  margin-top: 0.2rem;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: default;
   user-select: none;
   background: transparent;
@@ -221,37 +223,62 @@
 }
 
 .navSubsectionHeader .navIcon {
-  opacity: 0.6;
+  opacity: 0.78;
 }
 
 .navSubsectionHasActiveChild {
-  color: rgba(255, 255, 255, 0.75);
+  color: #ffffff;
 }
 
 .navNestedWrap {
   display: flex;
   flex-direction: column;
   gap: 0;
+  border-radius: 14px;
 }
 
 .navItemNested {
-  padding-left: 2rem;
+  margin-left: 2.55rem;
+  padding-left: 0.75rem;
+  position: relative;
+}
+
+.navItemNested::before {
+  content: '';
+  position: absolute;
+  left: -0.85rem;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* ========== Nav items ========== */
 .navItem {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.58rem 0.75rem;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.82);
+  gap: 0.85rem;
+  min-height: 46px;
+  padding: 0.72rem 0.9rem;
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.96rem;
   font-weight: 500;
-  transition: background 0.12s ease, color 0.12s ease;
-  border-left: 4px solid transparent;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+  border-left: none;
   position: relative;
+}
+
+.navItem::before {
+  content: '';
+  position: absolute;
+  left: -0.9rem;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
 }
 
 .navItemLink {
@@ -259,9 +286,10 @@
 }
 
 .navItemLink:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
   text-decoration: none;
+  transform: translateX(1px);
 }
 
 .navItemLink:focus-visible {
@@ -270,10 +298,13 @@
 }
 
 .navItemActive {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  border-left-color: #ffffff;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.navItemActive::before {
+  background: #4f8cff;
 }
 
 .navItemDisabled {
@@ -288,6 +319,8 @@
   align-items: center;
   justify-content: center;
   color: inherit;
+  width: 20px;
+  height: 20px;
 }
 
 .navLabel {
@@ -302,51 +335,53 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 10px;
-  background: #EF4444;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22c1f1 0%, #2aa7df 100%);
   color: #ffffff;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.84rem;
+  font-weight: 800;
   line-height: 1;
   flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(34, 193, 241, 0.28);
 }
 
 /* ========== Sidebar Footer - user profile card (pinned; only nav scrolls) ========== */
 .sidebarFooter {
   flex-shrink: 0;
-  padding: 0.75rem;
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+  padding: 0.9rem;
+  padding-bottom: max(0.9rem, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(9, 16, 28, 0.3);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.16);
   z-index: 2;
 }
 
 .sidebarProfile {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
   text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebarProfile:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
   text-decoration: none;
 }
 
 .sidebarAvatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(79, 140, 255, 0.95), rgba(37, 99, 235, 0.95));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -366,8 +401,8 @@
 }
 
 .sidebarProfileName {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -375,8 +410,8 @@
 }
 
 .sidebarProfileRole {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.46);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -385,12 +420,15 @@
 /* ========== Collapsed state ========== */
 .sidebarCollapsed .navItem {
   justify-content: center;
-  padding: 0.58rem 0;
-  border-left: none;
+  padding: 0.72rem 0;
 }
 
 .sidebarCollapsed .navItemActive {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebarCollapsed .navItem::before {
+  left: -0.5rem;
 }
 
 .sidebarCollapsed .navLabel {
@@ -403,7 +441,7 @@
 
 .sidebarCollapsed .navGroupHeader {
   justify-content: center;
-  padding: 0.35rem 0.4rem 0.15rem;
+  padding: 0.45rem 0.4rem 0.2rem;
   pointer-events: none;
 }
 
@@ -428,11 +466,16 @@
 
 .sidebarCollapsed .navItemNested {
   padding-left: 0;
+  margin-left: 0;
+}
+
+.sidebarCollapsed .navItemNested::before {
+  display: none;
 }
 
 .sidebarCollapsed .navSubsectionHeader {
   justify-content: center;
-  padding: 0.4rem;
+  padding: 0.5rem 0.4rem;
   margin-top: 0.15rem;
 }
 
@@ -442,7 +485,7 @@
 
 .sidebarCollapsed .sidebarProfile {
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.55rem;
 }
 
 .sidebarCollapsed .sidebarProfileInfo {
@@ -588,6 +631,14 @@
 .profileTrigger:hover {
   background: var(--hms-border);
   color: var(--hms-text);
+}
+
+.profileChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.72;
+  flex-shrink: 0;
 }
 
 .profileDropdownMenu {

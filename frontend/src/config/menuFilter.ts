@@ -104,7 +104,7 @@ export function filterMenuByAllowedRoutes(
 /** Group ids whose entire sidebar block is stub / not production-ready. */
 const STUB_MENU_GROUP_IDS = new Set(['radiology', 'hr-management'])
 /** Single items to hide under mixed groups (e.g. Reception). */
-const STUB_MENU_ITEM_IDS = new Set(['fo-enquiry', 'fo-visitors'])
+const STUB_MENU_ITEM_IDS = new Set(['fo-visitors'])
 
 /**
  * When {@link showStubSidebarItems} is false, removes stub entries so production menus stay accurate.

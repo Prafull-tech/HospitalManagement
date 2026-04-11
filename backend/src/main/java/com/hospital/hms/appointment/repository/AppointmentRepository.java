@@ -18,6 +18,23 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByAppointmentDateAndDoctorIdOrderBySlotTimeAscTokenNoAsc(LocalDate date, Long doctorId);
 
+    /** Check if an active (non-cancelled) appointment already exists for this doctor + date + slot. */
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.doctor.id = :doctorId " +
+           "AND a.appointmentDate = :date AND a.slotTime = :slotTime " +
+           "AND a.status NOT IN ('CANCELLED')")
+    boolean existsActiveByDoctorAndDateAndSlot(@Param("doctorId") Long doctorId,
+                                               @Param("date") LocalDate date,
+                                               @Param("slotTime") java.time.LocalTime slotTime);
+
+    /** Same check but excluding a specific appointment (for reschedule). */
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.doctor.id = :doctorId " +
+           "AND a.appointmentDate = :date AND a.slotTime = :slotTime " +
+           "AND a.status NOT IN ('CANCELLED') AND a.id <> :excludeId")
+    boolean existsActiveByDoctorAndDateAndSlotExcluding(@Param("doctorId") Long doctorId,
+                                                        @Param("date") LocalDate date,
+                                                        @Param("slotTime") java.time.LocalTime slotTime,
+                                                        @Param("excludeId") Long excludeId);
+
     @Query("SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor d JOIN FETCH d.department " +
            "WHERE a.appointmentDate = :date AND a.doctor.id = :doctorId ORDER BY a.slotTime ASC, a.tokenNo ASC")
     List<Appointment> findQueueWithAssociations(@Param("date") LocalDate date, @Param("doctorId") Long doctorId);

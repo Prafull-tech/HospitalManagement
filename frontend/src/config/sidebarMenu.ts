@@ -21,17 +21,21 @@ export type HMSRole =
   | 'HOUSEKEEPING'
   | 'HR_MANAGER'
   | 'HR'
+  | 'HELP_DESK'
+  | 'MEDICAL_SUPERINTENDENT'
   // Legacy – kept for auth/backend; map to canonical in filterMenuByRole
   | 'RECEPTIONIST'
   | 'LAB_TECHNICIAN'
   | 'LAB_SUPERVISOR'
   | 'PATHOLOGIST'
+  | 'QUALITY_MANAGER'
   | 'PHLEBOTOMIST'
   | 'PHARMACY_MANAGER'
   | 'STORE_INCHARGE'
   | 'IPD_PHARMACIST'
   | 'IPD_MANAGER'
   | 'IT_ADMIN'
+  | 'BLOOD_BANK_TECH'
   | 'LAUNDRY'
   | 'KITCHEN'
 
@@ -53,19 +57,33 @@ export type MenuIconKey =
   | 'Users'
   | 'FileText'
   | 'BarChart'
+  | 'Wrench'
   | 'Trash2'
   | 'Utensils'
+  | 'Monitor'
   | 'Package'
+  | 'Droplets'
+  | 'Megaphone'
   | 'Queue'
+  | 'Scissors'
+  | 'Truck'
   | 'HelpCircle'
   | 'CreditCard'
   | 'RefreshCw'
   | 'Briefcase'
+  | 'Scale'
+  | 'AlertCircle'
+  | 'Zap'
+  | 'Lock'
+  | 'BookOpen'
   | 'AlertTriangle'
   | 'Layers'
   | 'GitBranch'
   | 'Activity'
   | 'Building2'
+  | 'Ambulance'
+  | 'ShoppingCart'
+  | 'Sparkles'
 
 export interface SidebarMenuItem {
   id: string
@@ -245,7 +263,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       { id: 'sys-doctors', label: 'Doctor Setup', route: '/doctors', end: true, icon: 'Stethoscope', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'DOCTORS' },
       { id: 'sys-wards', label: 'Ward Setup', route: '/wards/general', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'WARDS' },
       { id: 'sys-beds', label: 'Bed Setup', route: '/ipd/beds', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'WARDS' },
-      { id: 'sys-settings', label: 'Hospital Settings', route: '/admin/config', end: true, icon: 'Settings', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
+      { id: 'sys-settings', label: 'Hospital Settings', route: '/admin/config/company-profile', end: true, icon: 'Settings', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
       { id: 'sys-audit', label: 'Audit Logs', route: '/admin/audit', end: true, icon: 'FileText', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
     ],
   },

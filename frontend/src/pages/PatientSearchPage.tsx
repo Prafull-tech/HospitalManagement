@@ -110,15 +110,6 @@ export function PatientSearchPage() {
   const [resultsPage, setResultsPage] = useState(0)
   const [allPage, setAllPage] = useState(0)
 
-  const refreshAllPatients = () => {
-    setAllLoading(true)
-    receptionApi
-      .list({ page: 0, size: 500 })
-      .then(setAllPatients)
-      .catch(() => setAllError('Failed to refresh list.'))
-      .finally(() => setAllLoading(false))
-  }
-
   useEffect(() => {
     setUhid(initialUhid)
   }, [initialUhid])
@@ -231,7 +222,7 @@ export function PatientSearchPage() {
     page: number
     onPageChange: (p: number) => void
     totalCount: number
-    printRef?: React.RefObject<HTMLDivElement | null>
+    printRef?: React.RefObject<HTMLDivElement>
   }) {
     const paginated = paginate(patients, page)
     const pages = totalPages(totalCount)

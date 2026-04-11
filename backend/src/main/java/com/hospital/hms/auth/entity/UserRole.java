@@ -2,6 +2,7 @@ package com.hospital.hms.auth.entity;
 
 public enum UserRole {
     ADMIN,
+    SUPER_ADMIN,
     PHARMACY_MANAGER,
     STORE_INCHARGE,
     IPD_PHARMACIST,

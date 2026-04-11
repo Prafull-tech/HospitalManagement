@@ -4,11 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/wait-for-backend.js && vite",
-    "dev:only": "vite",
+    "dev": "node scripts/run-vite.js dev --wait-for-backend",
+    "dev:only": "node scripts/run-vite.js dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "node scripts/run-vite.js preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },

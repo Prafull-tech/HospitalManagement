@@ -87,6 +87,8 @@ public class AppointmentService {
         Doctor doctor = doctorRepository.findByIdWithDepartment(request.getDoctorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
+        validateNoSlotConflict(doctor.getId(), request.getAppointmentDate(), request.getSlotTime(), null);
+
         int nextToken = getNextTokenForDoctorAndDate(doctor.getId(), request.getAppointmentDate());
 
         Appointment a = new Appointment();
@@ -114,6 +116,10 @@ public class AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
         LocalDate date = request.getAppointmentDate() != null ? request.getAppointmentDate() : LocalDate.now();
+        java.time.LocalTime slot = request.getSlotTime() != null ? request.getSlotTime() : java.time.LocalTime.now();
+
+        validateNoSlotConflict(doctor.getId(), date, slot, null);
+
         int nextToken = getNextTokenForDoctorAndDate(doctor.getId(), date);
 
         Appointment a = new Appointment();
@@ -121,7 +127,7 @@ public class AppointmentService {
         a.setDoctor(doctor);
         a.setDepartment(doctor.getDepartment());
         a.setAppointmentDate(date);
-        a.setSlotTime(request.getSlotTime() != null ? request.getSlotTime() : java.time.LocalTime.now());
+        a.setSlotTime(slot);
         a.setTokenNo(nextToken);
         a.setStatus(AppointmentStatus.BOOKED);
         a.setSource(AppointmentSource.WALK_IN);
@@ -138,6 +144,8 @@ public class AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + request.getPatientUhid()));
         Doctor doctor = doctorRepository.findByIdWithDepartment(request.getDoctorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
+
+        validateNoSlotConflict(doctor.getId(), request.getAppointmentDate(), request.getSlotTime(), null);
 
         int nextToken = getNextTokenForDoctorAndDate(doctor.getId(), request.getAppointmentDate());
 
@@ -174,6 +182,10 @@ public class AppointmentService {
         }
         if (request.getAppointmentDate() != null) a.setAppointmentDate(request.getAppointmentDate());
         if (request.getSlotTime() != null) a.setSlotTime(request.getSlotTime());
+
+        // Validate slot conflict with the updated values
+        validateNoSlotConflict(a.getDoctor().getId(), a.getAppointmentDate(), a.getSlotTime(), a.getId());
+
         a = appointmentRepository.save(a);
 
         logAudit(a.getId(), AppointmentAuditEventType.RESCHEDULED, userId, null);
@@ -259,6 +271,19 @@ public class AppointmentService {
         Appointment a = appointmentRepository.findByIdWithAssociations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
         return toResponse(a);
+    }
+
+    private void validateNoSlotConflict(Long doctorId, LocalDate date, java.time.LocalTime slotTime, Long excludeId) {
+        boolean conflict;
+        if (excludeId != null) {
+            conflict = appointmentRepository.existsActiveByDoctorAndDateAndSlotExcluding(doctorId, date, slotTime, excludeId);
+        } else {
+            conflict = appointmentRepository.existsActiveByDoctorAndDateAndSlot(doctorId, date, slotTime);
+        }
+        if (conflict) {
+            throw new IllegalArgumentException(
+                    "This doctor already has an appointment booked at " + slotTime + " on " + date + ". Please choose a different time slot.");
+        }
     }
 
     private int getNextTokenForDoctorAndDate(Long doctorId, LocalDate date) {

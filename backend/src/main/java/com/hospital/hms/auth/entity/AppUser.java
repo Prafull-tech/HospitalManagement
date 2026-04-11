@@ -1,4 +1,4 @@
-﻿package com.hospital.hms.auth.entity;
+package com.hospital.hms.auth.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
 import jakarta.persistence.Column;

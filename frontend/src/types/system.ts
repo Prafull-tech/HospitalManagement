@@ -100,3 +100,24 @@ export interface EffectiveFeatureToggleResponse {
   uiMode: 'hide' | 'disabled'
   source: 'default' | 'config' | 'database' | 'environment' | string
 }
+
+export interface CompanyProfileResponse {
+  id: number
+  companyName: string
+  brandName: string
+  logoText?: string
+  logoUrl?: string
+  supportEmail?: string
+  supportPhone?: string
+  addressText?: string
+}
+
+export interface CompanyProfileRequest {
+  companyName: string
+  brandName: string
+  logoText?: string
+  logoUrl?: string
+  supportEmail?: string
+  supportPhone?: string
+  addressText?: string
+}

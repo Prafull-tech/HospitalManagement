@@ -37,11 +37,39 @@ export function AppointmentBookingPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [slotConflict, setSlotConflict] = useState(false)
+  const [checkingSlot, setCheckingSlot] = useState(false)
 
   useEffect(() => {
     doctorsApi.list({ status: 'ACTIVE', page: 0, size: 200 }).then((d) => setDoctors(d.content)).catch(() => [])
     departmentsApi.list().then(setDepartments).catch(() => [])
   }, [])
+
+  // Check for slot conflicts whenever doctor, date, or time changes
+  useEffect(() => {
+    setSlotConflict(false)
+    if (!form.doctorId || !form.appointmentDate || !form.slotTime) return
+
+    setCheckingSlot(true)
+    appointmentApi
+      .search({
+        doctorId: form.doctorId,
+        date: form.appointmentDate,
+        page: 0,
+        size: 100,
+      })
+      .then((result) => {
+        const normalizedSlot = form.slotTime.length === 5 ? form.slotTime : form.slotTime.slice(0, 5)
+        const conflict = result.content.some(
+          (a) =>
+            a.slotTime.slice(0, 5) === normalizedSlot &&
+            a.status !== 'CANCELLED',
+        )
+        setSlotConflict(conflict)
+      })
+      .catch(() => {})
+      .finally(() => setCheckingSlot(false))
+  }, [form.doctorId, form.appointmentDate, form.slotTime])
 
   useEffect(() => {
     if (visitType !== 'FOLLOWUP') {
@@ -147,7 +175,7 @@ export function AppointmentBookingPage() {
   }
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="hms-page-shell">
       <nav aria-label="Breadcrumb">
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item"><Link to="/front-office/appointments">Appointments</Link></li>
@@ -155,10 +183,25 @@ export function AppointmentBookingPage() {
         </ol>
       </nav>
 
-      <h1 className="h4 mb-0">Book Appointment</h1>
+      <div className="hms-page-hero">
+        <div>
+          <div className="hms-page-kicker">Booking Desk</div>
+          <h1 className="hms-page-title">Book Appointment</h1>
+          <p className="hms-page-subtitle">Create a new appointment with the same visual language as Reception so the booking flow feels part of the same system.</p>
+        </div>
+        <div className="hms-page-actions">
+          <Link to="/front-office/appointments" className="btn btn-outline-secondary btn-sm">Back to Dashboard</Link>
+        </div>
+      </div>
 
-      <div className="card shadow-sm">
-        <div className="card-body">
+      <div className="hms-section-card">
+        <div className="hms-section-card-header">
+          <div>
+            <h2 className="hms-section-title">Appointment Form</h2>
+            <p className="hms-section-subtitle">Visit type, patient details, doctor, and slot selection in one place.</p>
+          </div>
+        </div>
+        <div className="hms-section-card-body">
           <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
             {error && <div className="alert alert-danger py-2 mb-0">{error}</div>}
 
@@ -309,15 +352,23 @@ export function AppointmentBookingPage() {
                   type="time"
                   id="slotTime"
                   name="slotTime"
-                  className="form-control"
+                  className={`form-control ${slotConflict ? 'is-invalid' : ''}`}
                   value={form.slotTime}
                   onChange={handleChange}
                 />
+                {slotConflict && (
+                  <div className="invalid-feedback">
+                    This doctor already has an appointment at this time. Please choose a different slot.
+                  </div>
+                )}
+                {checkingSlot && (
+                  <div className="form-text text-muted">Checking availability…</div>
+                )}
               </div>
             </div>
 
             <div className="d-flex gap-2">
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button type="submit" className="btn btn-primary" disabled={loading || slotConflict}>
                 {loading ? 'Booking…' : 'Book Appointment'}
               </button>
               <Link to="/front-office/appointments" className="btn btn-outline-secondary">Cancel</Link>
