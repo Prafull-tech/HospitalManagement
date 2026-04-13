@@ -106,6 +106,10 @@ const tenantBaseDomain = (() => {
   return raw.startsWith('.') ? raw : `.${raw}`
 })()
 
+const knownTenantDomainSuffixes = Array.from(
+  new Set([tenantBaseDomain, '.hms.com', '.hms.local'])
+)
+
 const platformHosts = new Set(
   ((import.meta.env.VITE_PLATFORM_HOSTS || 'hms.com,admin.hms.com') as string)
     .split(',')
@@ -128,7 +132,7 @@ function isTenantDomainPathAlias(pathname: string) {
   const segment = pathname.trim().replace(/^\//, '').replace(/\/$/, '').toLowerCase()
   if (!segment || segment.includes('/')) return false
   if (platformHosts.has(segment)) return false
-  return segment.endsWith(tenantBaseDomain)
+  return knownTenantDomainSuffixes.some((suffix) => segment.endsWith(suffix))
 }
 
 function HostAwareHomePage() {

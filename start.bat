@@ -2,6 +2,8 @@
 REM HMS Startup Script - Starts backend first, waits for it to be ready, then starts frontend
 REM Usage: start.bat
 
+if not defined SPRING_PROFILES_ACTIVE set "SPRING_PROFILES_ACTIVE=dev"
+
 echo === HMS Hospital Management System ===
 echo.
 
