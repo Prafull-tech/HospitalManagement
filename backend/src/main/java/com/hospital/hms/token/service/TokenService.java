@@ -19,6 +19,8 @@ import com.hospital.hms.token.entity.TokenPriority;
 import com.hospital.hms.token.entity.TokenStatus;
 import com.hospital.hms.token.repository.TokenAuditLogRepository;
 import com.hospital.hms.token.repository.TokenRepository;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -39,24 +41,29 @@ public class TokenService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final OPDVisitService opdVisitService;
+    private final TenantContextService tenantContextService;
 
     public TokenService(TokenRepository tokenRepository,
                         TokenAuditLogRepository auditLogRepository,
                         PatientRepository patientRepository,
                         DoctorRepository doctorRepository,
-                        OPDVisitService opdVisitService) {
+                        OPDVisitService opdVisitService,
+                        TenantContextService tenantContextService) {
         this.tokenRepository = tokenRepository;
         this.auditLogRepository = auditLogRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.opdVisitService = opdVisitService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public TokenResponseDto generate(TokenGenerateRequestDto request) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + request.getPatientId()));
-        Doctor doctor = doctorRepository.findById(request.getDoctorId())
+        validatePatientBelongsToCurrentHospital(patient);
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
         MedicalDepartment department = doctor.getDepartment();
         if (request.getDepartmentId() != null && !request.getDepartmentId().equals(department.getId())) {
@@ -86,6 +93,7 @@ public class TokenService {
 
     @Transactional(readOnly = true)
     public List<TokenResponseDto> getQueue(Long doctorId, LocalDate date) {
+        findDoctorInCurrentHospital(doctorId);
         LocalDate d = date != null ? date : LocalDate.now();
         List<Token> tokens = tokenRepository.findQueueByDoctorAndDate(doctorId, d);
         return tokens.stream().map(this::toDto).collect(Collectors.toList());
@@ -93,13 +101,13 @@ public class TokenService {
 
     @Transactional(readOnly = true)
     public TokenDisplayDto getCurrentDisplay(Long doctorId, LocalDate date) {
+        Doctor doctor = findDoctorInCurrentHospital(doctorId);
         LocalDate d = date != null ? date : LocalDate.now();
         List<Token> queue = tokenRepository.findQueueByDoctorAndDate(doctorId, d);
 
         TokenDisplayDto dto = new TokenDisplayDto();
-        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
-        dto.setDoctorName(doctor != null ? doctor.getFullName() : "—");
-        dto.setRoomNo(doctor != null ? (doctor.getCode() != null ? "Room " + doctor.getCode() : "—") : "—");
+        dto.setDoctorName(doctor.getFullName());
+        dto.setRoomNo(doctor.getCode() != null ? "Room " + doctor.getCode() : "—");
 
         Token current = queue.stream()
                 .filter(t -> t.getStatus() == TokenStatus.CALLED || t.getStatus() == TokenStatus.IN_CONSULTATION)
@@ -121,6 +129,7 @@ public class TokenService {
 
     @Transactional
     public TokenResponseDto callNext(Long doctorId, LocalDate date) {
+        findDoctorInCurrentHospital(doctorId);
         LocalDate d = date != null ? date : LocalDate.now();
         List<Token> waiting = tokenRepository.findWaitingByDoctorAndDate(doctorId, d, TokenStatus.WAITING);
         if (waiting.isEmpty()) {
@@ -150,6 +159,7 @@ public class TokenService {
     public TokenResponseDto startConsultation(Long tokenId) {
         Token token = tokenRepository.findById(tokenId)
                 .orElseThrow(() -> new ResourceNotFoundException("Token not found: " + tokenId));
+        validateTokenBelongsToCurrentHospital(token);
         if (token.getStatus() != TokenStatus.CALLED) {
             throw new IllegalStateException("Token must be in CALLED status to start consultation");
         }
@@ -163,6 +173,7 @@ public class TokenService {
     public TokenResponseDto complete(Long tokenId) {
         Token token = tokenRepository.findById(tokenId)
                 .orElseThrow(() -> new ResourceNotFoundException("Token not found: " + tokenId));
+        validateTokenBelongsToCurrentHospital(token);
         if (token.getStatus() != TokenStatus.IN_CONSULTATION && token.getStatus() != TokenStatus.CALLED) {
             throw new IllegalStateException("Token must be in consultation to complete");
         }
@@ -178,6 +189,7 @@ public class TokenService {
     public TokenResponseDto skip(Long tokenId) {
         Token token = tokenRepository.findById(tokenId)
                 .orElseThrow(() -> new ResourceNotFoundException("Token not found: " + tokenId));
+        validateTokenBelongsToCurrentHospital(token);
         if (token.getStatus() != TokenStatus.WAITING && token.getStatus() != TokenStatus.CALLED) {
             throw new IllegalStateException("Token cannot be skipped in current status");
         }
@@ -202,6 +214,7 @@ public class TokenService {
 
     @Transactional(readOnly = true)
     public TokenDashboardDto getDashboard(Long doctorId, LocalDate date) {
+        findDoctorInCurrentHospital(doctorId);
         LocalDate d = date != null ? date : LocalDate.now();
         List<Token> all = tokenRepository.findQueueByDoctorAndDate(doctorId, d);
 
@@ -214,8 +227,9 @@ public class TokenService {
 
     @Transactional(readOnly = true)
     public java.util.Map<String, Long> getWalkInStats(LocalDate date) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LocalDate d = date != null ? date : LocalDate.now();
-        List<Token> all = tokenRepository.findByTokenDate(d);
+        List<Token> all = tokenRepository.findByHospitalIdAndTokenDate(hospitalId, d);
         java.util.Map<String, Long> stats = new java.util.HashMap<>();
         stats.put("walkInsToday", (long) all.size());
         stats.put("patientsWaiting", all.stream().filter(t -> t.getStatus() == TokenStatus.WAITING).count());
@@ -227,16 +241,39 @@ public class TokenService {
 
     @Transactional(readOnly = true)
     public List<TokenDisplayDto> getAllCurrentDisplays(LocalDate date) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LocalDate d = date != null ? date : LocalDate.now();
-        List<Doctor> doctors = doctorRepository.findAll().stream()
-                .filter(doc -> doc.getStatus() == DoctorStatus.ACTIVE)
+        List<Token> hospitalTokens = tokenRepository.findByHospitalIdAndTokenDate(hospitalId, d);
+        List<Long> doctorIds = hospitalTokens.stream()
+                .map(t -> t.getDoctor().getId())
+                .distinct()
                 .collect(Collectors.toList());
 
         List<TokenDisplayDto> result = new ArrayList<>();
-        for (Doctor doc : doctors) {
-            result.add(getCurrentDisplay(doc.getId(), d));
+        for (Long docId : doctorIds) {
+            result.add(getCurrentDisplay(docId, d));
         }
         return result;
+    }
+
+    private void validatePatientBelongsToCurrentHospital(Patient patient) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (!patient.getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Patient does not belong to current hospital");
+        }
+    }
+
+    private void validateTokenBelongsToCurrentHospital(Token token) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (!token.getPatient().getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Token does not belong to current hospital");
+        }
+    }
+
+    private Doctor findDoctorInCurrentHospital(Long doctorId) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        return doctorRepository.findByIdAndHospitalId(doctorId, hospitalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));
     }
 
     private void audit(Long tokenId, TokenAuditEventType eventType) {

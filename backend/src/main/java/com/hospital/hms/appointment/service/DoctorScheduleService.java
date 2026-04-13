@@ -7,6 +7,7 @@ import com.hospital.hms.appointment.repository.DoctorScheduleRepository;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.repository.DoctorRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,16 +19,20 @@ public class DoctorScheduleService {
 
     private final DoctorScheduleRepository scheduleRepository;
     private final DoctorRepository doctorRepository;
+    private final TenantContextService tenantContextService;
 
     public DoctorScheduleService(DoctorScheduleRepository scheduleRepository,
-                                 DoctorRepository doctorRepository) {
+                                 DoctorRepository doctorRepository,
+                                 TenantContextService tenantContextService) {
         this.scheduleRepository = scheduleRepository;
         this.doctorRepository = doctorRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public DoctorScheduleResponseDto create(DoctorScheduleRequestDto request) {
-        Doctor doctor = doctorRepository.findById(request.getDoctorId())
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
         DoctorSchedule s = new DoctorSchedule();
@@ -43,6 +48,9 @@ public class DoctorScheduleService {
 
     @Transactional(readOnly = true)
     public List<DoctorScheduleResponseDto> getByDoctorId(Long doctorId) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        doctorRepository.findByIdAndHospitalId(doctorId, hospitalId)
+            .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));
         return scheduleRepository.findByDoctorIdOrderByDayOfWeekAscStartTimeAsc(doctorId)
                 .stream()
                 .map(this::toResponse)
@@ -51,6 +59,9 @@ public class DoctorScheduleService {
 
     @Transactional
     public void deleteByDoctorId(Long doctorId) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        doctorRepository.findByIdAndHospitalId(doctorId, hospitalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));
         scheduleRepository.deleteByDoctorId(doctorId);
     }
 

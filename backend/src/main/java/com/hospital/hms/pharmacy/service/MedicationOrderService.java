@@ -3,6 +3,7 @@ package com.hospital.hms.pharmacy.service;
 import com.hospital.hms.billing.dto.AdmissionChargeRequestDto;
 import com.hospital.hms.billing.entity.ChargeType;
 import com.hospital.hms.billing.service.AdmissionChargeService;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.common.logging.MdcKeys;
 import com.hospital.hms.doctor.entity.Doctor;
@@ -19,6 +20,7 @@ import com.hospital.hms.pharmacy.exception.InsufficientStockException;
 import com.hospital.hms.pharmacy.repository.*;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -53,6 +55,7 @@ public class MedicationOrderService {
     private final BedAllocationRepository bedAllocationRepository;
     private final OPDVisitRepository opdVisitRepository;
     private final AdmissionChargeService admissionChargeService;
+    private final TenantContextService tenantContextService;
 
     public MedicationOrderService(MedicationOrderRepository orderRepository,
                                  MedicineMasterRepository medicineRepository,
@@ -63,7 +66,8 @@ public class MedicationOrderService {
                                  IPDAdmissionRepository admissionRepository,
                                  BedAllocationRepository bedAllocationRepository,
                                  OPDVisitRepository opdVisitRepository,
-                                 AdmissionChargeService admissionChargeService) {
+                                 AdmissionChargeService admissionChargeService,
+                                 TenantContextService tenantContextService) {
         this.orderRepository = orderRepository;
         this.medicineRepository = medicineRepository;
         this.stockTransactionRepository = stockTransactionRepository;
@@ -74,15 +78,18 @@ public class MedicationOrderService {
         this.bedAllocationRepository = bedAllocationRepository;
         this.opdVisitRepository = opdVisitRepository;
         this.admissionChargeService = admissionChargeService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public MedicationOrder createOrder(MedicationOrderRequestDto request) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + request.getPatientId()));
+        validatePatientBelongsToCurrentHospital(patient);
         MedicineMaster medicine = medicineRepository.findById(request.getMedicineId())
                 .orElseThrow(() -> new ResourceNotFoundException("Medicine not found: " + request.getMedicineId()));
-        Doctor doctor = doctorRepository.findById(request.getOrderedByDoctorId())
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getOrderedByDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getOrderedByDoctorId()));
 
         MedicationOrder order = new MedicationOrder();
@@ -102,6 +109,13 @@ public class MedicationOrderService {
         order.setOrderedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
+    }
+
+    private void validatePatientBelongsToCurrentHospital(Patient patient) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (patient.getHospital() == null || !patient.getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Patient does not belong to current hospital");
+        }
     }
 
     @Transactional(readOnly = true)

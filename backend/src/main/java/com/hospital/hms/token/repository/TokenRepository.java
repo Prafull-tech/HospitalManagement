@@ -58,4 +58,9 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
 
     @Query("SELECT COALESCE(MAX(t.tokenNumber), 0) FROM Token t WHERE t.doctor.id = :doctorId AND t.tokenDate = :tokenDate")
     Integer findMaxTokenNumberForDoctorAndDate(@Param("doctorId") Long doctorId, @Param("tokenDate") LocalDate tokenDate);
+
+    // ─── Hospital-filtered variants (tenant isolation) ───
+
+    @Query("SELECT t FROM Token t WHERE t.patient.hospital.id = :hospitalId AND t.tokenDate = :tokenDate")
+    List<Token> findByHospitalIdAndTokenDate(@Param("hospitalId") Long hospitalId, @Param("tokenDate") LocalDate tokenDate);
 }

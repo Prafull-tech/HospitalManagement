@@ -13,5 +13,11 @@ public interface MedicalDepartmentRepository extends JpaRepository<MedicalDepart
 
     Optional<MedicalDepartment> findByCode(String code);
 
+    Optional<MedicalDepartment> findByCodeAndHospitalId(String code, Long hospitalId);
+
+    Optional<MedicalDepartment> findByIdAndHospitalId(Long id, Long hospitalId);
+
     List<MedicalDepartment> findAllByOrderByNameAsc();
+
+    List<MedicalDepartment> findAllByHospitalIdOrderByNameAsc(Long hospitalId);
 }

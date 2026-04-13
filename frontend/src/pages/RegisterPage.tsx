@@ -2,11 +2,13 @@
  * Admin-only user provisioning: calls POST /api/auth/register (requires ADMIN JWT).
  */
 import { useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../api/client'
 
 const ROLES = [
   { value: 'ADMIN', label: 'Admin' },
+  { value: 'SUPER_ADMIN', label: 'Super Admin' },
   { value: 'PHARMACY_MANAGER', label: 'Pharmacy Manager' },
   { value: 'STORE_INCHARGE', label: 'Store In-charge' },
   { value: 'IPD_PHARMACIST', label: 'IPD Pharmacist' },
@@ -17,16 +19,47 @@ const ROLES = [
   { value: 'QUALITY_MANAGER', label: 'Quality Manager' },
 ]
 
+interface HospitalOption {
+  id: number
+  hospitalCode: string
+  hospitalName: string
+}
+
 export function RegisterPage() {
   const [username, setUsername] = useState('')
   const [fullName, setFullName] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [role, setRole] = useState('PHARMACY_MANAGER')
+  const [hospitalId, setHospitalId] = useState('')
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let active = true
+
+    apiClient
+      .get<HospitalOption[]>('/hospitals', { params: { activeOnly: true } })
+      .then((response) => {
+        if (active) {
+          setHospitals(response.data)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setHospitals([])
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const requiresHospital = role !== 'SUPER_ADMIN'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +73,10 @@ export function RegisterPage() {
       setError('Passwords do not match.')
       return
     }
+    if (requiresHospital && !hospitalId) {
+      setError('Select a hospital for this user.')
+      return
+    }
     try {
       setLoading(true)
       await apiClient.post('/auth/register', {
@@ -47,6 +84,7 @@ export function RegisterPage() {
         fullName: fullName.trim(),
         password,
         role,
+        hospitalId: hospitalId ? Number(hospitalId) : null,
       })
       setSuccess('User registered. You can now sign in.')
       setTimeout(() => navigate('/login'), 1200)
@@ -157,6 +195,27 @@ export function RegisterPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="col-12">
+                <label className="form-label small">Hospital</label>
+                <select
+                  className="form-select form-select-sm bg-transparent text-light"
+                  style={{ borderRadius: 9999, borderColor: 'rgba(148,163,184,0.6)' }}
+                  value={hospitalId}
+                  onChange={(e) => setHospitalId(e.target.value)}
+                >
+                  <option value="">{requiresHospital ? 'Select hospital' : 'No hospital assignment'}</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital.id} value={hospital.id}>
+                      {hospital.hospitalName} ({hospital.hospitalCode})
+                    </option>
+                  ))}
+                </select>
+                <div className="form-text text-muted">
+                  {requiresHospital
+                    ? 'Required for tenant-scoped users.'
+                    : 'Optional for platform-level super admin users.'}
+                </div>
               </div>
             </div>
 

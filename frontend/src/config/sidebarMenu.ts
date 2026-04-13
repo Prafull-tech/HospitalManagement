@@ -1,7 +1,7 @@
 /**
  * HMS Central Menu Configuration
  * Centralized role-based sidebar. Each menu has label, route, icon, allowedRoles, children.
- * Visibility: filter by user role; ADMIN sees all; SUPER_ADMIN sees System Configuration.
+ * Visibility: hospital admins see hospital setup; super admins use Platform Management.
  * Optional `moduleCode` matches system_modules.code — when /permissions/me returns matrix data,
  * items are further filtered by VIEW + non-HIDDEN (see Sidebar + PermissionsContext).
  * Existing routes preserved – only structure and visibility are controlled.
@@ -106,7 +106,7 @@ export interface SidebarMenuGroup {
   items: SidebarMenuItem[]
 }
 
-/** Central menu config: Dashboard → Front Office → Patient Flow → Pharmacy → Lab → Radiology → Billing → Housekeeping → HR → System Config */
+/** Central menu config: Dashboard → Front Office → Patient Flow → Pharmacy → Lab → Radiology → Billing → Housekeeping → HR → Platform Management */
 export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
   {
     id: 'dashboard',
@@ -253,18 +253,29 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
   },
   {
     id: 'system-config',
-    label: 'System Configuration',
+    label: 'Hospital Configuration',
     groupIcon: 'Settings',
-    allowedRoles: ['ADMIN', 'SUPER_ADMIN'],
+    allowedRoles: ['ADMIN'],
     items: [
-      { id: 'sys-users', label: 'User Management', route: '/admin/users', end: true, icon: 'Users', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
-      { id: 'sys-roles', label: 'Roles & Permissions', route: '/admin/config/roles', end: true, icon: 'Shield', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
-      { id: 'sys-depts', label: 'Departments', route: '/admin/config/modules', end: true, icon: 'Building2', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
-      { id: 'sys-doctors', label: 'Doctor Setup', route: '/doctors', end: true, icon: 'Stethoscope', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'DOCTORS' },
-      { id: 'sys-wards', label: 'Ward Setup', route: '/wards/general', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'WARDS' },
-      { id: 'sys-beds', label: 'Bed Setup', route: '/ipd/beds', end: true, icon: 'Bed', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'WARDS' },
-      { id: 'sys-settings', label: 'Hospital Settings', route: '/admin/config/company-profile', end: true, icon: 'Settings', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
-      { id: 'sys-audit', label: 'Audit Logs', route: '/admin/audit', end: true, icon: 'FileText', allowedRoles: ['ADMIN', 'SUPER_ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
+      { id: 'sys-users', label: 'User Management', route: '/admin/users', end: true, icon: 'Users', allowedRoles: ['ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
+      { id: 'sys-depts', label: 'Departments', route: '/admin/config/modules', end: true, icon: 'Building2', allowedRoles: ['ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
+      { id: 'sys-doctors', label: 'Doctor Setup', route: '/doctors', end: true, icon: 'Stethoscope', allowedRoles: ['ADMIN'], moduleCode: 'DOCTORS' },
+      { id: 'sys-wards', label: 'Ward Setup', route: '/wards/general', end: true, icon: 'Bed', allowedRoles: ['ADMIN'], moduleCode: 'WARDS' },
+      { id: 'sys-beds', label: 'Bed Setup', route: '/ipd/beds', end: true, icon: 'Bed', allowedRoles: ['ADMIN'], moduleCode: 'WARDS' },
+      { id: 'sys-settings', label: 'Hospital Settings', route: '/admin/config/company-profile', end: true, icon: 'Settings', allowedRoles: ['ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
+      { id: 'sys-audit', label: 'Audit Logs', route: '/admin/audit', end: true, icon: 'FileText', allowedRoles: ['ADMIN'], moduleCode: 'SYSTEM_CONFIG' },
+    ],
+  },
+  {
+    id: 'super-admin',
+    label: 'Platform Management',
+    groupIcon: 'Shield',
+    allowedRoles: ['SUPER_ADMIN'],
+    items: [
+      { id: 'sa-dashboard', label: 'Platform Dashboard', route: '/super-admin/dashboard', end: true, icon: 'LayoutDashboard', allowedRoles: ['SUPER_ADMIN'] },
+      { id: 'sa-hospitals', label: 'Hospitals', route: '/super-admin/hospitals', end: true, icon: 'Building2', allowedRoles: ['SUPER_ADMIN'] },
+      { id: 'sa-subscriptions', label: 'Subscriptions', route: '/super-admin/subscriptions', end: true, icon: 'CreditCard', allowedRoles: ['SUPER_ADMIN'] },
+      { id: 'sa-plans', label: 'Subscription Plans', route: '/super-admin/subscriptions/plans', end: true, icon: 'Layers', allowedRoles: ['SUPER_ADMIN'] },
     ],
   },
 ]

@@ -23,6 +23,7 @@ import com.hospital.hms.ipd.repository.IPDAdmissionRepository;
 import com.hospital.hms.opd.entity.OPDVisit;
 import com.hospital.hms.opd.repository.OPDVisitRepository;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -60,6 +61,7 @@ public class BillingAccountService {
     private final OPDVisitRepository opdVisitRepository;
     private final PatientRepository patientRepository;
     private final BillingEngine billingEngine;
+    private final TenantContextService tenantContextService;
 
     public BillingAccountService(PatientBillingAccountRepository accountRepository,
                                  BillingItemRepository itemRepository,
@@ -68,7 +70,8 @@ public class BillingAccountService {
                                  IPDAdmissionRepository admissionRepository,
                                  OPDVisitRepository opdVisitRepository,
                                  PatientRepository patientRepository,
-                                 BillingEngine billingEngine) {
+                                 BillingEngine billingEngine,
+                                 TenantContextService tenantContextService) {
         this.accountRepository = accountRepository;
         this.itemRepository = itemRepository;
         this.paymentRepository = paymentRepository;
@@ -77,6 +80,7 @@ public class BillingAccountService {
         this.opdVisitRepository = opdVisitRepository;
         this.patientRepository = patientRepository;
         this.billingEngine = billingEngine;
+        this.tenantContextService = tenantContextService;
     }
 
     /**
@@ -108,17 +112,18 @@ public class BillingAccountService {
 
     @Transactional(readOnly = true)
     public BillingDashboardSummaryDto getDashboardSummary(LocalDate date) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LocalDate d = date != null ? date : LocalDate.now();
         ZonedDateTime start = d.atStartOfDay(ZoneId.systemDefault());
         ZonedDateTime end = d.atTime(23, 59, 59, 999_999_999).atZone(ZoneId.systemDefault());
         Instant from = start.toInstant();
         Instant to = end.toInstant();
-        BigDecimal today = paymentRepository.sumAmountByCreatedAtBetween(from, to);
+        BigDecimal today = paymentRepository.sumAmountByHospitalIdAndCreatedAtBetween(hospitalId, from, to);
         if (today == null) {
             today = BigDecimal.ZERO;
         }
-        long cnt = paymentRepository.countByCreatedAtBetween(from, to);
-        BigDecimal pending = accountRepository.sumPendingActiveAccounts();
+        long cnt = paymentRepository.countByHospitalIdAndCreatedAtBetween(hospitalId, from, to);
+        BigDecimal pending = accountRepository.sumPendingActiveAccountsByHospitalId(hospitalId);
         if (pending == null) {
             pending = BigDecimal.ZERO;
         }
@@ -157,7 +162,8 @@ public class BillingAccountService {
 
     @Transactional(readOnly = true)
     public Page<BillingTransactionDto> listTransactions(Instant from, Instant to, Pageable pageable) {
-        Page<Payment> payments = paymentRepository.findByCreatedAtBetween(from, to, pageable);
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Page<Payment> payments = paymentRepository.findByHospitalIdAndCreatedAtBetween(hospitalId, from, to, pageable);
         List<Payment> content = payments.getContent();
         if (content.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);

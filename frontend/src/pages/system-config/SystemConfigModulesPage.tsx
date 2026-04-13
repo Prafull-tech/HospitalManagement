@@ -166,13 +166,23 @@ export function SystemConfigModulesPage() {
                   <td>{MODULE_CATEGORY_LABELS[m.moduleCategory] ?? m.moduleCategory}</td>
                   <td><code className={styles.code}>{m.routePath || '—'}</code></td>
                   <td>
-                    <span className={m.enabled ? styles.badgeSuccess : styles.badgeMuted}>
-                      {m.enabled ? 'Enabled' : 'Disabled'}
-                    </span>
+                    {m.lockedBySuperAdmin ? (
+                      <span className={styles.badgeMuted}>Not in plan</span>
+                    ) : (
+                      <span className={m.enabled ? styles.badgeSuccess : styles.badgeMuted}>
+                        {m.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    )}
                   </td>
                   <td>{m.sortOrder ?? '—'}</td>
                   <td>
-                    <button type="button" className={styles.textBtn} onClick={() => openEdit(m)}>
+                    <button
+                      type="button"
+                      className={styles.textBtn}
+                      onClick={() => openEdit(m)}
+                      disabled={!!m.lockedBySuperAdmin}
+                      title={m.lockedBySuperAdmin ? 'Locked by Super Admin (Not in plan)' : undefined}
+                    >
                       Edit
                     </button>
                   </td>

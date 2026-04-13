@@ -2,6 +2,7 @@ package com.hospital.hms.enquiry.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
 import com.hospital.hms.doctor.entity.MedicalDepartment;
+import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.reception.entity.Patient;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +26,8 @@ import java.time.Instant;
         @Index(name = "idx_enquiry_status", columnList = "status"),
         @Index(name = "idx_enquiry_department", columnList = "department_id"),
         @Index(name = "idx_enquiry_patient", columnList = "patient_id"),
-        @Index(name = "idx_enquiry_assignee", columnList = "assigned_to_user")
+        @Index(name = "idx_enquiry_assignee", columnList = "assigned_to_user"),
+        @Index(name = "idx_enquiry_hospital", columnList = "hospital_id")
     }
 )
 public class Enquiry extends BaseIdEntity {
@@ -34,6 +36,10 @@ public class Enquiry extends BaseIdEntity {
     @Size(max = 30)
     @Column(name = "enquiry_no", nullable = false, unique = true, length = 30)
     private String enquiryNo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id")
@@ -201,5 +207,13 @@ public class Enquiry extends BaseIdEntity {
 
     public void setResolvedAt(Instant resolvedAt) {
         this.resolvedAt = resolvedAt;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
+    }
+
+    public void setHospital(Hospital hospital) {
+        this.hospital = hospital;
     }
 }

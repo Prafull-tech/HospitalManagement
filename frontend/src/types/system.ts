@@ -47,6 +47,8 @@ export interface ModuleResponse {
   moduleCategory: ModuleCategory
   routePath?: string
   enabled: boolean
+  lockedBySuperAdmin?: boolean
+  lockReason?: string | null
   sortOrder?: number
   createdAt: string
   updatedAt: string

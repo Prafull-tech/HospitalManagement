@@ -6,6 +6,7 @@ import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.repository.IPDAdmissionRepository;
 import com.hospital.hms.opd.repository.OPDVisitRepository;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,19 +34,24 @@ public class DashboardStatsService {
     private final OPDVisitRepository opdVisitRepository;
     private final IPDAdmissionRepository ipdAdmissionRepository;
     private final PaymentRepository paymentRepository;
+    private final TenantContextService tenantContextService;
 
     public DashboardStatsService(PatientRepository patientRepository,
                                  OPDVisitRepository opdVisitRepository,
                                  IPDAdmissionRepository ipdAdmissionRepository,
-                                 PaymentRepository paymentRepository) {
+                                 PaymentRepository paymentRepository,
+                                 TenantContextService tenantContextService) {
         this.patientRepository = patientRepository;
         this.opdVisitRepository = opdVisitRepository;
         this.ipdAdmissionRepository = ipdAdmissionRepository;
         this.paymentRepository = paymentRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional(readOnly = true)
     public DashboardStatsDto getStats(LocalDate fromDate, LocalDate toDate) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+
         if (fromDate == null) fromDate = LocalDate.now();
         if (toDate == null) toDate = LocalDate.now();
         if (fromDate.isAfter(toDate)) {
@@ -56,16 +62,16 @@ public class DashboardStatsService {
         LocalDateTime start = fromDate.atStartOfDay();
         LocalDateTime end = toDate.atTime(LocalTime.MAX);
 
-        long totalPatientsRegistered = patientRepository.countByRegistrationDateBetween(start, end);
-        long totalOPDVisits = opdVisitRepository.countByVisitDateBetween(fromDate, toDate);
-        long totalAdmitted = ipdAdmissionRepository.countByAdmissionDateTimeBetween(start, end);
-        long totalDischarged = ipdAdmissionRepository.countByDischargeDateTimeBetween(start, end);
-        long totalCurrentlyAdmitted = ipdAdmissionRepository.countByAdmissionStatusIn(ACTIVE_ADMISSION_STATUSES);
+        long totalPatientsRegistered = patientRepository.countByHospitalIdAndRegistrationDateBetween(hospitalId, start, end);
+        long totalOPDVisits = opdVisitRepository.countByHospitalIdAndVisitDateBetween(hospitalId, fromDate, toDate);
+        long totalAdmitted = ipdAdmissionRepository.countByHospitalIdAndAdmissionDateTimeBetween(hospitalId, start, end);
+        long totalDischarged = ipdAdmissionRepository.countByHospitalIdAndDischargeDateTimeBetween(hospitalId, start, end);
+        long totalCurrentlyAdmitted = ipdAdmissionRepository.countByHospitalIdAndAdmissionStatusIn(hospitalId, ACTIVE_ADMISSION_STATUSES);
 
         ZoneId zone = ZoneId.systemDefault();
         java.time.Instant instantFrom = ZonedDateTime.of(start, zone).toInstant();
         java.time.Instant instantTo = ZonedDateTime.of(end, zone).toInstant();
-        double totalCollection = paymentRepository.sumAmountByCreatedAtBetween(instantFrom, instantTo).doubleValue();
+        double totalCollection = paymentRepository.sumAmountByHospitalIdAndCreatedAtBetween(hospitalId, instantFrom, instantTo).doubleValue();
 
         DashboardStatsDto dto = new DashboardStatsDto();
         dto.setFromDate(fromDate);

@@ -4,6 +4,7 @@ import com.hospital.hms.ipd.entity.AdmissionStatus;
 import com.hospital.hms.ipd.entity.IPDAdmission;
 import com.hospital.hms.ipd.repository.BedAllocationRepository;
 import com.hospital.hms.ipd.repository.IPDAdmissionRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import com.hospital.hms.pharmacy.dto.PatientIpdStatusDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,17 +27,25 @@ public class PharmacyPatientService {
 
     private final IPDAdmissionRepository admissionRepository;
     private final BedAllocationRepository bedAllocationRepository;
+    private final TenantContextService tenantContextService;
 
     public PharmacyPatientService(IPDAdmissionRepository admissionRepository,
-                                  BedAllocationRepository bedAllocationRepository) {
+                                  BedAllocationRepository bedAllocationRepository,
+                                  TenantContextService tenantContextService) {
         this.admissionRepository = admissionRepository;
         this.bedAllocationRepository = bedAllocationRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional(readOnly = true)
     public PatientIpdStatusDto getActiveIpdStatus(Long patientId) {
         if (patientId == null) return emptyStatus();
         List<IPDAdmission> active = admissionRepository.findByPatientIdAndAdmissionStatusIn(patientId, ACTIVE_STATUSES);
+        // Filter to current hospital only
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        active = active.stream()
+                .filter(a -> a.getPatient().getHospital().getId().equals(hospitalId))
+                .collect(java.util.stream.Collectors.toList());
         if (active.isEmpty()) {
             PatientIpdStatusDto dto = emptyStatus();
             dto.setIpdLinked(false);

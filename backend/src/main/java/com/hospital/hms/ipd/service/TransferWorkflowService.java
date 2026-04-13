@@ -1,10 +1,12 @@
 package com.hospital.hms.ipd.service;
 
+import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.repository.DoctorRepository;
 import com.hospital.hms.ipd.dto.*;
 import com.hospital.hms.ipd.entity.*;
 import com.hospital.hms.ipd.repository.*;
+import com.hospital.hms.tenant.service.TenantContextService;
 import com.hospital.hms.ward.entity.BedStatus;
 import com.hospital.hms.ward.entity.WardType;
 import com.hospital.hms.ward.repository.BedRepository;
@@ -32,6 +34,7 @@ public class TransferWorkflowService {
     private final BedRepository bedRepository;
     private final IPDAdmissionService admissionService;
     private final EmergencyTransferService emergencyTransferService;
+    private final TenantContextService tenantContextService;
 
     public TransferWorkflowService(TransferRecommendationRepository recommendationRepository,
                                    TransferConsentRepository consentRepository,
@@ -41,7 +44,8 @@ public class TransferWorkflowService {
                                    DoctorRepository doctorRepository,
                                    BedRepository bedRepository,
                                    IPDAdmissionService admissionService,
-                                   EmergencyTransferService emergencyTransferService) {
+                                   EmergencyTransferService emergencyTransferService,
+                                   TenantContextService tenantContextService) {
         this.recommendationRepository = recommendationRepository;
         this.consentRepository = consentRepository;
         this.bedReservationRepository = bedReservationRepository;
@@ -51,13 +55,18 @@ public class TransferWorkflowService {
         this.bedRepository = bedRepository;
         this.admissionService = admissionService;
         this.emergencyTransferService = emergencyTransferService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public TransferRecommendResponseDto recommend(TransferRecommendRequestDto request) {
         var admission = admissionRepository.findById(request.getIpdAdmissionId())
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + request.getIpdAdmissionId()));
-        var doctor = doctorRepository.findById(request.getRecommendedByDoctorId())
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (admission.getHospital() == null || !admission.getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Admission does not belong to current hospital");
+        }
+        var doctor = doctorRepository.findByIdAndHospitalId(request.getRecommendedByDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getRecommendedByDoctorId()));
         WardType from = parseWardType(request.getFromWardType());
         WardType to = parseWardType(request.getToWardType());

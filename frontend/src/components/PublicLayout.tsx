@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Link, Outlet } from 'react-router-dom'
 import { BrandIdentity } from './BrandIdentity'
 import { useCompanyProfile } from '../hooks/useCompanyProfile'
+import { useAppBootstrap } from './AppBootstrap'
 import styles from './PublicLayout.module.css'
 
 const primaryNavigation = [
@@ -14,7 +15,26 @@ const primaryNavigation = [
 export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { profile } = useCompanyProfile()
+  const bootstrap = useAppBootstrap()
+  const tenant = bootstrap?.tenant
   const supportLine = [profile.supportEmail, profile.supportPhone].filter(Boolean).join('  •  ')
+  const hostMode = tenant?.tenantResolved
+    ? tenant.resolvedBy === 'CUSTOM_DOMAIN'
+      ? 'Custom domain workspace'
+      : 'Hospital subdomain workspace'
+    : tenant?.platformHost
+      ? 'Platform host'
+      : 'Public access live'
+  const topbarMessage = tenant?.tenantResolved
+    ? `${tenant.hospitalName} is active on ${tenant.resolvedBy === 'CUSTOM_DOMAIN' ? 'its enterprise custom domain' : 'its HMS subdomain'}.'`
+    : tenant?.platformHost
+      ? 'Platform host for super-admin setup, rollout operations, and hospital onboarding.'
+      : 'Connected admissions, billing, nursing, ward, and discharge workflows in one operational layer.'
+  const topbarRouteHint = tenant?.tenantResolved
+    ? `Staff sign in on ${tenant.host || 'this host'}${tenant.customDomain ? ' while platform admins stay on the platform host.' : '.'}`
+    : tenant?.platformHost
+      ? 'Hospital staff should sign in from their hospital subdomain or custom domain.'
+      : supportLine
 
   return (
     <div className={styles.layout}>
@@ -23,8 +43,8 @@ export function PublicLayout() {
       <div className={styles.navbarWrapper}>
         <div className={styles.topbar}>
           <div className={styles.topbarInner}>
-            <p className={styles.topbarMessage}>Connected admissions, billing, nursing, ward, and discharge workflows in one operational layer.</p>
-            {supportLine ? <span className={styles.topbarMeta}>{supportLine}</span> : null}
+            <p className={styles.topbarMessage}>{topbarMessage}</p>
+            {topbarRouteHint ? <span className={styles.topbarMeta}>{topbarRouteHint}</span> : null}
           </div>
         </div>
 
@@ -33,7 +53,7 @@ export function PublicLayout() {
             <BrandIdentity />
             <div className={styles.statusBadge}>
               <span className={styles.statusDot} />
-              Public access live
+              {hostMode}
             </div>
           </div>
 
@@ -70,10 +90,10 @@ export function PublicLayout() {
 
             <div className={styles.navActions}>
               <Link to="/contact" className={styles.navSecondary} onClick={() => setMenuOpen(false)}>
-                Book walkthrough
+                {tenant?.platformHost ? 'Book walkthrough' : 'Need platform help?'}
               </Link>
               <Link to="/signup" className={styles.navCta} onClick={() => setMenuOpen(false)}>
-                Launch workspace
+                {tenant?.tenantResolved ? 'Request access' : 'Launch workspace'}
               </Link>
             </div>
           </div>
@@ -122,11 +142,11 @@ export function PublicLayout() {
 
           <aside className={styles.footerCard}>
             <span className={styles.footerCardLabel}>For growing care teams</span>
-            <h4 className={styles.footerCardTitle}>Run a calmer front desk and a tighter inpatient floor.</h4>
-            <p className={styles.footerCardText}>Start with the public workspace now, then move your teams into a unified hospital operations flow.</p>
+            <h4 className={styles.footerCardTitle}>{tenant?.tenantResolved ? `Route ${tenant.hospitalName} staff into the right workspace.` : 'Run a calmer front desk and a tighter inpatient floor.'}</h4>
+            <p className={styles.footerCardText}>{tenant?.tenantResolved ? `This host is reserved for ${tenant.hospitalName}. Platform setup, domain verification, and certificate rollout stay on the admin host.` : 'Start with the public workspace now, then move your teams into a unified hospital operations flow.'}</p>
             <div className={styles.footerCardActions}>
-              <Link to="/signup" className={styles.footerCardPrimary}>Create account</Link>
-              <Link to="/login" className={styles.footerCardSecondary}>Existing login</Link>
+              <Link to="/signup" className={styles.footerCardPrimary}>{tenant?.tenantResolved ? 'Request access' : 'Create account'}</Link>
+              <Link to="/login" className={styles.footerCardSecondary}>{tenant?.tenantResolved ? 'Hospital login' : 'Existing login'}</Link>
             </div>
           </aside>
         </div>

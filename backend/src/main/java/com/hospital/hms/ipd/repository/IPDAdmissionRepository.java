@@ -22,33 +22,60 @@ public interface IPDAdmissionRepository extends JpaRepository<IPDAdmission, Long
     @Query("SELECT a FROM IPDAdmission a WHERE a.id = :id")
     Optional<IPDAdmission> findByIdWithPatient(@Param("id") Long id);
 
+    @EntityGraph(attributePaths = { "patient" })
+    @Query("SELECT a FROM IPDAdmission a WHERE a.id = :id AND a.hospital.id = :hospitalId")
+    Optional<IPDAdmission> findByIdWithPatient(@Param("id") Long id, @Param("hospitalId") Long hospitalId);
+
+    Optional<IPDAdmission> findByIdAndHospitalId(Long id, Long hospitalId);
+
     Optional<IPDAdmission> findByAdmissionNumber(String admissionNumber);
 
     @Query("SELECT a FROM IPDAdmission a WHERE a.patient.id = :patientId " +
+          "AND a.admissionStatus IN :statuses")
+    List<IPDAdmission> findByPatientIdAndAdmissionStatusIn(
+           @Param("patientId") Long patientId,
+           @Param("statuses") List<AdmissionStatus> statuses);
+
+    @Query("SELECT a FROM IPDAdmission a WHERE a.hospital.id = :hospitalId AND a.patient.id = :patientId " +
            "AND a.admissionStatus IN :statuses")
     List<IPDAdmission> findByPatientIdAndAdmissionStatusIn(
+            @Param("hospitalId") Long hospitalId,
             @Param("patientId") Long patientId,
             @Param("statuses") List<AdmissionStatus> statuses);
 
     List<IPDAdmission> findByAdmissionStatusIn(List<AdmissionStatus> statuses);
+
+    List<IPDAdmission> findByHospitalIdAndAdmissionStatusIn(Long hospitalId, List<AdmissionStatus> statuses);
 
     @EntityGraph(attributePaths = { "patient" })
     @Query("SELECT a FROM IPDAdmission a WHERE a.admissionStatus IN :statuses ORDER BY a.id")
     List<IPDAdmission> findByAdmissionStatusInWithPatient(@Param("statuses") List<AdmissionStatus> statuses);
 
     @EntityGraph(attributePaths = { "patient" })
+    @Query("SELECT a FROM IPDAdmission a WHERE a.hospital.id = :hospitalId AND a.admissionStatus IN :statuses ORDER BY a.id")
+    List<IPDAdmission> findByAdmissionStatusInWithPatient(@Param("hospitalId") Long hospitalId,
+                                                          @Param("statuses") List<AdmissionStatus> statuses);
+
+    @EntityGraph(attributePaths = { "patient" })
     @Query("SELECT a FROM IPDAdmission a ORDER BY a.id")
     List<IPDAdmission> findAllWithPatient();
 
+    @EntityGraph(attributePaths = { "patient" })
+    @Query("SELECT a FROM IPDAdmission a WHERE a.hospital.id = :hospitalId ORDER BY a.id")
+    List<IPDAdmission> findAllWithPatient(@Param("hospitalId") Long hospitalId);
+
     @EntityGraph(attributePaths = { "patient", "primaryDoctor" })
     @Query("SELECT a FROM IPDAdmission a WHERE " +
+           "a.hospital.id = :hospitalId " +
+           "AND " +
            "(:admissionNumber IS NULL OR a.admissionNumber = :admissionNumber) " +
            "AND (:patientUhid IS NULL OR a.patient.uhid = :patientUhid) " +
            "AND (:patientName IS NULL OR LOWER(a.patient.fullName) LIKE LOWER(CONCAT('%', :patientName, '%'))) " +
            "AND (:status IS NULL OR a.admissionStatus = :status) " +
            "AND (:fromDate IS NULL OR a.admissionDateTime >= :fromDate) " +
            "AND (:toDate IS NULL OR a.admissionDateTime <= :toDate)")
-    Page<IPDAdmission> search(@Param("admissionNumber") String admissionNumber,
+    Page<IPDAdmission> search(@Param("hospitalId") Long hospitalId,
+                             @Param("admissionNumber") String admissionNumber,
                              @Param("patientUhid") String patientUhid,
                              @Param("patientName") String patientName,
                              @Param("status") AdmissionStatus status,
@@ -56,9 +83,15 @@ public interface IPDAdmissionRepository extends JpaRepository<IPDAdmission, Long
                              @Param("toDate") LocalDateTime toDate,
                              Pageable pageable);
 
-    long countByAdmissionDateTimeBetween(LocalDateTime start, LocalDateTime end);
+       long countByAdmissionDateTimeBetween(LocalDateTime start, LocalDateTime end);
 
-    long countByDischargeDateTimeBetween(LocalDateTime start, LocalDateTime end);
+    long countByHospitalIdAndAdmissionDateTimeBetween(Long hospitalId, LocalDateTime start, LocalDateTime end);
 
-    long countByAdmissionStatusIn(List<AdmissionStatus> statuses);
+       long countByDischargeDateTimeBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByHospitalIdAndDischargeDateTimeBetween(Long hospitalId, LocalDateTime start, LocalDateTime end);
+
+       long countByAdmissionStatusIn(List<AdmissionStatus> statuses);
+
+    long countByHospitalIdAndAdmissionStatusIn(Long hospitalId, List<AdmissionStatus> statuses);
 }

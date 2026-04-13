@@ -1,11 +1,13 @@
 package com.hospital.hms.reception.service;
 
 import com.hospital.hms.common.exception.ResourceNotFoundException;
+import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.reception.dto.PatientCardDto;
 import com.hospital.hms.reception.dto.PatientRequestDto;
 import com.hospital.hms.reception.dto.PatientResponseDto;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
@@ -25,17 +27,22 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final UhidGenerator uhidGenerator;
     private final RegistrationNumberGenerator registrationNumberGenerator;
+    private final TenantContextService tenantContextService;
 
     public PatientService(PatientRepository patientRepository, UhidGenerator uhidGenerator,
-                          RegistrationNumberGenerator registrationNumberGenerator) {
+                          RegistrationNumberGenerator registrationNumberGenerator,
+                          TenantContextService tenantContextService) {
         this.patientRepository = patientRepository;
         this.uhidGenerator = uhidGenerator;
         this.registrationNumberGenerator = registrationNumberGenerator;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public PatientResponseDto register(PatientRequestDto request) {
+        Hospital hospital = tenantContextService.requireCurrentHospital();
         Patient patient = new Patient();
+        patient.setHospital(hospital);
         patient.setUhid(uhidGenerator.generate());
         patient.setRegistrationNumber(registrationNumberGenerator.generate());
         patient.setRegistrationDate(LocalDateTime.now());
@@ -70,20 +77,23 @@ public class PatientService {
     }
 
     public PatientResponseDto getById(Long id) {
-        Patient patient = patientRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Patient patient = patientRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
         return toResponse(patient);
     }
 
     public PatientResponseDto getByUhid(String uhid) {
-        Patient patient = patientRepository.findByUhid(uhid)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Patient patient = patientRepository.findByUhidAndHospitalId(uhid, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + uhid));
         return toResponse(patient);
     }
 
     @Transactional
     public PatientResponseDto update(Long id, PatientRequestDto request) {
-        Patient patient = patientRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Patient patient = patientRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
         patient.setFullName(request.getFullName().trim());
         patient.setIdProofType(request.getIdProofType() != null ? request.getIdProofType().trim() : null);
@@ -118,7 +128,8 @@ public class PatientService {
      * Returns print-ready patient card data for GET /api/patients/{uhid}/card.
      */
     public PatientCardDto getCardByUhid(String uhid) {
-        Patient patient = patientRepository.findByUhid(uhid)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Patient patient = patientRepository.findByUhidAndHospitalId(uhid, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + uhid));
         return toCard(patient);
     }
@@ -171,15 +182,16 @@ public class PatientService {
         if (q == null || q.isBlank()) {
             return List.of();
         }
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         String trimmed = q.trim();
         if (trimmed.matches("\\d+")) {
             long id = Long.parseLong(trimmed);
-            List<PatientResponseDto> byId = patientRepository.findById(id)
+            List<PatientResponseDto> byId = patientRepository.findByIdAndHospitalId(id, hospitalId)
                     .stream()
                     .filter(p -> Boolean.TRUE.equals(p.getActive()))
                     .map(this::toResponse)
                     .collect(Collectors.toList());
-            List<PatientResponseDto> byPhone = patientRepository.findByPhoneAndActiveTrue(trimmed)
+            List<PatientResponseDto> byPhone = patientRepository.findByPhoneAndHospitalIdAndActiveTrue(trimmed, hospitalId)
                     .stream()
                     .map(this::toResponse)
                     .toList();
@@ -189,14 +201,14 @@ public class PatientService {
                     .collect(Collectors.toList());
         }
         if (trimmed.matches("^[0-9+\\-\\s]+$")) {
-            return patientRepository.findByPhoneAndActiveTrue(trimmed)
+            return patientRepository.findByPhoneAndHospitalIdAndActiveTrue(trimmed, hospitalId)
                     .stream()
                     .map(this::toResponse)
                     .toList();
         }
-        List<Patient> byUhid = patientRepository.findByUhidAndActiveTrue(trimmed).stream().toList();
-        List<Patient> byName = patientRepository.findByFullNameContainingIgnoreCaseAndActiveTrue(trimmed);
-        List<Patient> byIdProof = patientRepository.findByIdProofNumberAndActiveTrue(trimmed);
+        List<Patient> byUhid = patientRepository.findByUhidAndHospitalIdAndActiveTrue(trimmed, hospitalId).stream().toList();
+        List<Patient> byName = patientRepository.findByFullNameContainingIgnoreCaseAndHospitalIdAndActiveTrue(trimmed, hospitalId);
+        List<Patient> byIdProof = patientRepository.findByIdProofNumberAndHospitalIdAndActiveTrue(trimmed, hospitalId);
         return java.util.stream.Stream.of(byUhid.stream(), byName.stream(), byIdProof.stream())
                 .flatMap(s -> s)
                 .distinct()
@@ -205,20 +217,21 @@ public class PatientService {
     }
 
     public List<PatientResponseDto> search(String uhid, String phone, String name) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         if (uhid != null && !uhid.isBlank()) {
-            return patientRepository.findByUhidAndActiveTrue(uhid.trim())
+            return patientRepository.findByUhidAndHospitalIdAndActiveTrue(uhid.trim(), hospitalId)
                     .stream()
                     .map(this::toResponse)
                     .collect(Collectors.toList());
         }
         if (phone != null && !phone.isBlank()) {
-            return patientRepository.findByPhoneAndActiveTrue(phone.trim())
+            return patientRepository.findByPhoneAndHospitalIdAndActiveTrue(phone.trim(), hospitalId)
                     .stream()
                     .map(this::toResponse)
                     .toList();
         }
         if (name != null && !name.isBlank()) {
-            return patientRepository.findByFullNameContainingIgnoreCaseAndActiveTrue(name.trim())
+            return patientRepository.findByFullNameContainingIgnoreCaseAndHospitalIdAndActiveTrue(name.trim(), hospitalId)
                     .stream()
                     .map(this::toResponse)
                     .collect(Collectors.toList());
@@ -232,9 +245,10 @@ public class PatientService {
      */
     @Transactional(readOnly = true)
     public List<PatientResponseDto> list(int page, int size) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         int safeSize = size <= 0 ? 500 : Math.min(size, 2000);
         Pageable pageable = PageRequest.of(Math.max(0, page), safeSize);
-        Page<Patient> pageResult = patientRepository.findAllByActiveTrue(pageable);
+        Page<Patient> pageResult = patientRepository.findAllByHospitalIdAndActiveTrue(hospitalId, pageable);
         return pageResult.getContent().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -242,7 +256,8 @@ public class PatientService {
 
     @Transactional
     public PatientResponseDto setActive(Long id, boolean active) {
-        Patient patient = patientRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Patient patient = patientRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with ID: " + id));
         patient.setActive(active);
         patient = patientRepository.save(patient);

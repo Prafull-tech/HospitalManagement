@@ -81,4 +81,54 @@ public interface TestOrderRepository extends JpaRepository<TestOrder, Long> {
 
     @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.status = :status AND t.isPriority = true")
     long countEmergencySamplesPendingCollection(@Param("status") TestStatus status);
+
+    // ─── Hospital-filtered variants (tenant isolation) ───
+
+    @Query("SELECT t FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status ORDER BY t.isPriority DESC, t.orderedAt ASC")
+    List<TestOrder> findByHospitalIdAndStatusOrderByIsPriorityDescOrderedAtAsc(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status);
+
+    @Query("SELECT t FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.sampleCollectedAt IS NOT NULL ORDER BY t.isPriority DESC, t.sampleCollectedAt ASC")
+    List<TestOrder> findPendingVerificationByHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status);
+
+    @Query("SELECT t FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status IN :statuses AND t.tatStatus = 'BREACH' ORDER BY t.tatEndTime DESC")
+    List<TestOrder> findTATBreachesByHospitalId(@Param("hospitalId") Long hospitalId, @Param("statuses") List<TestStatus> statuses);
+
+    @Query("SELECT t FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.isPriority = true ORDER BY t.orderedAt ASC")
+    List<TestOrder> findEmergencySamplesPendingCollectionByHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.orderedAt >= :startOfDay AND t.orderedAt < :endOfDay")
+    Long countTodayByStatusAndHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.releasedAt >= :startOfDay AND t.releasedAt < :endOfDay")
+    Long countReleasedBetweenByHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.orderedAt >= :startOfDay AND t.orderedAt < :endOfDay")
+    Long countOrderedBetweenByHospitalId(@Param("hospitalId") Long hospitalId, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.sampleCollectedAt >= :startOfDay AND t.sampleCollectedAt < :endOfDay")
+    Long countCollectedBetweenByHospitalId(@Param("hospitalId") Long hospitalId, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.resultEnteredAt >= :startOfDay AND t.resultEnteredAt < :endOfDay")
+    Long countResultEnteredBetweenByHospitalId(@Param("hospitalId") Long hospitalId, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.verifiedAt >= :startOfDay AND t.verifiedAt < :endOfDay")
+    Long countVerifiedBetweenByHospitalId(@Param("hospitalId") Long hospitalId, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.releasedAt >= :startOfDay AND t.releasedAt < :endOfDay AND t.tatStatus = :tatStatus")
+    Long countReleasedWithTatStatusBetweenByHospitalId(@Param("hospitalId") Long hospitalId, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay, @Param("tatStatus") TATStatus tatStatus);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.releasedAt >= :startOfDay AND t.releasedAt < :endOfDay AND t.isPriority = true")
+    Long countReleasedBetweenWithPriorityByHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status, @Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status")
+    long countByStatusAndHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.sampleCollectedAt IS NOT NULL")
+    long countPendingVerificationByHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status IN :statuses AND t.tatStatus = 'BREACH'")
+    long countTatBreachesByHospitalId(@Param("hospitalId") Long hospitalId, @Param("statuses") List<TestStatus> statuses);
+
+    @Query("SELECT COUNT(t) FROM TestOrder t WHERE t.patient.hospital.id = :hospitalId AND t.status = :status AND t.isPriority = true")
+    long countEmergencySamplesPendingCollectionByHospitalId(@Param("hospitalId") Long hospitalId, @Param("status") TestStatus status);
 }

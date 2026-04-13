@@ -1,9 +1,13 @@
 package com.hospital.hms.reception.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
+import com.hospital.hms.hospital.entity.Hospital;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -145,6 +149,10 @@ public class Patient extends BaseIdEntity {
     @NotNull
     @Column(name = "active", nullable = false)
     private Boolean active = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
 
     public Patient() {
     }
@@ -382,5 +390,13 @@ public class Patient extends BaseIdEntity {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
+    }
+
+    public void setHospital(Hospital hospital) {
+        this.hospital = hospital;
     }
 }

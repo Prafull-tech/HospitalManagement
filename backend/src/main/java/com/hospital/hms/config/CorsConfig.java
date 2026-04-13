@@ -11,6 +11,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -24,6 +25,9 @@ public class CorsConfig {
     @Value("${hms.security.cors.allowed-origin-patterns:}")
     private String allowedOriginPatterns;
 
+    @Value("${hms.tenant.base-domain:hms.com}")
+    private String tenantBaseDomain;
+
     public CorsConfig(Environment environment) {
         this.environment = environment;
     }
@@ -31,10 +35,17 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        String normalizedTenantBaseDomain = normalizeBaseDomain(tenantBaseDomain);
+        String tenantOriginPatterns = "http://*." + normalizedTenantBaseDomain + ":*,https://*." + normalizedTenantBaseDomain;
 
         String patternsRaw = allowedOriginPatterns;
         if (!StringUtils.hasText(patternsRaw) && Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
             patternsRaw = "http://localhost:*,http://127.0.0.1:*,http://192.168.*:*";
+        }
+        if (StringUtils.hasText(patternsRaw) && !patternsRaw.contains(normalizedTenantBaseDomain)) {
+            patternsRaw += "," + tenantOriginPatterns;
+        } else if (!StringUtils.hasText(patternsRaw)) {
+            patternsRaw = tenantOriginPatterns;
         }
 
         if (StringUtils.hasText(patternsRaw)) {
@@ -59,5 +70,12 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private String normalizeBaseDomain(String domain) {
+        if (!StringUtils.hasText(domain)) {
+            return "hms.com";
+        }
+        return domain.trim().toLowerCase(Locale.ROOT).replaceFirst("^\\.+", "");
     }
 }

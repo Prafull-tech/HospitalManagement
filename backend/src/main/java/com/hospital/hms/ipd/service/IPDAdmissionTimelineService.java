@@ -10,6 +10,7 @@ import com.hospital.hms.nursing.entity.VitalSignRecord;
 import com.hospital.hms.nursing.repository.MedicationAdministrationRepository;
 import com.hospital.hms.nursing.repository.NursingNoteRepository;
 import com.hospital.hms.nursing.repository.VitalSignRecordRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,24 +36,28 @@ public class IPDAdmissionTimelineService {
     private final MedicationAdministrationRepository marRepository;
     private final DoctorOrderRepository doctorOrderRepository;
     private final AdmissionChargeRepository admissionChargeRepository;
+    private final TenantContextService tenantContextService;
 
     public IPDAdmissionTimelineService(IPDAdmissionRepository admissionRepository,
                                        NursingNoteRepository nursingNoteRepository,
                                        VitalSignRecordRepository vitalSignRepository,
                                        MedicationAdministrationRepository marRepository,
                                        DoctorOrderRepository doctorOrderRepository,
-                                       AdmissionChargeRepository admissionChargeRepository) {
+                                       AdmissionChargeRepository admissionChargeRepository,
+                                       TenantContextService tenantContextService) {
         this.admissionRepository = admissionRepository;
         this.nursingNoteRepository = nursingNoteRepository;
         this.vitalSignRepository = vitalSignRepository;
         this.marRepository = marRepository;
         this.doctorOrderRepository = doctorOrderRepository;
         this.admissionChargeRepository = admissionChargeRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional(readOnly = true)
     public List<TimelineEventDto> getTimeline(Long admissionId) {
-        IPDAdmission admission = admissionRepository.findById(admissionId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        IPDAdmission admission = admissionRepository.findByIdAndHospitalId(admissionId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + admissionId));
 
         List<TimelineEventDto> events = new ArrayList<>();

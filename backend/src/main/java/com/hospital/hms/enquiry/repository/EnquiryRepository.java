@@ -65,13 +65,72 @@ public interface EnquiryRepository extends JpaRepository<Enquiry, Long> {
                          @Param("query") String query,
                          Pageable pageable);
 
+    @Query(
+        value = """
+            SELECT e FROM Enquiry e
+            LEFT JOIN FETCH e.patient p
+            LEFT JOIN FETCH e.department d
+            WHERE e.hospital.id = :hospitalId
+              AND (:status IS NULL OR e.status = :status)
+              AND (:category IS NULL OR e.category = :category)
+              AND (:priority IS NULL OR e.priority = :priority)
+              AND (:departmentId IS NULL OR d.id = :departmentId)
+              AND (:assignedToUser IS NULL OR LOWER(e.assignedToUser) = LOWER(:assignedToUser))
+              AND (:createdFrom IS NULL OR e.createdAt >= :createdFrom)
+              AND (:createdTo IS NULL OR e.createdAt < :createdTo)
+              AND (:patientUhid IS NULL OR LOWER(p.uhid) LIKE LOWER(CONCAT('%', :patientUhid, '%')))
+              AND (:query IS NULL OR LOWER(e.subject) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(e.description) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(e.enquirerName) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(e.phone) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :query, '%')))
+            ORDER BY e.createdAt DESC
+            """,
+        countQuery = """
+            SELECT COUNT(e) FROM Enquiry e
+            LEFT JOIN e.patient p
+            LEFT JOIN e.department d
+            WHERE e.hospital.id = :hospitalId
+              AND (:status IS NULL OR e.status = :status)
+              AND (:category IS NULL OR e.category = :category)
+              AND (:priority IS NULL OR e.priority = :priority)
+              AND (:departmentId IS NULL OR d.id = :departmentId)
+              AND (:assignedToUser IS NULL OR LOWER(e.assignedToUser) = LOWER(:assignedToUser))
+              AND (:createdFrom IS NULL OR e.createdAt >= :createdFrom)
+              AND (:createdTo IS NULL OR e.createdAt < :createdTo)
+              AND (:patientUhid IS NULL OR LOWER(p.uhid) LIKE LOWER(CONCAT('%', :patientUhid, '%')))
+              AND (:query IS NULL OR LOWER(e.subject) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(e.description) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(e.enquirerName) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(e.phone) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :query, '%')))
+            """)
+    Page<Enquiry> search(@Param("hospitalId") Long hospitalId,
+                         @Param("status") EnquiryStatus status,
+                         @Param("category") EnquiryCategory category,
+                         @Param("priority") EnquiryPriority priority,
+                         @Param("departmentId") Long departmentId,
+                         @Param("assignedToUser") String assignedToUser,
+                         @Param("createdFrom") Instant createdFrom,
+                         @Param("createdTo") Instant createdTo,
+                         @Param("patientUhid") String patientUhid,
+                         @Param("query") String query,
+                         Pageable pageable);
+
     @Query("SELECT e FROM Enquiry e LEFT JOIN FETCH e.patient LEFT JOIN FETCH e.department WHERE e.id = :id")
     Optional<Enquiry> findByIdWithAssociations(@Param("id") Long id);
 
     long countByStatus(EnquiryStatus status);
 
+    long countByHospitalIdAndStatus(Long hospitalId, EnquiryStatus status);
+
     List<Enquiry> findTop10ByOrderByCreatedAtDesc();
+
+    List<Enquiry> findTop10ByHospitalIdOrderByCreatedAtDesc(Long hospitalId);
 
     @Query("SELECT e.category, COUNT(e) FROM Enquiry e GROUP BY e.category")
     List<Object[]> countByCategory();
+
+    @Query("SELECT e.category, COUNT(e) FROM Enquiry e WHERE e.hospital.id = :hospitalId GROUP BY e.category")
+    List<Object[]> countByCategoryAndHospitalId(@Param("hospitalId") Long hospitalId);
 }

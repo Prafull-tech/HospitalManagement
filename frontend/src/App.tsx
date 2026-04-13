@@ -94,6 +94,77 @@ import { SignupPage } from './pages/SignupPage'
 import { ContactPage } from './pages/ContactPage'
 import { BlogListPage } from './pages/blog/BlogListPage'
 import { BlogPostPage } from './pages/blog/BlogPostPage'
+import { SuperAdminDashboard } from './pages/super-admin/SuperAdminDashboard'
+import { SuperAdminHospitalsPage } from './pages/super-admin/SuperAdminHospitalsPage'
+import { SuperAdminHospitalDetailPage } from './pages/super-admin/SuperAdminHospitalDetailPage'
+import { SuperAdminSubscriptionsPage } from './pages/super-admin/SuperAdminSubscriptionsPage'
+import { SuperAdminPlansPage } from './pages/super-admin/SuperAdminPlansPage'
+
+const tenantBaseDomain = (() => {
+  const raw = (import.meta.env.VITE_TENANT_BASE_DOMAIN || 'hms.com').trim().toLowerCase()
+  if (!raw) return '.hms.com'
+  return raw.startsWith('.') ? raw : `.${raw}`
+})()
+
+const platformHosts = new Set(
+  ((import.meta.env.VITE_PLATFORM_HOSTS || 'hms.com,admin.hms.com') as string)
+    .split(',')
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean)
+)
+
+function isLikelyTenantHost(hostname: string) {
+  const host = hostname.trim().toLowerCase()
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
+    return false
+  }
+  if (platformHosts.has(host)) {
+    return false
+  }
+  return host.endsWith(tenantBaseDomain)
+}
+
+function isTenantDomainPathAlias(pathname: string) {
+  const segment = pathname.trim().replace(/^\//, '').replace(/\/$/, '').toLowerCase()
+  if (!segment || segment.includes('/')) return false
+  if (platformHosts.has(segment)) return false
+  return segment.endsWith(tenantBaseDomain)
+}
+
+function HostAwareHomePage() {
+  const bootstrap = useAppBootstrap()
+  const browserTenantHost = typeof window !== 'undefined' && isLikelyTenantHost(window.location.hostname)
+
+  if (browserTenantHost) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (bootstrap?.tenantLoading) {
+    return null
+  }
+
+  if (bootstrap?.tenant?.tenantResolved) {
+    return <Navigate to="/login" replace />
+  }
+
+  return <MarketingLandingPage />
+}
+
+function HostAwareFallbackRedirect() {
+  const bootstrap = useAppBootstrap()
+  const browserTenantHost = typeof window !== 'undefined' && isLikelyTenantHost(window.location.hostname)
+  const tenantDomainPathAlias = typeof window !== 'undefined' && isTenantDomainPathAlias(window.location.pathname)
+
+  if (browserTenantHost || tenantDomainPathAlias) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (bootstrap?.tenantLoading) {
+    return null
+  }
+
+  return <Navigate to={bootstrap?.tenant?.tenantResolved ? '/login' : '/home'} replace />
+}
 
 export default function App() {
   const { user } = useAuth()
@@ -115,7 +186,7 @@ export default function App() {
     <Routes>
       {/* Public pages with shared header/footer */}
       <Route element={<PublicLayout />}>
-        <Route path="/home" element={<MarketingLandingPage />} />
+        <Route path="/home" element={<HostAwareHomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/contact" element={<ContactPage />} />
@@ -175,7 +246,7 @@ export default function App() {
           <Route path="billing" element={<Navigate to="/billing" replace />} />
           <Route path="discharge" element={<Navigate to="/ipd/admissions" replace />} />
         </Route>
-        <Route path="reception" element={<Outlet />}>
+        <Route path="reception" element={<ProtectedRoute allowedRoles={['ADMIN', 'RECEPTIONIST', 'HELP_DESK', 'DOCTOR', 'NURSE']}><Outlet /></ProtectedRoute>}>
           <Route index element={<ReceptionDashboard />} />
           <Route path="register" element={<PatientRegisterPage />} />
           <Route path="search" element={<PatientSearchPage />} />
@@ -289,9 +360,16 @@ export default function App() {
           <Route path="permissions" element={<SystemConfigPermissionsPage />} />
           <Route path="features" element={<SystemConfigFeaturesPage />} />
         </Route>
+        <Route path="super-admin" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Outlet /></ProtectedRoute>}>
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="hospitals" element={<SuperAdminHospitalsPage />} />
+          <Route path="hospitals/:id" element={<SuperAdminHospitalDetailPage />} />
+          <Route path="subscriptions" element={<SuperAdminSubscriptionsPage />} />
+          <Route path="subscriptions/plans" element={<SuperAdminPlansPage />} />
+        </Route>
       </Route>
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      <Route path="*" element={<HostAwareFallbackRedirect />} />
     </Routes>
   )
 }

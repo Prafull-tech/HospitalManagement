@@ -4,6 +4,7 @@ import com.hospital.hms.auth.jwt.JwtAuthenticationFilter;
 import com.hospital.hms.common.logging.RequestCorrelationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.hospital.hms.tenant.filter.TenantRequestContextFilter;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -27,13 +28,16 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final TenantRequestContextFilter tenantRequestContextFilter;
     private final CorsConfigurationSource corsConfigurationSource;
     private final RateLimitFilter rateLimitFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          TenantRequestContextFilter tenantRequestContextFilter,
                           CorsConfigurationSource corsConfigurationSource,
                           RateLimitFilter rateLimitFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.tenantRequestContextFilter = tenantRequestContextFilter;
         this.corsConfigurationSource = corsConfigurationSource;
         this.rateLimitFilter = rateLimitFilter;
     }
@@ -63,6 +67,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(tenantRequestContextFilter, JwtAuthenticationFilter.class)
                 .addFilterAfter(requestCorrelationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
@@ -71,6 +76,7 @@ public class SecurityConfig {
                         .requestMatchers(mvc.pattern("/auth/refresh")).permitAll()
                         .requestMatchers(mvc.pattern("/auth/signup")).permitAll()
                         .requestMatchers(mvc.pattern("/public/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/.well-known/**")).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated());
         return http.build();

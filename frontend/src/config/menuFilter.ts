@@ -22,6 +22,9 @@ export function normalizeUserRoles(userRoles: HMSRole[]): HMSRole[] {
 }
 
 function hasAccess(roles: HMSRole[], userRoles: HMSRole[]): boolean {
+  // SUPER_ADMIN-only items must not be visible to plain ADMIN
+  const isSuperAdminOnly = roles.length === 1 && roles[0] === 'SUPER_ADMIN'
+  if (isSuperAdminOnly) return userRoles.includes('SUPER_ADMIN')
   if (userRoles.includes('ADMIN')) return true
   return roles.some((r) => userRoles.includes(r))
 }

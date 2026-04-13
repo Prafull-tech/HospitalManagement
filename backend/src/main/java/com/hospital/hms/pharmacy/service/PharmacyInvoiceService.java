@@ -8,6 +8,8 @@ import com.hospital.hms.pharmacy.entity.SaleType;
 import com.hospital.hms.pharmacy.entity.StockTransaction;
 import com.hospital.hms.pharmacy.repository.PharmacyInvoiceRepository;
 import com.hospital.hms.pharmacy.repository.StockTransactionRepository;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
+import com.hospital.hms.tenant.service.TenantContextService;
 import com.hospital.hms.reception.entity.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,7 @@ public class PharmacyInvoiceService {
 
     private final PharmacyInvoiceRepository invoiceRepository;
     private final StockTransactionRepository stockTransactionRepository;
+    private final TenantContextService tenantContextService;
 
     @Value("${pharmacy.invoice.storage-path:./data/invoices}")
     private String storagePath;
@@ -75,9 +78,11 @@ public class PharmacyInvoiceService {
     private double gstPercent;
 
     public PharmacyInvoiceService(PharmacyInvoiceRepository invoiceRepository,
-                                  StockTransactionRepository stockTransactionRepository) {
+                                  StockTransactionRepository stockTransactionRepository,
+                                  TenantContextService tenantContextService) {
         this.invoiceRepository = invoiceRepository;
         this.stockTransactionRepository = stockTransactionRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     /**
@@ -145,6 +150,13 @@ public class PharmacyInvoiceService {
     public Resource getInvoicePdf(String invoiceNumber) {
         PharmacyInvoice inv = invoiceRepository.findByInvoiceNumber(invoiceNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceNumber));
+        // Validate invoice belongs to current hospital
+        if (inv.getSale() != null && inv.getSale().getPatient() != null) {
+            Long hospitalId = tenantContextService.requireCurrentHospitalId();
+            if (!inv.getSale().getPatient().getHospital().getId().equals(hospitalId)) {
+                throw new OperationNotAllowedException("Invoice does not belong to current hospital");
+            }
+        }
         Path path = Paths.get(inv.getPdfPath());
         if (!Files.exists(path)) {
             throw new ResourceNotFoundException("Invoice PDF file not found: " + invoiceNumber);

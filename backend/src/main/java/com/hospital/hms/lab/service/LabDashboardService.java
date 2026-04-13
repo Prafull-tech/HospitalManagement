@@ -9,6 +9,7 @@ import com.hospital.hms.lab.dto.TestOrderResponseDto;
 import com.hospital.hms.lab.entity.TATStatus;
 import com.hospital.hms.lab.entity.TestStatus;
 import com.hospital.hms.lab.repository.TestOrderRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,19 +27,22 @@ public class LabDashboardService {
 
     private final TestOrderRepository testOrderRepository;
     private final TestOrderService testOrderService;
+    private final TenantContextService tenantContextService;
 
-    public LabDashboardService(TestOrderRepository testOrderRepository, TestOrderService testOrderService) {
+    public LabDashboardService(TestOrderRepository testOrderRepository, TestOrderService testOrderService, TenantContextService tenantContextService) {
         this.testOrderRepository = testOrderRepository;
         this.testOrderService = testOrderService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional(readOnly = true)
     public LabDashboardSummaryDto getDashboardSummary() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LabDashboardSummaryDto summary = new LabDashboardSummaryDto();
 
         // Pending collection (ORDERED status) - emergency first
         List<TestOrderResponseDto> pendingCollection = testOrderRepository
-                .findByStatusOrderByIsPriorityDescOrderedAtAsc(TestStatus.ORDERED).stream()
+                .findByHospitalIdAndStatusOrderByIsPriorityDescOrderedAtAsc(hospitalId, TestStatus.ORDERED).stream()
                 .map(testOrderService::toDto)
                 .limit(50) // Limit for performance
                 .collect(Collectors.toList());
@@ -47,7 +51,7 @@ public class LabDashboardService {
 
         // Pending processing (COLLECTED status) - emergency first
         List<TestOrderResponseDto> pendingProcessing = testOrderRepository
-                .findByStatusOrderByIsPriorityDescOrderedAtAsc(TestStatus.COLLECTED).stream()
+                .findByHospitalIdAndStatusOrderByIsPriorityDescOrderedAtAsc(hospitalId, TestStatus.COLLECTED).stream()
                 .map(testOrderService::toDto)
                 .limit(50)
                 .collect(Collectors.toList());
@@ -56,7 +60,7 @@ public class LabDashboardService {
 
         // Pending verification (COMPLETED status)
         List<TestOrderResponseDto> pendingVerification = testOrderRepository
-                .findPendingVerification(TestStatus.COMPLETED).stream()
+                .findPendingVerificationByHospitalId(hospitalId, TestStatus.COMPLETED).stream()
                 .map(testOrderService::toDto)
                 .limit(50)
                 .collect(Collectors.toList());
@@ -65,7 +69,7 @@ public class LabDashboardService {
 
         // TAT breaches
         List<TestOrderResponseDto> tatBreaches = testOrderRepository
-                .findTATBreaches(List.of(TestStatus.COLLECTED, TestStatus.IN_PROGRESS, TestStatus.COMPLETED, TestStatus.VERIFIED)).stream()
+                .findTATBreachesByHospitalId(hospitalId, List.of(TestStatus.COLLECTED, TestStatus.IN_PROGRESS, TestStatus.COMPLETED, TestStatus.VERIFIED)).stream()
                 .map(testOrderService::toDto)
                 .limit(50)
                 .collect(Collectors.toList());
@@ -74,7 +78,7 @@ public class LabDashboardService {
 
         // Emergency samples pending collection
         List<TestOrderResponseDto> emergencySamples = testOrderRepository
-                .findEmergencySamplesPendingCollection(TestStatus.ORDERED).stream()
+                .findEmergencySamplesPendingCollectionByHospitalId(hospitalId, TestStatus.ORDERED).stream()
                 .map(testOrderService::toDto)
                 .limit(50)
                 .collect(Collectors.toList());
@@ -85,7 +89,7 @@ public class LabDashboardService {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
-        Long completedToday = testOrderRepository.countReleasedBetween(TestStatus.RELEASED, startOfDay, endOfDay);
+        Long completedToday = testOrderRepository.countReleasedBetweenByHospitalId(hospitalId, TestStatus.RELEASED, startOfDay, endOfDay);
         summary.setCompletedTodayCount(completedToday != null ? completedToday : 0L);
 
         return summary;
@@ -96,24 +100,25 @@ public class LabDashboardService {
      */
     @Transactional(readOnly = true)
     public LabDashboardResponseDto getDashboard() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LabDashboardResponseDto dto = new LabDashboardResponseDto();
-        dto.setPendingCollection(testOrderRepository.countByStatus(TestStatus.ORDERED));
-        dto.setPendingProcessing(testOrderRepository.countByStatus(TestStatus.COLLECTED));
-        dto.setPendingVerification(testOrderRepository.countPendingVerification(TestStatus.COMPLETED));
-        dto.setTatBreaches(testOrderRepository.countTatBreaches(
+        dto.setPendingCollection(testOrderRepository.countByStatusAndHospitalId(hospitalId, TestStatus.ORDERED));
+        dto.setPendingProcessing(testOrderRepository.countByStatusAndHospitalId(hospitalId, TestStatus.COLLECTED));
+        dto.setPendingVerification(testOrderRepository.countPendingVerificationByHospitalId(hospitalId, TestStatus.COMPLETED));
+        dto.setTatBreaches(testOrderRepository.countTatBreachesByHospitalId(hospitalId,
                 List.of(TestStatus.COLLECTED, TestStatus.IN_PROGRESS, TestStatus.COMPLETED, TestStatus.VERIFIED)));
-        dto.setEmergencySamples(testOrderRepository.countEmergencySamplesPendingCollection(TestStatus.ORDERED));
+        dto.setEmergencySamples(testOrderRepository.countEmergencySamplesPendingCollectionByHospitalId(hospitalId, TestStatus.ORDERED));
 
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
 
-        Long ordered = testOrderRepository.countOrderedBetween(startOfDay, endOfDay);
-        Long collected = testOrderRepository.countCollectedBetween(startOfDay, endOfDay);
-        Long completed = testOrderRepository.countResultEnteredBetween(startOfDay, endOfDay);
-        Long verified = testOrderRepository.countVerifiedBetween(startOfDay, endOfDay);
-        Long releasedTotal = testOrderRepository.countReleasedBetween(TestStatus.RELEASED, startOfDay, endOfDay);
-        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetween(startOfDay, endOfDay, TATStatus.WITHIN_TAT);
+        Long ordered = testOrderRepository.countOrderedBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long collected = testOrderRepository.countCollectedBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long completed = testOrderRepository.countResultEnteredBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long verified = testOrderRepository.countVerifiedBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long releasedTotal = testOrderRepository.countReleasedBetweenByHospitalId(hospitalId, TestStatus.RELEASED, startOfDay, endOfDay);
+        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetweenByHospitalId(hospitalId, startOfDay, endOfDay, TATStatus.WITHIN_TAT);
 
         dto.setTodayOrdered(ordered != null ? ordered : 0L);
         dto.setTodayCollected(collected != null ? collected : 0L);
@@ -129,27 +134,29 @@ public class LabDashboardService {
 
     @Transactional(readOnly = true)
     public LabDashboardMetricsDto getMetrics() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LabDashboardMetricsDto dto = new LabDashboardMetricsDto();
-        dto.setPendingCollection(testOrderRepository.countByStatus(TestStatus.ORDERED));
-        dto.setPendingVerification(testOrderRepository.countPendingVerification(TestStatus.COMPLETED));
-        dto.setTatBreaches(testOrderRepository.countTatBreaches(
+        dto.setPendingCollection(testOrderRepository.countByStatusAndHospitalId(hospitalId, TestStatus.ORDERED));
+        dto.setPendingVerification(testOrderRepository.countPendingVerificationByHospitalId(hospitalId, TestStatus.COMPLETED));
+        dto.setTatBreaches(testOrderRepository.countTatBreachesByHospitalId(hospitalId,
                 List.of(TestStatus.COLLECTED, TestStatus.IN_PROGRESS, TestStatus.COMPLETED, TestStatus.VERIFIED)));
-        dto.setEmergencySamples(testOrderRepository.countEmergencySamplesPendingCollection(TestStatus.ORDERED));
+        dto.setEmergencySamples(testOrderRepository.countEmergencySamplesPendingCollectionByHospitalId(hospitalId, TestStatus.ORDERED));
         return dto;
     }
 
     @Transactional(readOnly = true)
     public LabDashboardOverviewDto getOverview() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
 
-        Long ordered = testOrderRepository.countOrderedBetween(startOfDay, endOfDay);
-        Long collected = testOrderRepository.countCollectedBetween(startOfDay, endOfDay);
-        Long completed = testOrderRepository.countResultEnteredBetween(startOfDay, endOfDay);
-        Long verified = testOrderRepository.countVerifiedBetween(startOfDay, endOfDay);
-        Long releasedTotal = testOrderRepository.countReleasedBetween(TestStatus.RELEASED, startOfDay, endOfDay);
-        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetween(startOfDay, endOfDay, TATStatus.WITHIN_TAT);
+        Long ordered = testOrderRepository.countOrderedBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long collected = testOrderRepository.countCollectedBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long completed = testOrderRepository.countResultEnteredBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long verified = testOrderRepository.countVerifiedBetweenByHospitalId(hospitalId, startOfDay, endOfDay);
+        Long releasedTotal = testOrderRepository.countReleasedBetweenByHospitalId(hospitalId, TestStatus.RELEASED, startOfDay, endOfDay);
+        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetweenByHospitalId(hospitalId, startOfDay, endOfDay, TATStatus.WITHIN_TAT);
 
         LabDashboardOverviewDto dto = new LabDashboardOverviewDto();
         dto.setTotalOrderedToday(ordered != null ? ordered : 0L);
@@ -166,15 +173,16 @@ public class LabDashboardService {
 
     @Transactional(readOnly = true)
     public LabTodaySummaryDto getTodaySummary() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
 
-        Long completed = testOrderRepository.countReleasedBetween(TestStatus.RELEASED, startOfDay, endOfDay);
-        long pending = testOrderRepository.countByStatus(TestStatus.ORDERED);
-        Long releasedTotal = testOrderRepository.countReleasedBetween(TestStatus.RELEASED, startOfDay, endOfDay);
-        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetween(startOfDay, endOfDay, TATStatus.WITHIN_TAT);
-        Long emergencyReleased = testOrderRepository.countReleasedBetweenWithPriority(TestStatus.RELEASED, startOfDay, endOfDay);
+        Long completed = testOrderRepository.countReleasedBetweenByHospitalId(hospitalId, TestStatus.RELEASED, startOfDay, endOfDay);
+        long pending = testOrderRepository.countByStatusAndHospitalId(hospitalId, TestStatus.ORDERED);
+        Long releasedTotal = testOrderRepository.countReleasedBetweenByHospitalId(hospitalId, TestStatus.RELEASED, startOfDay, endOfDay);
+        Long withinTat = testOrderRepository.countReleasedWithTatStatusBetweenByHospitalId(hospitalId, startOfDay, endOfDay, TATStatus.WITHIN_TAT);
+        Long emergencyReleased = testOrderRepository.countReleasedBetweenWithPriorityByHospitalId(hospitalId, TestStatus.RELEASED, startOfDay, endOfDay);
 
         LabTodaySummaryDto dto = new LabTodaySummaryDto();
         dto.setDate(today.format(DateTimeFormatter.ISO_LOCAL_DATE));

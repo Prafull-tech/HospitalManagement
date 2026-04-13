@@ -1,6 +1,7 @@
 package com.hospital.hms.opd.service;
 
 import com.hospital.hms.billing.service.BillingAccountService;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.entity.MedicalDepartment;
@@ -17,6 +18,7 @@ import com.hospital.hms.opd.repository.OPDTokenRepository;
 import com.hospital.hms.opd.repository.OPDVisitRepository;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +48,7 @@ public class OPDVisitService {
     private final DoctorRepository doctorRepository;
     private final OPDVisitNumberGenerator visitNumberGenerator;
     private final BillingAccountService billingAccountService;
+    private final TenantContextService tenantContextService;
 
     @Value("${hms.billing.opd-consultation-fee:500}")
     private BigDecimal opdConsultationFee;
@@ -56,7 +59,8 @@ public class OPDVisitService {
                           PatientRepository patientRepository,
                           DoctorRepository doctorRepository,
                           OPDVisitNumberGenerator visitNumberGenerator,
-                          BillingAccountService billingAccountService) {
+                          BillingAccountService billingAccountService,
+                          TenantContextService tenantContextService) {
         this.visitRepository = visitRepository;
         this.tokenRepository = tokenRepository;
         this.clinicalNoteRepository = clinicalNoteRepository;
@@ -64,6 +68,7 @@ public class OPDVisitService {
         this.doctorRepository = doctorRepository;
         this.visitNumberGenerator = visitNumberGenerator;
         this.billingAccountService = billingAccountService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
@@ -73,9 +78,10 @@ public class OPDVisitService {
 
     @Transactional
     public OPDVisitResponseDto registerVisit(OPDVisitRequestDto request, VisitType visitType) {
-        Patient patient = patientRepository.findByUhid(request.getPatientUhid().trim())
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Patient patient = patientRepository.findByUhidAndHospitalId(request.getPatientUhid().trim(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + request.getPatientUhid()));
-        Doctor doctor = doctorRepository.findById(request.getDoctorId())
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
         LocalDate visitDate = request.getVisitDate();
         if (visitDate == null) {
@@ -110,6 +116,7 @@ public class OPDVisitService {
     public OPDVisitResponseDto getById(Long id) {
         OPDVisit visit = visitRepository.findByIdWithAssociations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OPD visit not found: " + id));
+        validateVisitBelongsToCurrentHospital(visit);
         return toResponse(visit, true);
     }
 
@@ -117,15 +124,16 @@ public class OPDVisitService {
     public Page<OPDVisitResponseDto> search(LocalDate visitDate, LocalDate fromDate, LocalDate toDate,
                                             Long doctorId, VisitStatus status,
                                             String patientUhid, String patientName, String visitNumber, int page, int size) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "visitDate", "tokenNumber"));
         String uhid = patientUhid != null && !patientUhid.isBlank() ? patientUhid.trim() : null;
         String name = patientName != null && !patientName.isBlank() ? patientName.trim() : null;
         String num = visitNumber != null && !visitNumber.isBlank() ? visitNumber.trim() : null;
         Page<OPDVisit> result;
         if (fromDate != null && toDate != null) {
-            result = visitRepository.searchByDateRange(fromDate, toDate, doctorId, status, uhid, name, num, pageable);
+            result = visitRepository.searchByDateRange(hospitalId, fromDate, toDate, doctorId, status, uhid, name, num, pageable);
         } else {
-            result = visitRepository.search(visitDate, doctorId, status, uhid, name, num, pageable);
+            result = visitRepository.search(hospitalId, visitDate, doctorId, status, uhid, name, num, pageable);
         }
         List<OPDVisitResponseDto> content = result.getContent().stream()
                 .map(v -> toResponse(v, false))
@@ -135,8 +143,9 @@ public class OPDVisitService {
 
     @Transactional(readOnly = true)
     public List<OPDVisitResponseDto> getQueue(Long doctorId, LocalDate visitDate) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         if (visitDate == null) visitDate = LocalDate.now();
-        return visitRepository.findByVisitDateAndDoctorIdOrderByTokenNumberAsc(visitDate, doctorId)
+        return visitRepository.findByHospitalIdAndVisitDateAndDoctorId(hospitalId, visitDate, doctorId)
                 .stream()
                 .map(v -> toResponse(v, false))
                 .collect(Collectors.toList());
@@ -146,6 +155,7 @@ public class OPDVisitService {
     public OPDVisitResponseDto updateStatus(Long id, OPDStatusRequestDto request) {
         OPDVisit visit = visitRepository.findByIdWithAssociations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OPD visit not found: " + id));
+        validateVisitBelongsToCurrentHospital(visit);
         VisitStatus previous = visit.getVisitStatus();
         visit.setVisitStatus(request.getStatus());
         if (request.getConsultationOutcome() != null) {
@@ -169,6 +179,7 @@ public class OPDVisitService {
     public OPDVisitResponseDto recommendAdmission(Long visitId, RecommendAdmissionRequestDto request, Authentication authentication) {
         OPDVisit visit = visitRepository.findByIdWithAssociations(visitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit not found: " + visitId));
+        validateVisitBelongsToCurrentHospital(visit);
         visit.setAdmissionRecommended(true);
         visit.setAdmissionRecommendedAt(Instant.now());
         visit.setAdmissionRecommendedBy(authentication != null ? authentication.getName() : null);
@@ -185,6 +196,7 @@ public class OPDVisitService {
     public OPDClinicalNoteResponseDto addOrUpdateNotes(Long visitId, OPDClinicalNoteRequestDto request) {
         OPDVisit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new ResourceNotFoundException("OPD visit not found: " + visitId));
+        validateVisitBelongsToCurrentHospital(visit);
         OPDClinicalNote note = clinicalNoteRepository.findByVisitId(visitId).orElse(null);
         if (note == null) {
             note = new OPDClinicalNote();
@@ -201,6 +213,7 @@ public class OPDVisitService {
     public OPDVisitResponseDto refer(Long visitId, OPDReferRequestDto request) {
         OPDVisit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new ResourceNotFoundException("OPD visit not found: " + visitId));
+        validateVisitBelongsToCurrentHospital(visit);
         visit.setReferredToDepartmentId(request.getReferredToDepartmentId());
         visit.setReferredToDoctorId(request.getReferredToDoctorId());
         visit.setReferToIpd(request.getReferToIpd() != null ? request.getReferToIpd() : false);
@@ -208,6 +221,14 @@ public class OPDVisitService {
         visit.setVisitStatus(VisitStatus.REFERRED);
         visit = visitRepository.save(visit);
         return toResponse(visit, true);
+    }
+
+    private void validateVisitBelongsToCurrentHospital(OPDVisit visit) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (visit.getPatient() != null && visit.getPatient().getHospital() != null
+                && !hospitalId.equals(visit.getPatient().getHospital().getId())) {
+            throw new OperationNotAllowedException("OPD visit does not belong to current hospital");
+        }
     }
 
     private OPDVisitResponseDto toResponse(OPDVisit v, boolean loadNote) {

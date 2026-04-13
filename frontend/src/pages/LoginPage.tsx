@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { BrandIdentity } from '../components/BrandIdentity'
+import { useAppBootstrap } from '../components/AppBootstrap'
 import styles from './LoginPage.module.css'
 
 export function LoginPage() {
@@ -10,9 +11,33 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, isAuthenticated } = useAuth()
+  const bootstrap = useAppBootstrap()
+  const tenant = bootstrap?.tenant
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/reception'
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/dashboard'
+  const isTenantHost = !!tenant?.tenantResolved
+  const hostModeLabel = isTenantHost
+    ? tenant?.resolvedBy === 'CUSTOM_DOMAIN'
+      ? 'Enterprise custom domain'
+      : 'Hospital subdomain'
+    : tenant?.platformHost
+      ? 'Platform admin host'
+      : 'Public host'
+  const loginTitle = isTenantHost
+    ? `Sign in to ${tenant?.hospitalName ?? 'your hospital workspace'}.`
+    : tenant?.platformHost
+      ? 'Sign in to manage rollout and platform operations.'
+      : 'Sign in to continue the operational day.'
+  const loginSubtitle = isTenantHost
+    ? `You are on ${tenant?.host || 'this host'}. Only ${tenant?.hospitalName ?? 'hospital'} staff accounts can sign in here.`
+    : tenant?.platformHost
+      ? 'Use this host for super-admin setup, domain verification, certificates, and hospital onboarding. Hospital teams should sign in from their hospital URL.'
+      : 'Move back into reception, nursing, pharmacy, lab, and billing workflows with the same shared patient context.'
+  const formHeaderTitle = isTenantHost ? `${tenant?.hospitalName ?? 'Hospital'} login` : 'Platform login'
+  const formHeaderSubtitle = isTenantHost
+    ? `${hostModeLabel} detected${tenant?.customDomain ? `: ${tenant.customDomain}` : tenant?.tenantSlug ? `: ${tenant.tenantSlug}.hms.com` : ''}.`
+    : 'Super admins and rollout operators sign in here. Hospital staff should use their hospital workspace URL.'
 
   // Redirect to app if already logged in
   useEffect(() => {
@@ -55,22 +80,21 @@ export function LoginPage() {
         <section className={styles.introPanel}>
           <BrandIdentity to="" />
           <span className={styles.kicker}>Secure hospital workspace access</span>
-          <h1 className={styles.title}>Sign in to continue the operational day.</h1>
-          <p className={styles.subtitle}>
-            Move back into reception, nursing, pharmacy, lab, and billing workflows with the same shared patient context.
-          </p>
+          <div className={styles.hostBadge}>{hostModeLabel}</div>
+          <h1 className={styles.title}>{loginTitle}</h1>
+          <p className={styles.subtitle}>{loginSubtitle}</p>
           <div className={styles.bulletList}>
             <div>
               <strong>Role-based access</strong>
-              <span>Department teams land directly in the part of the system they work in most.</span>
+              <span>{isTenantHost ? 'Department teams enter only their hospital workspace from this host.' : 'Platform operators can onboard hospitals and guide staff to the correct domain.'}</span>
             </div>
             <div>
               <strong>Continuous workflow</strong>
               <span>Admissions, care updates, and financial closure stay connected after sign-in.</span>
             </div>
             <div>
-              <strong>Public to private path</strong>
-              <span>Use the public site for discovery, then step into the live operational workspace.</span>
+              <strong>Host-aware routing</strong>
+              <span>{isTenantHost ? 'Custom-domain and subdomain hosts stay tenant-specific, while the platform host remains separate for super-admin operations.' : 'Use the platform host for onboarding and direct hospital teams to their subdomain or custom domain for day-to-day work.'}</span>
             </div>
           </div>
           <p className={styles.devHint}>
@@ -81,8 +105,8 @@ export function LoginPage() {
         <section className={styles.formPanel}>
           <div className={styles.formCard}>
             <div className={styles.formHeader}>
-              <h2>Login</h2>
-              <p>Have an account? Sign in to continue.</p>
+              <h2>{formHeaderTitle}</h2>
+              <p>{formHeaderSubtitle}</p>
             </div>
 
             <form onSubmit={handleSubmit} className={styles.form}>
@@ -124,7 +148,7 @@ export function LoginPage() {
             </form>
 
             <div className={styles.footerNote}>
-              New to HMS? <Link to="/signup">Request an account</Link>
+              {isTenantHost ? 'Need a new hospital account? Contact your hospital administrator or platform support.' : <>New to HMS? <Link to="/signup">Request an account</Link></>}
             </div>
           </div>
         </section>

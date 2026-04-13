@@ -6,6 +6,15 @@ spring:
     username: root
     password: your-local-mysql-password
 
+hms:
+  tenant:
+    base-domain: hms.local
+  security:
+    jwt:
+      expiry-minutes: 30
+    cors:
+      allowed-origin-patterns: "http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://*.hms.local:*"
+
 # Uncomment to override JWT secret locally
 # hms:
 #   security:

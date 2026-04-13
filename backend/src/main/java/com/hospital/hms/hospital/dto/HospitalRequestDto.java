@@ -19,6 +19,39 @@ public class HospitalRequestDto {
     @Size(max = 500, message = "Location must not exceed 500 characters")
     private String location;
 
+    @Size(max = 100, message = "Subdomain must not exceed 100 characters")
+    private String subdomain;
+
+    @Size(max = 255, message = "Custom domain must not exceed 255 characters")
+    private String customDomain;
+
+    @Size(max = 255, message = "Logo URL must not exceed 255 characters")
+    private String logoUrl;
+
+    @Size(max = 255, message = "Website URL must not exceed 255 characters")
+    private String websiteUrl;
+
+    @Size(max = 255, message = "Facebook URL must not exceed 255 characters")
+    private String facebookUrl;
+
+    @Size(max = 255, message = "Twitter URL must not exceed 255 characters")
+    private String twitterUrl;
+
+    @Size(max = 255, message = "Instagram URL must not exceed 255 characters")
+    private String instagramUrl;
+
+    @Size(max = 255, message = "LinkedIn URL must not exceed 255 characters")
+    private String linkedinUrl;
+
+    @Size(max = 100, message = "Contact email must not exceed 100 characters")
+    private String contactEmail;
+
+    @Size(max = 100, message = "Billing email must not exceed 100 characters")
+    private String billingEmail;
+
+    @Size(max = 20, message = "Contact phone must not exceed 20 characters")
+    private String contactPhone;
+
     private Boolean active = true;
 
     public String getHospitalCode() {
@@ -43,6 +76,94 @@ public class HospitalRequestDto {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getSubdomain() {
+        return subdomain;
+    }
+
+    public void setSubdomain(String subdomain) {
+        this.subdomain = subdomain;
+    }
+
+    public String getCustomDomain() {
+        return customDomain;
+    }
+
+    public void setCustomDomain(String customDomain) {
+        this.customDomain = customDomain;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
+    }
+
+    public String getWebsiteUrl() {
+        return websiteUrl;
+    }
+
+    public void setWebsiteUrl(String websiteUrl) {
+        this.websiteUrl = websiteUrl;
+    }
+
+    public String getFacebookUrl() {
+        return facebookUrl;
+    }
+
+    public void setFacebookUrl(String facebookUrl) {
+        this.facebookUrl = facebookUrl;
+    }
+
+    public String getTwitterUrl() {
+        return twitterUrl;
+    }
+
+    public void setTwitterUrl(String twitterUrl) {
+        this.twitterUrl = twitterUrl;
+    }
+
+    public String getInstagramUrl() {
+        return instagramUrl;
+    }
+
+    public void setInstagramUrl(String instagramUrl) {
+        this.instagramUrl = instagramUrl;
+    }
+
+    public String getLinkedinUrl() {
+        return linkedinUrl;
+    }
+
+    public void setLinkedinUrl(String linkedinUrl) {
+        this.linkedinUrl = linkedinUrl;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getBillingEmail() {
+        return billingEmail;
+    }
+
+    public void setBillingEmail(String billingEmail) {
+        this.billingEmail = billingEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
     }
 
     public Boolean getActive() {

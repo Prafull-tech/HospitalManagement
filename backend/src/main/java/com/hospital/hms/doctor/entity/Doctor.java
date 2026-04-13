@@ -1,6 +1,7 @@
 package com.hospital.hms.doctor.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
+import com.hospital.hms.hospital.entity.Hospital;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,6 +24,7 @@ import jakarta.validation.constraints.Size;
     name = "doctors",
     indexes = {
         @Index(name = "idx_doctor_code", columnList = "code", unique = true),
+        @Index(name = "idx_doctor_hospital", columnList = "hospital_id"),
         @Index(name = "idx_doctor_department", columnList = "department_id"),
         @Index(name = "idx_doctor_status", columnList = "status")
     }
@@ -38,6 +40,10 @@ public class Doctor extends BaseIdEntity {
     @Size(max = 255)
     @Column(name = "full_name", nullable = false, length = 255)
     private String fullName;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -90,6 +96,14 @@ public class Doctor extends BaseIdEntity {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
+    }
+
+    public void setHospital(Hospital hospital) {
+        this.hospital = hospital;
     }
 
     public MedicalDepartment getDepartment() {

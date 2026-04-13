@@ -74,8 +74,36 @@ apiClient.interceptors.response.use(
 
         try {
           const res = await axios.post(`${baseURL}/auth/refresh`, { refreshToken })
-          const { token: newToken, refreshToken: newRefresh, username, role, fullName } = res.data
-          localStorage.setItem('hms_auth', JSON.stringify({ username, role, fullName, token: newToken, refreshToken: newRefresh }))
+          const {
+            token: newToken,
+            refreshToken: newRefresh,
+            username,
+            role,
+            fullName,
+            email,
+            phone,
+            active,
+            createdAt,
+            hospitalId,
+            hospitalCode,
+            hospitalName,
+            tenantSlug,
+          } = res.data
+          localStorage.setItem('hms_auth', JSON.stringify({
+            username,
+            role,
+            fullName,
+            email,
+            phone,
+            active,
+            createdAt,
+            hospitalId,
+            hospitalCode,
+            hospitalName,
+            tenantSlug,
+            token: newToken,
+            refreshToken: newRefresh,
+          }))
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           processQueue(null, newToken)
           return apiClient(originalRequest)

@@ -14,7 +14,19 @@ public interface WardRepository extends JpaRepository<Ward, Long> {
 
     Optional<Ward> findByCode(String code);
 
+    Optional<Ward> findByIdAndHospitalId(Long id, Long hospitalId);
+
+    boolean existsByIdAndHospitalId(Long id, Long hospitalId);
+
+    Optional<Ward> findByCodeAndHospitalId(String code, Long hospitalId);
+
     List<Ward> findByIsActiveTrueOrderByNameAsc();
+
+    List<Ward> findByHospitalIdOrderByNameAsc(Long hospitalId);
+
+    List<Ward> findByHospitalIdAndIsActiveTrueOrderByNameAsc(Long hospitalId);
+
+    List<Ward> findByHospitalIdAndIsActiveTrueAndWardTypeOrderByNameAsc(Long hospitalId, WardType wardType);
 
     List<Ward> findByIsActiveTrueAndWardTypeOrderByNameAsc(WardType wardType);
 }

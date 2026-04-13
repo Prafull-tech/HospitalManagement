@@ -1,6 +1,7 @@
 package com.hospital.hms.doctor.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
+import com.hospital.hms.hospital.entity.Hospital;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,7 +18,10 @@ import jakarta.validation.constraints.Size;
 @Entity
 @Table(
     name = "medical_departments",
-    indexes = @Index(name = "idx_department_code", columnList = "code", unique = true)
+    indexes = {
+        @Index(name = "idx_department_code", columnList = "code", unique = true),
+        @Index(name = "idx_department_hospital", columnList = "hospital_id")
+    }
 )
 public class MedicalDepartment extends BaseIdEntity {
 
@@ -34,6 +38,10 @@ public class MedicalDepartment extends BaseIdEntity {
     @Size(max = 500)
     @Column(name = "description", length = 500)
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hod_doctor_id")
@@ -64,6 +72,14 @@ public class MedicalDepartment extends BaseIdEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
+    }
+
+    public void setHospital(Hospital hospital) {
+        this.hospital = hospital;
     }
 
     public Doctor getHod() {

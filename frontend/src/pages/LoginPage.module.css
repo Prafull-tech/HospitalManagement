@@ -32,6 +32,21 @@
   color: var(--hms-text-muted);
 }
 
+.hostBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.42rem 0.78rem;
+  border-radius: 999px;
+  background: rgba(91, 79, 207, 0.1);
+  border: 1px solid rgba(91, 79, 207, 0.12);
+  color: var(--hms-primary-dark);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .title {
   margin: 0;
   font-family: var(--hms-heading-font);

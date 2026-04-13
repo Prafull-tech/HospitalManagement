@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.hospital.hms.auth.entity.AppUser;
 import com.hospital.hms.auth.entity.RefreshToken;
 import com.hospital.hms.auth.entity.UserRole;
 import com.hospital.hms.auth.repository.RefreshTokenRepository;
@@ -35,15 +36,22 @@ public class JwtTokenService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
-    public String generateToken(String username, UserRole role) {
+    public String generateToken(AppUser user) {
         Instant now = Instant.now();
-        return JWT.create()
-                .withSubject(username)
-                .withClaim("role", role.name())
+        var builder = JWT.create()
+                .withSubject(user.getUsername())
+                .withClaim("role", user.getRole().name())
                 .withJWTId(UUID.randomUUID().toString())
                 .withIssuedAt(Date.from(now))
-                .withExpiresAt(Date.from(now.plus(expiryMinutes, ChronoUnit.MINUTES)))
-                .sign(algorithm);
+                .withExpiresAt(Date.from(now.plus(expiryMinutes, ChronoUnit.MINUTES)));
+
+        if (user.getHospital() != null) {
+            builder.withClaim("hospitalId", user.getHospital().getId())
+                    .withClaim("hospitalCode", user.getHospital().getHospitalCode())
+                    .withClaim("tenantSlug", user.getHospital().getSubdomain());
+        }
+
+        return builder.sign(algorithm);
     }
 
     public DecodedJWT verify(String token) throws JWTVerificationException {

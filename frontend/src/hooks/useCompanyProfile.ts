@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { publicCompanyProfileApi } from '../api/system'
 import type { CompanyProfileResponse } from '../types/system'
+import { useAppBootstrap } from '../components/AppBootstrap'
 
 export const DEFAULT_COMPANY_PROFILE: CompanyProfileResponse = {
   id: 1,
@@ -14,10 +15,28 @@ export const DEFAULT_COMPANY_PROFILE: CompanyProfileResponse = {
 }
 
 export function useCompanyProfile() {
+  const bootstrap = useAppBootstrap()
   const [profile, setProfile] = useState<CompanyProfileResponse>(DEFAULT_COMPANY_PROFILE)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (bootstrap?.tenantLoading) {
+      return
+    }
+
+    if (bootstrap?.tenant?.tenantResolved) {
+      setProfile({
+        ...DEFAULT_COMPANY_PROFILE,
+        companyName: bootstrap.tenant.hospitalName || DEFAULT_COMPANY_PROFILE.companyName,
+        brandName: bootstrap.tenant.hospitalName || DEFAULT_COMPANY_PROFILE.brandName,
+        logoUrl: bootstrap.tenant.logoUrl || DEFAULT_COMPANY_PROFILE.logoUrl,
+        supportEmail: bootstrap.tenant.contactEmail || DEFAULT_COMPANY_PROFILE.supportEmail,
+        supportPhone: bootstrap.tenant.contactPhone || DEFAULT_COMPANY_PROFILE.supportPhone,
+      })
+      setLoading(false)
+      return
+    }
+
     let active = true
     publicCompanyProfileApi
       .get()
@@ -38,7 +57,7 @@ export function useCompanyProfile() {
     return () => {
       active = false
     }
-  }, [])
+  }, [bootstrap?.tenant, bootstrap?.tenantLoading])
 
   return { profile, loading }
 }

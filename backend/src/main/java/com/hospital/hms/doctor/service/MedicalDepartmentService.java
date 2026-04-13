@@ -7,6 +7,8 @@ import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.entity.MedicalDepartment;
 import com.hospital.hms.doctor.repository.DoctorRepository;
 import com.hospital.hms.doctor.repository.MedicalDepartmentRepository;
+import com.hospital.hms.hospital.entity.Hospital;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,32 +23,39 @@ public class MedicalDepartmentService {
 
     private final MedicalDepartmentRepository departmentRepository;
     private final DoctorRepository doctorRepository;
+    private final TenantContextService tenantContextService;
 
     public MedicalDepartmentService(MedicalDepartmentRepository departmentRepository,
-                                    DoctorRepository doctorRepository) {
+                                    DoctorRepository doctorRepository,
+                                    TenantContextService tenantContextService) {
         this.departmentRepository = departmentRepository;
         this.doctorRepository = doctorRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     public List<DepartmentResponseDto> listAll() {
-        return departmentRepository.findAllByOrderByNameAsc()
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        return departmentRepository.findAllByHospitalIdOrderByNameAsc(hospitalId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     public DepartmentResponseDto getById(Long id) {
-        MedicalDepartment dept = departmentRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        MedicalDepartment dept = departmentRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
         return toResponse(dept);
     }
 
     @Transactional
     public DepartmentResponseDto create(DepartmentRequestDto request) {
-        if (departmentRepository.findByCode(request.getCode().trim()).isPresent()) {
+        Hospital hospital = tenantContextService.requireCurrentHospital();
+        if (departmentRepository.findByCodeAndHospitalId(request.getCode().trim(), hospital.getId()).isPresent()) {
             throw new IllegalArgumentException("Department code already exists: " + request.getCode());
         }
         MedicalDepartment dept = new MedicalDepartment();
+        dept.setHospital(hospital);
         mapRequestToEntity(request, dept);
         dept = departmentRepository.save(dept);
         if (request.getHodDoctorId() != null) {
@@ -58,7 +67,8 @@ public class MedicalDepartmentService {
 
     @Transactional
     public DepartmentResponseDto update(Long id, DepartmentRequestDto request) {
-        MedicalDepartment dept = departmentRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        MedicalDepartment dept = departmentRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
         mapRequestToEntity(request, dept);
         dept = departmentRepository.save(dept);
@@ -74,9 +84,10 @@ public class MedicalDepartmentService {
 
     @Transactional
     public void assignHod(Long departmentId, Long doctorId) {
-        MedicalDepartment dept = departmentRepository.findById(departmentId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        MedicalDepartment dept = departmentRepository.findByIdAndHospitalId(departmentId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found: " + departmentId));
-        Doctor doctor = doctorRepository.findById(doctorId)
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(doctorId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));
         dept.setHod(doctor);
         departmentRepository.save(dept);

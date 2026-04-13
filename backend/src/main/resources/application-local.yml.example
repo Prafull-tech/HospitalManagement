@@ -10,3 +10,8 @@ spring:
   datasource:
     username: root
     password: Maknish@2217
+
+hms:
+  security:
+    jwt:
+      expiry-minutes: 30

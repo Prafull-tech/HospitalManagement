@@ -1,6 +1,7 @@
 package com.hospital.hms.ward.service;
 
 import com.hospital.hms.common.exception.ResourceNotFoundException;
+import com.hospital.hms.tenant.service.TenantContextService;
 import com.hospital.hms.ward.dto.BedResponseDto;
 import com.hospital.hms.ward.dto.BedStatusRequestDto;
 import com.hospital.hms.ward.entity.Bed;
@@ -25,18 +26,24 @@ public class BedService {
     private final BedRepository bedRepository;
     private final WardRepository wardRepository;
     private final RoomRepository roomRepository;
+    private final TenantContextService tenantContextService;
 
-    public BedService(BedRepository bedRepository, WardRepository wardRepository, RoomRepository roomRepository) {
+    public BedService(BedRepository bedRepository,
+                      WardRepository wardRepository,
+                      RoomRepository roomRepository,
+                      TenantContextService tenantContextService) {
         this.bedRepository = bedRepository;
         this.wardRepository = wardRepository;
         this.roomRepository = roomRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public BedResponseDto create(Long wardId, com.hospital.hms.ward.dto.BedRequestDto request) {
-        Ward ward = wardRepository.findById(wardId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Ward ward = wardRepository.findByIdAndHospitalId(wardId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ward not found: " + wardId));
-        if (bedRepository.findByWardIdAndBedNumber(wardId, request.getBedNumber().trim()).isPresent()) {
+        if (bedRepository.findByWardIdAndWard_Hospital_IdAndBedNumber(wardId, hospitalId, request.getBedNumber().trim()).isPresent()) {
             throw new IllegalArgumentException("Bed number already exists in this ward: " + request.getBedNumber());
         }
         Bed bed = new Bed();
@@ -60,10 +67,11 @@ public class BedService {
 
     @Transactional(readOnly = true)
     public List<BedResponseDto> listByWardId(Long wardId) {
-        if (!wardRepository.existsById(wardId)) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (!wardRepository.existsByIdAndHospitalId(wardId, hospitalId)) {
             throw new ResourceNotFoundException("Ward not found: " + wardId);
         }
-        return bedRepository.findByWardIdWithWardAndRoom(wardId)
+        return bedRepository.findByWardIdWithWardAndRoom(wardId, hospitalId)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -74,9 +82,10 @@ public class BedService {
      */
     @Transactional(readOnly = true)
     public List<BedResponseDto> getAvailability(Long wardId) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         List<Bed> beds = wardId != null
-                ? bedRepository.findByWardIdWithWardAndRoom(wardId)
-                : bedRepository.findAllWithActiveWardAndRoomOrderByWardNameAndBedNumber();
+            ? bedRepository.findByWardIdWithWardAndRoom(wardId, hospitalId)
+            : bedRepository.findAllWithActiveWardAndRoomOrderByWardNameAndBedNumber(hospitalId);
         return beds.stream()
                 .map(bed -> {
                     BedResponseDto dto = toDto(bed);
@@ -88,7 +97,8 @@ public class BedService {
 
     @Transactional
     public BedResponseDto updateStatus(Long bedId, BedStatusRequestDto request) {
-        Bed bed = bedRepository.findById(bedId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Bed bed = bedRepository.findByIdAndWard_Hospital_Id(bedId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bed not found: " + bedId));
         bed.setBedStatus(request.getBedStatus());
         bed = bedRepository.save(bed);
@@ -98,7 +108,8 @@ public class BedService {
     }
 
     public Bed getEntityById(Long id) {
-        return bedRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        return bedRepository.findByIdAndWard_Hospital_Id(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bed not found: " + id));
     }
 

@@ -2,6 +2,7 @@ package com.hospital.hms.ipd.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
 import com.hospital.hms.doctor.entity.Doctor;
+import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.ipd.entity.PriorityCode;
 import com.hospital.hms.reception.entity.Patient;
 import jakarta.persistence.Column;
@@ -50,6 +51,10 @@ public class IPDAdmission extends BaseIdEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "primary_doctor_id", nullable = false)
     private Doctor primaryDoctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -156,6 +161,14 @@ public class IPDAdmission extends BaseIdEntity {
 
     public void setPrimaryDoctor(Doctor primaryDoctor) {
         this.primaryDoctor = primaryDoctor;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
+    }
+
+    public void setHospital(Hospital hospital) {
+        this.hospital = hospital;
     }
 
     public AdmissionType getAdmissionType() {

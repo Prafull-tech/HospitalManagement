@@ -17,7 +17,19 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
 
     Optional<Hospital> findByHospitalCodeAndDeletedFalse(String hospitalCode);
 
+    Optional<Hospital> findBySubdomainAndDeletedFalse(String subdomain);
+
+    Optional<Hospital> findByCustomDomainAndDeletedFalse(String customDomain);
+
     boolean existsByHospitalCodeAndDeletedFalse(String hospitalCode);
 
+    boolean existsBySubdomainAndDeletedFalse(String subdomain);
+
+    boolean existsByCustomDomainAndDeletedFalse(String customDomain);
+
     boolean existsByHospitalCodeAndDeletedFalseAndIdNot(String hospitalCode, Long excludeId);
+
+    boolean existsBySubdomainAndDeletedFalseAndIdNot(String subdomain, Long excludeId);
+
+    boolean existsByCustomDomainAndDeletedFalseAndIdNot(String customDomain, Long excludeId);
 }

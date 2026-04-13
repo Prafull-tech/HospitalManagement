@@ -110,6 +110,11 @@ spring:
     hibernate:
       ddl-auto: update
 
+hms:
+  security:
+    jwt:
+      expiry-minutes: 30
+
 ---
 # MySQL - prod
 spring:

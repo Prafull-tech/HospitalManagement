@@ -20,6 +20,15 @@ import type {
 
 const BASE = '/system'
 
+function toEffectiveFeatureToggle(feature: FeatureToggleResponse): EffectiveFeatureToggleResponse {
+  return {
+    featureKey: feature.featureKey,
+    enabled: feature.enabled,
+    uiMode: 'hide',
+    source: 'database',
+  }
+}
+
 export const systemRolesApi = {
   list(activeOnly = false): Promise<RoleResponse[]> {
     return apiClient.get(`${BASE}/roles`, { params: { activeOnly } }).then((r) => r.data)
@@ -70,7 +79,18 @@ export const systemFeaturesApi = {
     return apiClient.patch(`${BASE}/features/${id}`, null, { params: { enabled } }).then((r) => r.data)
   },
   listEffective(): Promise<EffectiveFeatureToggleResponse[]> {
-    return apiClient.get(`${BASE}/features/effective`).then((r) => r.data)
+    return apiClient
+      .get(`${BASE}/features/effective`)
+      .then((r) => r.data)
+      .catch((error: { response?: { status?: number } }) => {
+        const status = error.response?.status
+        if (status === 404 || status === 405) {
+          return apiClient
+            .get(`${BASE}/features`)
+            .then((r) => (r.data as FeatureToggleResponse[]).map(toEffectiveFeatureToggle))
+        }
+        throw error
+      })
   },
 }
 

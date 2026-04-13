@@ -2,6 +2,8 @@ package com.hospital.hms.ward.service;
 
 import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
+import com.hospital.hms.hospital.entity.Hospital;
+import com.hospital.hms.tenant.service.TenantContextService;
 import com.hospital.hms.ward.dto.WardRequestDto;
 import com.hospital.hms.ward.dto.WardResponseDto;
 import com.hospital.hms.ward.entity.Ward;
@@ -24,22 +26,27 @@ public class WardService {
     private final WardRepository wardRepository;
     private final BedRepository bedRepository;
     private final WardRoomAuditService auditService;
+    private final TenantContextService tenantContextService;
 
     public WardService(WardRepository wardRepository,
                        BedRepository bedRepository,
-                       WardRoomAuditService auditService) {
+                       WardRoomAuditService auditService,
+                       TenantContextService tenantContextService) {
         this.wardRepository = wardRepository;
         this.bedRepository = bedRepository;
         this.auditService = auditService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public WardResponseDto create(WardRequestDto request) {
+        Hospital hospital = tenantContextService.requireCurrentHospital();
         String code = request.getCode().trim();
-        if (wardRepository.findByCode(code).isPresent()) {
+        if (wardRepository.findByCodeAndHospitalId(code, hospital.getId()).isPresent()) {
             throw new IllegalArgumentException("Ward code already exists: " + code);
         }
         Ward ward = new Ward();
+        ward.setHospital(hospital);
         applyRequest(ward, request, true);
         Ward saved = wardRepository.save(ward);
         WardResponseDto dto = toDto(saved);
@@ -48,26 +55,28 @@ public class WardService {
     }
 
     public List<WardResponseDto> list(Boolean activeOnly, WardType wardType) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         List<Ward> list;
         if (Boolean.TRUE.equals(activeOnly)) {
             list = wardType != null
-                    ? wardRepository.findByIsActiveTrueAndWardTypeOrderByNameAsc(wardType)
-                    : wardRepository.findByIsActiveTrueOrderByNameAsc();
+                    ? wardRepository.findByHospitalIdAndIsActiveTrueAndWardTypeOrderByNameAsc(hospitalId, wardType)
+                    : wardRepository.findByHospitalIdAndIsActiveTrueOrderByNameAsc(hospitalId);
         } else {
-            list = wardRepository.findAll();
-            list.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+            list = wardRepository.findByHospitalIdOrderByNameAsc(hospitalId);
         }
         return list.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public WardResponseDto getById(Long id) {
-        Ward ward = wardRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Ward ward = wardRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ward not found: " + id));
         return toDto(ward);
     }
 
     public Ward getEntityById(Long id) {
-        return wardRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        return wardRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ward not found: " + id));
     }
 
@@ -77,11 +86,12 @@ public class WardService {
      */
     @Transactional
     public WardResponseDto update(Long id, WardRequestDto request, boolean isAdmin) {
-        Ward ward = wardRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Ward ward = wardRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ward not found: " + id));
 
         String newCode = request.getCode().trim();
-        wardRepository.findByCode(newCode)
+        wardRepository.findByCodeAndHospitalId(newCode, hospitalId)
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
                     throw new IllegalArgumentException("Ward code already exists: " + newCode);
@@ -106,7 +116,8 @@ public class WardService {
      */
     @Transactional
     public void disable(Long id) {
-        Ward ward = wardRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Ward ward = wardRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ward not found: " + id));
 
         if (bedRepository.existsByWardIdAndIsActiveTrue(id)) {

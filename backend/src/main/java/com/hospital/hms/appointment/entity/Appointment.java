@@ -2,6 +2,7 @@ package com.hospital.hms.appointment.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
 import com.hospital.hms.doctor.entity.Doctor;
+import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.doctor.entity.MedicalDepartment;
 import com.hospital.hms.reception.entity.Patient;
 import jakarta.persistence.Column;
@@ -49,6 +50,10 @@ public class Appointment extends BaseIdEntity {
     @JoinColumn(name = "department_id", nullable = false)
     private MedicalDepartment department;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
+
     @NotNull
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
@@ -94,6 +99,8 @@ public class Appointment extends BaseIdEntity {
     public void setDoctor(Doctor doctor) { this.doctor = doctor; }
     public MedicalDepartment getDepartment() { return department; }
     public void setDepartment(MedicalDepartment department) { this.department = department; }
+    public Hospital getHospital() { return hospital; }
+    public void setHospital(Hospital hospital) { this.hospital = hospital; }
     public LocalDate getAppointmentDate() { return appointmentDate; }
     public void setAppointmentDate(LocalDate appointmentDate) { this.appointmentDate = appointmentDate; }
     public LocalTime getSlotTime() { return slotTime; }

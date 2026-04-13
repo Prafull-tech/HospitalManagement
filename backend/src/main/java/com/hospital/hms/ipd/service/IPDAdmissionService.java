@@ -4,6 +4,7 @@ import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.repository.DoctorRepository;
+import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.ipd.dto.*;
 import com.hospital.hms.ipd.entity.*;
 import com.hospital.hms.ipd.repository.BedAllocationRepository;
@@ -15,6 +16,7 @@ import com.hospital.hms.ward.repository.BedRepository;
 import com.hospital.hms.ward.service.BedService;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +54,7 @@ public class IPDAdmissionService {
     private final AdmissionPriorityOverrideAuthorityResolver overrideAuthorityResolver;
     private final AdmissionPriorityAuditService priorityAuditService;
     private final AdmissionStatusMasterService admissionStatusMasterService;
+    private final TenantContextService tenantContextService;
 
     public IPDAdmissionService(IPDAdmissionRepository admissionRepository,
                                BedRepository bedRepository,
@@ -63,7 +66,8 @@ public class IPDAdmissionService {
                                AdmissionPriorityEvaluationService priorityEvaluationService,
                                AdmissionPriorityOverrideAuthorityResolver overrideAuthorityResolver,
                                AdmissionPriorityAuditService priorityAuditService,
-                               AdmissionStatusMasterService admissionStatusMasterService) {
+                               AdmissionStatusMasterService admissionStatusMasterService,
+                               TenantContextService tenantContextService) {
         this.admissionRepository = admissionRepository;
         this.bedRepository = bedRepository;
         this.bedAllocationRepository = bedAllocationRepository;
@@ -75,19 +79,21 @@ public class IPDAdmissionService {
         this.overrideAuthorityResolver = overrideAuthorityResolver;
         this.priorityAuditService = priorityAuditService;
         this.admissionStatusMasterService = admissionStatusMasterService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public IPDAdmissionResponseDto admit(IPDAdmissionRequestDto request) {
-        Patient patient = patientRepository.findByUhid(request.getPatientUhid().trim())
+        Hospital hospital = tenantContextService.requireCurrentHospital();
+        Patient patient = patientRepository.findByUhidAndHospitalId(request.getPatientUhid().trim(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + request.getPatientUhid()));
-        Doctor doctor = doctorRepository.findById(request.getPrimaryDoctorId())
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getPrimaryDoctorId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getPrimaryDoctorId()));
-        Bed bed = bedRepository.findById(request.getBedId())
+        Bed bed = bedRepository.findByIdAndWard_Hospital_Id(request.getBedId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bed not found: " + request.getBedId()));
 
         List<IPDAdmission> activeAdmissions = admissionRepository.findByPatientIdAndAdmissionStatusIn(
-                patient.getId(), ACTIVE_STATUSES);
+            hospital.getId(), patient.getId(), ACTIVE_STATUSES);
         if (!activeAdmissions.isEmpty()) {
             throw new IllegalArgumentException("Patient already has an active IPD admission. Discharge or cancel first.");
         }
@@ -112,6 +118,7 @@ public class IPDAdmissionService {
         AdmissionPriorityResult priorityResult = priorityEvaluationService.evaluateWithReason(priorityInput);
 
         IPDAdmission adm = new IPDAdmission();
+        adm.setHospital(hospital);
         adm.setAdmissionNumber(admissionNumber);
         adm.setPatient(patient);
         adm.setPrimaryDoctor(doctor);
@@ -152,7 +159,8 @@ public class IPDAdmissionService {
 
     @Transactional(readOnly = true)
     public IPDAdmissionResponseDto getById(Long id) {
-        IPDAdmission admission = admissionRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        IPDAdmission admission = admissionRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + id));
         return toResponse(admission, true);
     }
@@ -163,7 +171,8 @@ public class IPDAdmissionService {
      */
     @Transactional
     public IPDAdmissionResponseDto shiftToWard(Long admissionId, ShiftToWardRequestDto request, Authentication authentication) {
-        IPDAdmission admission = admissionRepository.findById(admissionId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        IPDAdmission admission = admissionRepository.findByIdAndHospitalId(admissionId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + admissionId));
         if (admission.getAdmissionStatus() != AdmissionStatus.ADMITTED) {
             throw new IllegalArgumentException("Only admission with status ADMITTED can be shifted to ward. Current: " + admission.getAdmissionStatus());
@@ -188,8 +197,10 @@ public class IPDAdmissionService {
     public Page<IPDAdmissionResponseDto> search(String admissionNumber, String patientUhid, String patientName,
                                                  AdmissionStatus status, LocalDateTime fromDate, LocalDateTime toDate,
                                                  int page, int size) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "admissionDateTime"));
         Page<IPDAdmission> result = admissionRepository.search(
+            hospitalId,
                 admissionNumber != null && !admissionNumber.isBlank() ? admissionNumber.trim() : null,
                 patientUhid != null && !patientUhid.isBlank() ? patientUhid.trim() : null,
                 patientName != null && !patientName.isBlank() ? patientName.trim() : null,
@@ -203,13 +214,14 @@ public class IPDAdmissionService {
 
     @Transactional
     public IPDAdmissionResponseDto transfer(Long id, IPDTransferRequestDto request) {
-        IPDAdmission admission = admissionRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        IPDAdmission admission = admissionRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + id));
         if (!ACTIVE_STATUSES.contains(admission.getAdmissionStatus())) {
             throw new IllegalArgumentException("Admission is not active. Cannot transfer.");
         }
 
-        Bed targetBed = bedRepository.findById(request.getBedId())
+        Bed targetBed = bedRepository.findByIdAndWard_Hospital_Id(request.getBedId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bed not found: " + request.getBedId()));
         if (bedAllocationRepository.findActiveByBedId(targetBed.getId()).isPresent()) {
             throw new IllegalArgumentException("Target bed is already occupied.");
@@ -255,7 +267,8 @@ public class IPDAdmissionService {
      */
     @Transactional
     public IPDAdmissionResponseDto discharge(Long id, IPDDischargeRequestDto request) {
-        IPDAdmission admission = admissionRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        IPDAdmission admission = admissionRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + id));
         if (!ACTIVE_STATUSES.contains(admission.getAdmissionStatus())) {
             throw new IllegalArgumentException("Admission is not active or already discharged.");
@@ -327,7 +340,8 @@ public class IPDAdmissionService {
      */
     private IPDAdmissionResponseDto doOverridePriority(Long admissionId, PriorityCode newPriority,
                                                         String reason, String authorityUsername) {
-        IPDAdmission admission = admissionRepository.findById(admissionId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        IPDAdmission admission = admissionRepository.findByIdAndHospitalId(admissionId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("IPD admission not found: " + admissionId));
         admission.setAdmissionPriority(newPriority);
         admission.setPriorityAssignmentReason("Override by " + authorityUsername + ": " + reason);

@@ -13,6 +13,10 @@ export interface User {
   phone?: string
   active?: boolean
   createdAt?: string
+  hospitalId?: number | null
+  hospitalCode?: string
+  hospitalName?: string
+  tenantSlug?: string
 }
 
 interface AuthState {
@@ -34,6 +38,7 @@ function getInitialUser(): User | null {
     const parsed = JSON.parse(auth) as {
       username?: string; role?: string; fullName?: string
       email?: string; phone?: string; active?: boolean; createdAt?: string
+      hospitalId?: number | null; hospitalCode?: string; hospitalName?: string; tenantSlug?: string
     }
     if (parsed?.username && parsed?.role) {
       return {
@@ -44,6 +49,10 @@ function getInitialUser(): User | null {
         phone: parsed.phone,
         active: parsed.active,
         createdAt: parsed.createdAt,
+        hospitalId: parsed.hospitalId,
+        hospitalCode: parsed.hospitalCode,
+        hospitalName: parsed.hospitalName,
+        tenantSlug: parsed.tenantSlug,
       }
     }
   } catch { /* ignore */ }
@@ -58,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = res.data as {
       token: string; refreshToken: string; username: string; role: string
       fullName: string; email?: string; phone?: string; active?: boolean; createdAt?: string
+      hospitalId?: number | null; hospitalCode?: string; hospitalName?: string; tenantSlug?: string
     }
     const u: User = {
       username: data.username,
@@ -67,6 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       phone: data.phone,
       active: data.active,
       createdAt: data.createdAt,
+      hospitalId: data.hospitalId,
+      hospitalCode: data.hospitalCode,
+      hospitalName: data.hospitalName,
+      tenantSlug: data.tenantSlug,
     }
     setUser(u)
     localStorage.setItem('hms_auth', JSON.stringify({
@@ -77,6 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       phone: data.phone,
       active: data.active,
       createdAt: data.createdAt,
+      hospitalId: data.hospitalId,
+      hospitalCode: data.hospitalCode,
+      hospitalName: data.hospitalName,
+      tenantSlug: data.tenantSlug,
       token: data.token,
       refreshToken: data.refreshToken,
     }))

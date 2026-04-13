@@ -9,6 +9,8 @@ import com.hospital.hms.doctor.entity.MedicalDepartment;
 import com.hospital.hms.doctor.repository.DoctorAvailabilityRepository;
 import com.hospital.hms.doctor.repository.DoctorRepository;
 import com.hospital.hms.doctor.repository.MedicalDepartmentRepository;
+import com.hospital.hms.hospital.entity.Hospital;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -29,23 +31,28 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final MedicalDepartmentRepository departmentRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
+    private final TenantContextService tenantContextService;
 
     public DoctorService(DoctorRepository doctorRepository,
                          MedicalDepartmentRepository departmentRepository,
-                         DoctorAvailabilityRepository availabilityRepository) {
+                         DoctorAvailabilityRepository availabilityRepository,
+                         TenantContextService tenantContextService) {
         this.doctorRepository = doctorRepository;
         this.departmentRepository = departmentRepository;
         this.availabilityRepository = availabilityRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public DoctorResponseDto create(DoctorRequestDto request) {
-        if (doctorRepository.findByCode(request.getCode().trim()).isPresent()) {
+        Hospital hospital = tenantContextService.requireCurrentHospital();
+        if (doctorRepository.findByCodeAndHospitalId(request.getCode().trim(), hospital.getId()).isPresent()) {
             throw new IllegalArgumentException("Doctor code already exists: " + request.getCode());
         }
-        MedicalDepartment department = departmentRepository.findById(request.getDepartmentId())
+        MedicalDepartment department = departmentRepository.findByIdAndHospitalId(request.getDepartmentId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found: " + request.getDepartmentId()));
         Doctor doctor = new Doctor();
+        doctor.setHospital(hospital);
         mapRequestToEntity(request, doctor, department);
         doctor = doctorRepository.save(doctor);
         return toResponse(doctor, true);
@@ -53,9 +60,10 @@ public class DoctorService {
 
     @Transactional
     public DoctorResponseDto update(Long id, DoctorRequestDto request) {
-        Doctor doctor = doctorRepository.findById(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + id));
-        MedicalDepartment department = departmentRepository.findById(request.getDepartmentId())
+        MedicalDepartment department = departmentRepository.findByIdAndHospitalId(request.getDepartmentId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found: " + request.getDepartmentId()));
         mapRequestToEntity(request, doctor, department);
         doctor = doctorRepository.save(doctor);
@@ -63,15 +71,18 @@ public class DoctorService {
     }
 
     public DoctorResponseDto getById(Long id) {
-        Doctor doctor = doctorRepository.findByIdWithDepartment(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Doctor doctor = doctorRepository.findByIdWithDepartmentAndHospitalId(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + id));
         return toResponse(doctor, true);
     }
 
     @Transactional(readOnly = true)
     public Page<DoctorResponseDto> search(String code, Long departmentId, DoctorStatus status, String search, int page, int size) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("fullName"));
         Page<Doctor> result = doctorRepository.search(
+            hospitalId,
                 code != null && !code.isBlank() ? code.trim() : null,
                 departmentId,
                 status,
@@ -86,7 +97,8 @@ public class DoctorService {
 
     @Transactional
     public DoctorAvailabilityResponseDto addAvailability(Long doctorId, DoctorAvailabilityRequestDto request) {
-        Doctor doctor = doctorRepository.findById(doctorId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(doctorId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));
         DoctorAvailability existing = availabilityRepository.findByDoctorIdAndDayOfWeek(doctorId, request.getDayOfWeek()).orElse(null);
         DoctorAvailability slot;
@@ -108,6 +120,9 @@ public class DoctorService {
     }
 
     public List<DoctorAvailabilityResponseDto> getAvailability(Long doctorId) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        doctorRepository.findByIdAndHospitalId(doctorId, hospitalId)
+            .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));
         return availabilityRepository.findByDoctorIdOrderByDayOfWeekAsc(doctorId)
                 .stream()
                 .map(this::toAvailabilityResponse)

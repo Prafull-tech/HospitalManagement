@@ -8,6 +8,10 @@ export interface UserProfile {
   phone: string
   active: boolean
   createdAt: string
+  hospitalId?: number | null
+  hospitalCode?: string
+  hospitalName?: string
+  tenantSlug?: string
 }
 
 export interface UpdateProfileDto {

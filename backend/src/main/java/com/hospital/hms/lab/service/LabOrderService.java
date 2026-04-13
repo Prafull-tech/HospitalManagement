@@ -3,6 +3,7 @@ package com.hospital.hms.lab.service;
 import com.hospital.hms.billing.dto.AddBillingItemRequestDto;
 import com.hospital.hms.billing.entity.BillingServiceType;
 import com.hospital.hms.billing.service.BillingEngine;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.repository.DoctorRepository;
@@ -21,6 +22,7 @@ import com.hospital.hms.opd.entity.OPDVisit;
 import com.hospital.hms.opd.repository.OPDVisitRepository;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +52,7 @@ public class LabOrderService {
     private final TestOrderService testOrderService;
     private final BillingEngine billingEngine;
     private final LabAuditService labAuditService;
+    private final TenantContextService tenantContextService;
 
     public LabOrderService(
             LabOrderRepository labOrderRepository,
@@ -62,7 +65,8 @@ public class LabOrderService {
             OPDVisitRepository opdVisitRepository,
             TestOrderService testOrderService,
             BillingEngine billingEngine,
-            LabAuditService labAuditService) {
+            LabAuditService labAuditService,
+            TenantContextService tenantContextService) {
         this.labOrderRepository = labOrderRepository;
         this.labOrderItemRepository = labOrderItemRepository;
         this.testMasterRepository = testMasterRepository;
@@ -74,11 +78,13 @@ public class LabOrderService {
         this.testOrderService = testOrderService;
         this.billingEngine = billingEngine;
         this.labAuditService = labAuditService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public LabOrderResponseDto createOrder(LabOrderRequestDto request) {
-        Doctor doctor = doctorRepository.findById(request.getOrderedByDoctorId())
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getOrderedByDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getOrderedByDoctorId()));
 
         Patient patient;
@@ -99,6 +105,8 @@ public class LabOrderService {
         } else {
             throw new IllegalArgumentException("Either ipdAdmissionId, opdVisitId, or patientId must be provided");
         }
+
+        validatePatientBelongsToCurrentHospital(patient);
 
         LabOrderPriority orderPriority = request.getPriority() != null ? request.getPriority() : LabOrderPriority.NORMAL;
         if (Boolean.TRUE.equals(request.getIsPriority())) {
@@ -167,6 +175,13 @@ public class LabOrderService {
         }
 
         return toDto(order);
+    }
+
+    private void validatePatientBelongsToCurrentHospital(Patient patient) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (patient.getHospital() == null || !patient.getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Patient does not belong to current hospital");
+        }
     }
 
     @Transactional(readOnly = true)

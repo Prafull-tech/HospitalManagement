@@ -20,6 +20,7 @@ import com.hospital.hms.enquiry.repository.EnquiryAuditLogRepository;
 import com.hospital.hms.enquiry.repository.EnquiryRepository;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,21 +50,25 @@ public class EnquiryService {
     private final EnquiryAuditLogRepository auditLogRepository;
     private final PatientRepository patientRepository;
     private final MedicalDepartmentRepository departmentRepository;
+    private final TenantContextService tenantContextService;
 
     public EnquiryService(EnquiryRepository enquiryRepository,
                           EnquiryAuditLogRepository auditLogRepository,
                           PatientRepository patientRepository,
-                          MedicalDepartmentRepository departmentRepository) {
+                          MedicalDepartmentRepository departmentRepository,
+                          TenantContextService tenantContextService) {
         this.enquiryRepository = enquiryRepository;
         this.auditLogRepository = auditLogRepository;
         this.patientRepository = patientRepository;
         this.departmentRepository = departmentRepository;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional
     public EnquiryResponseDto create(EnquiryRequestDto request) {
         Enquiry enquiry = new Enquiry();
         enquiry.setEnquiryNo(generateEnquiryNo());
+        enquiry.setHospital(tenantContextService.requireCurrentHospital());
         applyCreateRequest(enquiry, request);
         enquiry.setStatus(EnquiryStatus.OPEN);
         enquiry = enquiryRepository.save(enquiry);
@@ -98,6 +103,7 @@ public class EnquiryService {
                 ? createdTo.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
                 : null;
         return enquiryRepository.search(
+                tenantContextService.requireCurrentHospitalId(),
                 status,
                 category,
                 priority,
@@ -113,16 +119,17 @@ public class EnquiryService {
 
     @Transactional(readOnly = true)
     public EnquiryDashboardDto getDashboard() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         EnquiryDashboardDto dto = new EnquiryDashboardDto();
-        dto.setOpenCount(enquiryRepository.countByStatus(EnquiryStatus.OPEN));
-        dto.setInProgressCount(enquiryRepository.countByStatus(EnquiryStatus.IN_PROGRESS));
-        dto.setResolvedCount(enquiryRepository.countByStatus(EnquiryStatus.RESOLVED));
-        dto.setClosedCount(enquiryRepository.countByStatus(EnquiryStatus.CLOSED));
-        dto.setEscalatedCount(enquiryRepository.countByStatus(EnquiryStatus.ESCALATED));
-        dto.setRecentEnquiries(enquiryRepository.findTop10ByOrderByCreatedAtDesc().stream()
+        dto.setOpenCount(enquiryRepository.countByHospitalIdAndStatus(hospitalId, EnquiryStatus.OPEN));
+        dto.setInProgressCount(enquiryRepository.countByHospitalIdAndStatus(hospitalId, EnquiryStatus.IN_PROGRESS));
+        dto.setResolvedCount(enquiryRepository.countByHospitalIdAndStatus(hospitalId, EnquiryStatus.RESOLVED));
+        dto.setClosedCount(enquiryRepository.countByHospitalIdAndStatus(hospitalId, EnquiryStatus.CLOSED));
+        dto.setEscalatedCount(enquiryRepository.countByHospitalIdAndStatus(hospitalId, EnquiryStatus.ESCALATED));
+        dto.setRecentEnquiries(enquiryRepository.findTop10ByHospitalIdOrderByCreatedAtDesc(hospitalId).stream()
                 .map(enquiry -> toDto(enquiry, false))
                 .collect(Collectors.toList()));
-        dto.setByCategory(enquiryRepository.countByCategory().stream().collect(Collectors.toMap(
+        dto.setByCategory(enquiryRepository.countByCategoryAndHospitalId(hospitalId).stream().collect(Collectors.toMap(
                 row -> String.valueOf(row[0]),
                 row -> (Long) row[1]
         )));

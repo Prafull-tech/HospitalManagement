@@ -20,17 +20,27 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     Optional<Doctor> findByCode(String code);
 
+    Optional<Doctor> findByCodeAndHospitalId(String code, Long hospitalId);
+
+    Optional<Doctor> findByIdAndHospitalId(Long id, Long hospitalId);
+
     List<Doctor> findByDepartmentId(Long departmentId);
+
+    List<Doctor> findByDepartmentIdAndHospitalId(Long departmentId, Long hospitalId);
 
     List<Doctor> findByStatus(DoctorStatus status);
 
+    List<Doctor> findByStatusAndHospitalId(DoctorStatus status, Long hospitalId);
+
     @EntityGraph(attributePaths = "department")
-    @Query("SELECT d FROM Doctor d WHERE (:code IS NULL OR d.code = :code) " +
+    @Query("SELECT d FROM Doctor d WHERE d.hospital.id = :hospitalId " +
+        "AND (:code IS NULL OR d.code = :code) " +
            "AND (:departmentId IS NULL OR d.department.id = :departmentId) " +
            "AND (:status IS NULL OR d.status = :status) " +
            "AND (:search IS NULL OR LOWER(d.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(d.code) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Doctor> search(@Param("code") String code,
+    Page<Doctor> search(@Param("hospitalId") Long hospitalId,
+               @Param("code") String code,
                         @Param("departmentId") Long departmentId,
                         @Param("status") DoctorStatus status,
                         @Param("search") String search,
@@ -38,4 +48,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     @Query("SELECT d FROM Doctor d JOIN FETCH d.department WHERE d.id = :id")
     Optional<Doctor> findByIdWithDepartment(@Param("id") Long id);
+
+    @Query("SELECT d FROM Doctor d JOIN FETCH d.department WHERE d.id = :id AND d.hospital.id = :hospitalId")
+    Optional<Doctor> findByIdWithDepartmentAndHospitalId(@Param("id") Long id, @Param("hospitalId") Long hospitalId);
 }

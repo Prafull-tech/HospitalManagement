@@ -1,11 +1,15 @@
 package com.hospital.hms.auth.entity;
 
 import com.hospital.hms.common.entity.BaseIdEntity;
+import com.hospital.hms.hospital.entity.Hospital;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +24,8 @@ import jakarta.validation.constraints.Size;
         name = "hms_users",
         indexes = {
                 @Index(name = "idx_user_username", columnList = "username", unique = true),
-                @Index(name = "idx_user_role", columnList = "role")
+                @Index(name = "idx_user_role", columnList = "role"),
+                @Index(name = "idx_user_hospital_role", columnList = "hospital_id, role")
         }
 )
 public class AppUser extends BaseIdEntity {
@@ -57,6 +62,10 @@ public class AppUser extends BaseIdEntity {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "hospital_id")
+        private Hospital hospital;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
@@ -77,4 +86,7 @@ public class AppUser extends BaseIdEntity {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+        public Hospital getHospital() { return hospital; }
+        public void setHospital(Hospital hospital) { this.hospital = hospital; }
 }

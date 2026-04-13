@@ -13,6 +13,8 @@ public class ModuleResponseDto {
     private ModuleCategory moduleCategory;
     private String routePath;
     private boolean enabled;
+    private boolean lockedBySuperAdmin;
+    private String lockReason;
     private Integer sortOrder;
     private Instant createdAt;
     private Instant updatedAt;
@@ -71,6 +73,22 @@ public class ModuleResponseDto {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isLockedBySuperAdmin() {
+        return lockedBySuperAdmin;
+    }
+
+    public void setLockedBySuperAdmin(boolean lockedBySuperAdmin) {
+        this.lockedBySuperAdmin = lockedBySuperAdmin;
+    }
+
+    public String getLockReason() {
+        return lockReason;
+    }
+
+    public void setLockReason(String lockReason) {
+        this.lockReason = lockReason;
     }
 
     public Integer getSortOrder() {

@@ -20,11 +20,13 @@ public class CompanyProfileService {
 
     @Transactional(readOnly = true)
     public CompanyProfileDto getProfile() {
-        return toDto(getOrCreate());
+        return repository.findById(SINGLETON_ID)
+                .map(this::toDto)
+                .orElseGet(this::defaultProfile);
     }
 
     public CompanyProfileDto updateProfile(CompanyProfileDto request) {
-        CompanyProfile profile = getOrCreate();
+        CompanyProfile profile = getOrCreateForWrite();
         profile.setCompanyName(request.getCompanyName().trim());
         profile.setBrandName(request.getBrandName().trim());
         profile.setLogoText(trimToNull(request.getLogoText()));
@@ -35,7 +37,7 @@ public class CompanyProfileService {
         return toDto(repository.save(profile));
     }
 
-    private CompanyProfile getOrCreate() {
+    private CompanyProfile getOrCreateForWrite() {
         return repository.findById(SINGLETON_ID).orElseGet(() -> {
             CompanyProfile profile = new CompanyProfile();
             profile.setId(SINGLETON_ID);
@@ -47,6 +49,18 @@ public class CompanyProfileService {
             profile.setAddressText("HMS Office, Health Tech Park, Mumbai, Maharashtra, India");
             return repository.save(profile);
         });
+    }
+
+    private CompanyProfileDto defaultProfile() {
+        CompanyProfileDto dto = new CompanyProfileDto();
+        dto.setId(SINGLETON_ID);
+        dto.setCompanyName("HMS Hospital Management System");
+        dto.setBrandName("HMS");
+        dto.setLogoText("HMS");
+        dto.setSupportEmail("support@hms-hospital.com");
+        dto.setSupportPhone("+91 22 1234 5678");
+        dto.setAddressText("HMS Office, Health Tech Park, Mumbai, Maharashtra, India");
+        return dto;
     }
 
     private CompanyProfileDto toDto(CompanyProfile profile) {

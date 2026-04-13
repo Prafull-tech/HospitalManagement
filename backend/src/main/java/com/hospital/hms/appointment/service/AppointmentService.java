@@ -6,13 +6,14 @@ import com.hospital.hms.appointment.repository.AppointmentAuditLogRepository;
 import com.hospital.hms.appointment.repository.AppointmentRepository;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
 import com.hospital.hms.doctor.entity.Doctor;
-import com.hospital.hms.doctor.entity.MedicalDepartment;
+import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.doctor.repository.DoctorRepository;
 import com.hospital.hms.opd.dto.OPDVisitRequestDto;
 import com.hospital.hms.opd.dto.OPDVisitResponseDto;
 import com.hospital.hms.opd.service.OPDVisitService;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,49 +33,53 @@ public class AppointmentService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final OPDVisitService opdVisitService;
+    private final TenantContextService tenantContextService;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               AppointmentAuditLogRepository auditLogRepository,
                               PatientRepository patientRepository,
                               DoctorRepository doctorRepository,
-                              OPDVisitService opdVisitService) {
+                              OPDVisitService opdVisitService,
+                              TenantContextService tenantContextService) {
         this.appointmentRepository = appointmentRepository;
         this.auditLogRepository = auditLogRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.opdVisitService = opdVisitService;
+        this.tenantContextService = tenantContextService;
     }
 
     @Transactional(readOnly = true)
     public AppointmentDashboardDto getDashboard(LocalDate date) {
         if (date == null) date = LocalDate.now();
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         AppointmentDashboardDto dto = new AppointmentDashboardDto();
         dto.setDate(date);
 
         List<AppointmentStatus> todayStatuses = List.of(AppointmentStatus.BOOKED, AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING_CONFIRMATION,
                 AppointmentStatus.COMPLETED, AppointmentStatus.NO_SHOW);
-        List<Appointment> todayList = appointmentRepository.findByAppointmentDateAndStatusInWithAssociations(date, todayStatuses);
+        List<Appointment> todayList = appointmentRepository.findByAppointmentDateAndStatusInWithAssociations(hospitalId, date, todayStatuses);
 
         dto.setTotalAppointmentsToday(todayList.size());
-        dto.setWalkIns(appointmentRepository.countByAppointmentDateAndSource(date, AppointmentSource.WALK_IN));
-        dto.setOnlineBookings(appointmentRepository.countByAppointmentDateAndSource(date, AppointmentSource.ONLINE));
-        dto.setCompletedConsultations(appointmentRepository.countByAppointmentDateAndStatus(date, AppointmentStatus.COMPLETED));
-        dto.setCancelled(appointmentRepository.countByAppointmentDateAndStatus(date, AppointmentStatus.CANCELLED));
-        dto.setNoShow(appointmentRepository.countByAppointmentDateAndStatus(date, AppointmentStatus.NO_SHOW));
+        dto.setWalkIns(appointmentRepository.countByHospitalIdAndAppointmentDateAndSource(hospitalId, date, AppointmentSource.WALK_IN));
+        dto.setOnlineBookings(appointmentRepository.countByHospitalIdAndAppointmentDateAndSource(hospitalId, date, AppointmentSource.ONLINE));
+        dto.setCompletedConsultations(appointmentRepository.countByHospitalIdAndAppointmentDateAndStatus(hospitalId, date, AppointmentStatus.COMPLETED));
+        dto.setCancelled(appointmentRepository.countByHospitalIdAndAppointmentDateAndStatus(hospitalId, date, AppointmentStatus.CANCELLED));
+        dto.setNoShow(appointmentRepository.countByHospitalIdAndAppointmentDateAndStatus(hospitalId, date, AppointmentStatus.NO_SHOW));
 
         dto.setTodaysAppointments(todayList.stream().map(this::toResponse).collect(Collectors.toList()));
 
         LocalDate tomorrow = date.plusDays(1);
         List<Appointment> upcoming = appointmentRepository.findByAppointmentDateAndStatusInWithAssociations(
-                tomorrow, List.of(AppointmentStatus.BOOKED, AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING_CONFIRMATION));
+            hospitalId, tomorrow, List.of(AppointmentStatus.BOOKED, AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING_CONFIRMATION));
         dto.setUpcomingAppointments(upcoming.stream().map(this::toResponse).collect(Collectors.toList()));
 
-        List<Appointment> cancelledList = appointmentRepository.findByAppointmentDateAndStatusInOrderBySlotTimeAsc(
-                date, List.of(AppointmentStatus.CANCELLED));
+        List<Appointment> cancelledList = appointmentRepository.findByHospitalIdAndAppointmentDateAndStatusInOrderBySlotTimeAsc(
+            hospitalId, date, List.of(AppointmentStatus.CANCELLED));
         dto.setCancelledAppointments(cancelledList.stream().map(this::toResponse).collect(Collectors.toList()));
 
         List<Appointment> noShowList = appointmentRepository.findByAppointmentDateAndStatusInWithAssociations(
-                date, List.of(AppointmentStatus.NO_SHOW));
+            hospitalId, date, List.of(AppointmentStatus.NO_SHOW));
         dto.setNoShowPatients(noShowList.stream().map(this::toResponse).collect(Collectors.toList()));
 
         return dto;
@@ -82,16 +87,18 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto create(AppointmentRequestDto request, String createdBy) {
-        Patient patient = patientRepository.findById(request.getPatientId())
+        Hospital hospital = tenantContextService.requireCurrentHospital();
+        Patient patient = patientRepository.findByIdAndHospitalId(request.getPatientId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + request.getPatientId()));
-        Doctor doctor = doctorRepository.findByIdWithDepartment(request.getDoctorId())
+        Doctor doctor = doctorRepository.findByIdWithDepartmentAndHospitalId(request.getDoctorId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
-        validateNoSlotConflict(doctor.getId(), request.getAppointmentDate(), request.getSlotTime(), null);
+        validateNoSlotConflict(hospital.getId(), doctor.getId(), request.getAppointmentDate(), request.getSlotTime(), null);
 
-        int nextToken = getNextTokenForDoctorAndDate(doctor.getId(), request.getAppointmentDate());
+        int nextToken = getNextTokenForDoctorAndDate(hospital.getId(), doctor.getId(), request.getAppointmentDate());
 
         Appointment a = new Appointment();
+        a.setHospital(hospital);
         a.setPatient(patient);
         a.setDoctor(doctor);
         a.setDepartment(doctor.getDepartment());
@@ -110,19 +117,21 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto createWalkIn(WalkInAppointmentRequestDto request, String createdBy) {
-        Patient patient = patientRepository.findByUhid(request.getPatientUhid().trim())
+        Hospital hospital = tenantContextService.requireCurrentHospital();
+        Patient patient = patientRepository.findByUhidAndHospitalId(request.getPatientUhid().trim(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + request.getPatientUhid()));
-        Doctor doctor = doctorRepository.findByIdWithDepartment(request.getDoctorId())
+        Doctor doctor = doctorRepository.findByIdWithDepartmentAndHospitalId(request.getDoctorId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
         LocalDate date = request.getAppointmentDate() != null ? request.getAppointmentDate() : LocalDate.now();
         java.time.LocalTime slot = request.getSlotTime() != null ? request.getSlotTime() : java.time.LocalTime.now();
 
-        validateNoSlotConflict(doctor.getId(), date, slot, null);
+        validateNoSlotConflict(hospital.getId(), doctor.getId(), date, slot, null);
 
-        int nextToken = getNextTokenForDoctorAndDate(doctor.getId(), date);
+        int nextToken = getNextTokenForDoctorAndDate(hospital.getId(), doctor.getId(), date);
 
         Appointment a = new Appointment();
+        a.setHospital(hospital);
         a.setPatient(patient);
         a.setDoctor(doctor);
         a.setDepartment(doctor.getDepartment());
@@ -140,16 +149,18 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto createOnline(OnlineAppointmentRequestDto request) {
-        Patient patient = patientRepository.findByUhid(request.getPatientUhid().trim())
+        Hospital hospital = tenantContextService.requireCurrentHospital();
+        Patient patient = patientRepository.findByUhidAndHospitalId(request.getPatientUhid().trim(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with UHID: " + request.getPatientUhid()));
-        Doctor doctor = doctorRepository.findByIdWithDepartment(request.getDoctorId())
+        Doctor doctor = doctorRepository.findByIdWithDepartmentAndHospitalId(request.getDoctorId(), hospital.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
-        validateNoSlotConflict(doctor.getId(), request.getAppointmentDate(), request.getSlotTime(), null);
+        validateNoSlotConflict(hospital.getId(), doctor.getId(), request.getAppointmentDate(), request.getSlotTime(), null);
 
-        int nextToken = getNextTokenForDoctorAndDate(doctor.getId(), request.getAppointmentDate());
+        int nextToken = getNextTokenForDoctorAndDate(hospital.getId(), doctor.getId(), request.getAppointmentDate());
 
         Appointment a = new Appointment();
+        a.setHospital(hospital);
         a.setPatient(patient);
         a.setDoctor(doctor);
         a.setDepartment(doctor.getDepartment());
@@ -168,14 +179,15 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto reschedule(Long id, RescheduleRequestDto request, String userId) {
-        Appointment a = appointmentRepository.findByIdWithAssociations(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Appointment a = appointmentRepository.findByIdWithAssociations(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
         if (a.getStatus() == AppointmentStatus.CANCELLED || a.getStatus() == AppointmentStatus.COMPLETED) {
             throw new IllegalArgumentException("Cannot reschedule cancelled or completed appointment");
         }
 
         if (request.getDoctorId() != null) {
-            Doctor doctor = doctorRepository.findByIdWithDepartment(request.getDoctorId())
+            Doctor doctor = doctorRepository.findByIdWithDepartmentAndHospitalId(request.getDoctorId(), hospitalId)
                     .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
             a.setDoctor(doctor);
             a.setDepartment(doctor.getDepartment());
@@ -184,7 +196,7 @@ public class AppointmentService {
         if (request.getSlotTime() != null) a.setSlotTime(request.getSlotTime());
 
         // Validate slot conflict with the updated values
-        validateNoSlotConflict(a.getDoctor().getId(), a.getAppointmentDate(), a.getSlotTime(), a.getId());
+        validateNoSlotConflict(hospitalId, a.getDoctor().getId(), a.getAppointmentDate(), a.getSlotTime(), a.getId());
 
         a = appointmentRepository.save(a);
 
@@ -194,7 +206,8 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto cancel(Long id, CancelRequestDto request, String userId) {
-        Appointment a = appointmentRepository.findByIdWithAssociations(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Appointment a = appointmentRepository.findByIdWithAssociations(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
         a.setStatus(AppointmentStatus.CANCELLED);
         a.setCancelReason(request != null && request.getReason() != null ? request.getReason().trim() : null);
@@ -206,7 +219,8 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto markNoShow(Long id, String userId) {
-        Appointment a = appointmentRepository.findByIdWithAssociations(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Appointment a = appointmentRepository.findByIdWithAssociations(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
         a.setStatus(AppointmentStatus.NO_SHOW);
         a = appointmentRepository.save(a);
@@ -217,7 +231,8 @@ public class AppointmentService {
 
     @Transactional
     public OPDVisitResponseDto convertToOpdVisit(Long appointmentId, String userId) {
-        Appointment a = appointmentRepository.findByIdWithAssociations(appointmentId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Appointment a = appointmentRepository.findByIdWithAssociations(appointmentId, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + appointmentId));
         if (a.getStatus() == AppointmentStatus.CANCELLED || a.getStatus() == AppointmentStatus.NO_SHOW) {
             throw new IllegalArgumentException("Cannot convert cancelled or no-show appointment to OPD visit");
@@ -239,7 +254,8 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto confirmOnline(Long id, String userId) {
-        Appointment a = appointmentRepository.findByIdWithAssociations(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Appointment a = appointmentRepository.findByIdWithAssociations(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
         if (a.getStatus() != AppointmentStatus.PENDING_CONFIRMATION) {
             throw new IllegalArgumentException("Only PENDING_CONFIRMATION appointments can be confirmed");
@@ -252,15 +268,17 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDto> search(LocalDate date, Long doctorId, AppointmentStatus status,
                                                        String patientUhid, String patientName, int page, int size) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "appointmentDate", "slotTime"));
-        Page<Appointment> result = appointmentRepository.search(date, doctorId, status, patientUhid, patientName, pageable);
+        Page<Appointment> result = appointmentRepository.search(hospitalId, date, doctorId, status, patientUhid, patientName, pageable);
         return result.map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
     public List<AppointmentResponseDto> getQueue(Long doctorId, LocalDate date) {
         if (date == null) date = LocalDate.now();
-        return appointmentRepository.findQueueWithAssociations(date, doctorId)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        return appointmentRepository.findQueueWithAssociations(hospitalId, date, doctorId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -268,17 +286,18 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public AppointmentResponseDto getById(Long id) {
-        Appointment a = appointmentRepository.findByIdWithAssociations(id)
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Appointment a = appointmentRepository.findByIdWithAssociations(id, hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
         return toResponse(a);
     }
 
-    private void validateNoSlotConflict(Long doctorId, LocalDate date, java.time.LocalTime slotTime, Long excludeId) {
+    private void validateNoSlotConflict(Long hospitalId, Long doctorId, LocalDate date, java.time.LocalTime slotTime, Long excludeId) {
         boolean conflict;
         if (excludeId != null) {
-            conflict = appointmentRepository.existsActiveByDoctorAndDateAndSlotExcluding(doctorId, date, slotTime, excludeId);
+            conflict = appointmentRepository.existsActiveByDoctorAndDateAndSlotExcluding(hospitalId, doctorId, date, slotTime, excludeId);
         } else {
-            conflict = appointmentRepository.existsActiveByDoctorAndDateAndSlot(doctorId, date, slotTime);
+            conflict = appointmentRepository.existsActiveByDoctorAndDateAndSlot(hospitalId, doctorId, date, slotTime);
         }
         if (conflict) {
             throw new IllegalArgumentException(
@@ -286,8 +305,8 @@ public class AppointmentService {
         }
     }
 
-    private int getNextTokenForDoctorAndDate(Long doctorId, LocalDate date) {
-        List<Appointment> existing = appointmentRepository.findByAppointmentDateAndDoctorIdOrderBySlotTimeAscTokenNoAsc(date, doctorId);
+    private int getNextTokenForDoctorAndDate(Long hospitalId, Long doctorId, LocalDate date) {
+        List<Appointment> existing = appointmentRepository.findByHospitalIdAndAppointmentDateAndDoctorIdOrderBySlotTimeAscTokenNoAsc(hospitalId, date, doctorId);
         int max = existing.stream()
                 .mapToInt(a -> a.getTokenNo() != null ? a.getTokenNo() : 0)
                 .max()

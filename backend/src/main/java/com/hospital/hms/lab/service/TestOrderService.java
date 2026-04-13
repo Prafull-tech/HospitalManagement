@@ -20,6 +20,8 @@ import com.hospital.hms.opd.entity.OPDVisit;
 import com.hospital.hms.opd.repository.OPDVisitRepository;
 import com.hospital.hms.reception.entity.Patient;
 import com.hospital.hms.reception.repository.PatientRepository;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
+import com.hospital.hms.tenant.service.TenantContextService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class TestOrderService {
     private final TestOrderNumberGenerator orderNumberGenerator;
     private final TestMasterService testMasterService;
     private final AdmissionChargeService admissionChargeService;
+    private final TenantContextService tenantContextService;
 
     public TestOrderService(
             TestOrderRepository testOrderRepository,
@@ -53,7 +56,8 @@ public class TestOrderService {
             OPDVisitRepository opdVisitRepository,
             TestOrderNumberGenerator orderNumberGenerator,
             TestMasterService testMasterService,
-            AdmissionChargeService admissionChargeService) {
+            AdmissionChargeService admissionChargeService,
+            TenantContextService tenantContextService) {
         this.testOrderRepository = testOrderRepository;
         this.testMasterRepository = testMasterRepository;
         this.patientRepository = patientRepository;
@@ -63,6 +67,7 @@ public class TestOrderService {
         this.orderNumberGenerator = orderNumberGenerator;
         this.testMasterService = testMasterService;
         this.admissionChargeService = admissionChargeService;
+        this.tenantContextService = tenantContextService;
     }
 
     /**
@@ -72,8 +77,9 @@ public class TestOrderService {
      */
     @Transactional
     public List<TestOrderResponseDto> createOrder(TestOrderRequestDto request, String performedBy) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
         // Validate doctor
-        Doctor doctor = doctorRepository.findById(request.getDoctorId())
+        Doctor doctor = doctorRepository.findByIdAndHospitalId(request.getDoctorId(), hospitalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + request.getDoctorId()));
 
         // Validate test master
@@ -166,6 +172,7 @@ public class TestOrderService {
     @Transactional
     public TestOrder createTestOrderEntity(Patient patient, Doctor doctor, IPDAdmission ipdAdmission,
                                            OPDVisit opdVisit, TestMaster testMaster, boolean isPriority) {
+        validateDoctorBelongsToCurrentHospital(doctor);
         TestOrder order = new TestOrder();
         order.setOrderNumber(orderNumberGenerator.generate());
         order.setPatient(patient);
@@ -202,6 +209,7 @@ public class TestOrderService {
     public TestOrderResponseDto findById(Long id) {
         TestOrder order = testOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test order not found: " + id));
+        validateOrderBelongsToCurrentHospital(order);
         return toDto(order);
     }
 
@@ -242,9 +250,24 @@ public class TestOrderService {
 
     @Transactional(readOnly = true)
     public List<TestOrderResponseDto> findByStatus(TestStatus status) {
-        return testOrderRepository.findByStatusOrderByIsPriorityDescOrderedAtAsc(status).stream()
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        return testOrderRepository.findByHospitalIdAndStatusOrderByIsPriorityDescOrderedAtAsc(hospitalId, status).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    private void validateOrderBelongsToCurrentHospital(TestOrder order) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (!order.getPatient().getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Test order does not belong to current hospital");
+        }
+    }
+
+    private void validateDoctorBelongsToCurrentHospital(Doctor doctor) {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        if (doctor.getHospital() == null || !doctor.getHospital().getId().equals(hospitalId)) {
+            throw new OperationNotAllowedException("Doctor does not belong to current hospital");
+        }
     }
 
     public TestOrderResponseDto toDto(TestOrder order) {

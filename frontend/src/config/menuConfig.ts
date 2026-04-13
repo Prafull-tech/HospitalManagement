@@ -230,7 +230,10 @@ export function getDefaultDashboardForUser(userRoles: HMSRole[]): string {
   const normalized = userRoles.includes('LAB_TECHNICIAN')
     ? [...userRoles, 'LAB_TECH' as HMSRole]
     : userRoles
-  if (normalized.includes('ADMIN') || normalized.includes('SUPER_ADMIN')) {
+  if (normalized.includes('SUPER_ADMIN')) {
+    return '/super-admin/dashboard'
+  }
+  if (normalized.includes('ADMIN')) {
     // Admin should land on Reception dashboard (consistent UX; avoids always going to /pharmacy)
     return '/reception'
   }
