@@ -9,6 +9,8 @@ spring:
 hms:
   tenant:
     base-domain: hms.local
+    alias-base-domains: hms.com
+    dev-default-subdomain: genius36
   security:
     jwt:
       expiry-minutes: 30

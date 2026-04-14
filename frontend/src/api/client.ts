@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getAuthRedirect, getAuthClearCallback } from './authRedirect'
+import { getCurrentTenantHostAlias } from '../lib/tenantHostAlias'
 
 const baseURL = '/api'
 
@@ -15,6 +16,13 @@ apiClient.interceptors.request.use((config) => {
   if (config.data instanceof FormData) {
     delete (config.headers as Record<string, unknown>)['Content-Type']
   }
+
+  const tenantHostAlias = getCurrentTenantHostAlias()
+  if (tenantHostAlias) {
+    config.headers = config.headers ?? {}
+    config.headers['X-HMS-Tenant-Host'] = tenantHostAlias
+  }
+
   const auth = localStorage.getItem('hms_auth')
   if (auth) {
     try {

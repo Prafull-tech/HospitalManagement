@@ -7,20 +7,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TenantResolutionService {
 
     private final HospitalRepository hospitalRepository;
     private final String baseDomain;
+    private final List<String> tenantBaseDomains;
     private final String platformSubdomain;
 
     public TenantResolutionService(HospitalRepository hospitalRepository,
                                    @Value("${hms.tenant.base-domain:hms.com}") String baseDomain,
+                                   @Value("${hms.tenant.alias-base-domains:}") String aliasBaseDomains,
                                    @Value("${hms.tenant.platform-subdomain:admin}") String platformSubdomain) {
         this.hospitalRepository = hospitalRepository;
         this.baseDomain = baseDomain.toLowerCase();
+        this.tenantBaseDomains = buildTenantBaseDomains(this.baseDomain, aliasBaseDomains);
         this.platformSubdomain = platformSubdomain.toLowerCase();
     }
 
@@ -37,7 +43,11 @@ public class TenantResolutionService {
         if (customDomainHospital.isPresent()) {
             return customDomainHospital;
         }
-        String suffix = "." + baseDomain;
+        String matchingBaseDomain = findMatchingBaseDomain(normalizedHost);
+        if (matchingBaseDomain == null) {
+            return Optional.empty();
+        }
+        String suffix = "." + matchingBaseDomain;
         if (!normalizedHost.endsWith(suffix)) {
             return Optional.empty();
         }
@@ -60,7 +70,9 @@ public class TenantResolutionService {
         if (isLocalHost(normalizedHost)) {
             return true;
         }
-        return normalizedHost.equals(baseDomain) || normalizedHost.equals(platformSubdomain + "." + baseDomain);
+        return tenantBaseDomains.stream().anyMatch(baseDomain ->
+            normalizedHost.equals(baseDomain) || normalizedHost.equals(platformSubdomain + "." + baseDomain)
+        );
     }
 
     public TenantContextResponseDto buildTenantContext(HttpServletRequest request) {
@@ -92,6 +104,10 @@ public class TenantResolutionService {
     }
 
     public String getRequestHost(HttpServletRequest request) {
+        String tenantHost = request.getHeader("X-HMS-Tenant-Host");
+        if (tenantHost != null && !tenantHost.isBlank()) {
+            return tenantHost;
+        }
         String forwardedHost = request.getHeader("X-Forwarded-Host");
         if (forwardedHost != null && !forwardedHost.isBlank()) {
             return forwardedHost;
@@ -124,12 +140,28 @@ public class TenantResolutionService {
                 && normalizedHost.equalsIgnoreCase(hospital.getCustomDomain());
     }
 
+    private List<String> buildTenantBaseDomains(String primaryBaseDomain, String aliasBaseDomains) {
+        return Arrays.stream((primaryBaseDomain + "," + aliasBaseDomains).split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private String findMatchingBaseDomain(String normalizedHost) {
+        return tenantBaseDomains.stream()
+                .filter(baseDomain -> normalizedHost.endsWith("." + baseDomain))
+                .findFirst()
+                .orElse(null);
+    }
+
     private boolean isLocalHost(String host) {
         return "localhost".equals(host)
                 || "127.0.0.1".equals(host)
                 || "0.0.0.0".equals(host)
                 || "backend".equals(host)
                 || "frontend".equals(host)
-                || host.endsWith(".local");
+                || host.endsWith(".localhost");
     }
 }

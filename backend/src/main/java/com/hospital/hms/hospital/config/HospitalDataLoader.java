@@ -5,6 +5,7 @@ import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.hospital.repository.BedAvailabilityRepository;
 import com.hospital.hms.hospital.repository.HospitalRepository;
 import com.hospital.hms.ward.entity.WardType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,16 +26,23 @@ public class HospitalDataLoader {
     private static final int[] RESERVED = { 1, 0, 0, 1, 0 };
     private static final int[] UNDER_CLEANING = { 2, 1, 0, 0, 1 };
 
+    @Value("${hms.tenant.dev-default-subdomain:genius36}")
+    private String devDefaultSubdomain;
+
     @Bean
     @Order(6)
     public ApplicationRunner seedHospitalsAndBedAvailability(HospitalRepository hospitalRepo,
                                                              BedAvailabilityRepository bedAvailabilityRepo) {
         return args -> {
+            backfillDefaultSubdomain(hospitalRepo);
             if (hospitalRepo.count() > 0) return;
+
+            String defaultSubdomain = normalizeSubdomain(devDefaultSubdomain);
             Hospital h = new Hospital();
             h.setHospitalCode("MAIN");
             h.setHospitalName("Main Hospital");
             h.setLocation("Central Campus");
+            h.setSubdomain(defaultSubdomain);
             h.setIsActive(true);
             h.setDeleted(false);
             h = hospitalRepo.save(h);
@@ -50,5 +58,31 @@ public class HospitalDataLoader {
                 bedAvailabilityRepo.save(ba);
             }
         };
+    }
+
+    private void backfillDefaultSubdomain(HospitalRepository hospitalRepo) {
+        String defaultSubdomain = normalizeSubdomain(devDefaultSubdomain);
+        if (defaultSubdomain == null || hospitalRepo.existsBySubdomainAndDeletedFalse(defaultSubdomain)) {
+            return;
+        }
+
+        hospitalRepo.findByHospitalCodeAndDeletedFalse("MAIN")
+                .filter(this::isMissingSubdomain)
+                .ifPresent(hospital -> {
+                    hospital.setSubdomain(defaultSubdomain);
+                    hospitalRepo.save(hospital);
+                });
+    }
+
+    private boolean isMissingSubdomain(Hospital hospital) {
+        return hospital.getSubdomain() == null || hospital.getSubdomain().isBlank();
+    }
+
+    private String normalizeSubdomain(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim().toLowerCase();
+        return normalized.isBlank() ? null : normalized;
     }
 }

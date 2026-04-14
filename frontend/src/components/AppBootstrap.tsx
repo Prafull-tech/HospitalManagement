@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getTenantContext, type TenantContextDto } from '../api/tenant'
+import { getTenantHostAliasFromPath, setTenantHostAlias } from '../lib/tenantHostAlias'
 
 const FailSafeMs = 2000
 
@@ -26,6 +27,15 @@ export function AppBootstrap({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true
+
+    const tenantAlias = typeof window !== 'undefined'
+      ? getTenantHostAliasFromPath(window.location.pathname)
+      : null
+
+    if (tenantAlias) {
+      setTenantHostAlias(tenantAlias)
+    }
+
     getTenantContext()
       .then((data) => {
         if (!active) return
