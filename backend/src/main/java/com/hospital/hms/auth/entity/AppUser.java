@@ -62,6 +62,10 @@ public class AppUser extends BaseIdEntity {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
+        @NotNull
+        @Column(name = "token_version", nullable = false)
+        private Long tokenVersion = 0L;
+
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "hospital_id")
         private Hospital hospital;
@@ -86,6 +90,9 @@ public class AppUser extends BaseIdEntity {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+        public Long getTokenVersion() { return tokenVersion; }
+        public void setTokenVersion(Long tokenVersion) { this.tokenVersion = tokenVersion; }
 
         public Hospital getHospital() { return hospital; }
         public void setHospital(Hospital hospital) { this.hospital = hospital; }

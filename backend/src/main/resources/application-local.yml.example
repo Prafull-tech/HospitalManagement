@@ -19,3 +19,4 @@ hms:
   security:
     jwt:
       expiry-minutes: 30
+      refresh-expiry-minutes: 30

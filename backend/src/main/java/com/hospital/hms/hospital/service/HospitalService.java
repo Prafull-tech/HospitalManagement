@@ -89,13 +89,13 @@ public class HospitalService {
         String subdomain = normalizeSubdomain(request.getSubdomain());
         String customDomain = normalizeCustomDomain(request.getCustomDomain());
         if (hospitalRepository.existsByHospitalCodeAndDeletedFalse(code)) {
-            throw new IllegalArgumentException("Hospital code already exists: " + code);
+            throw new IllegalArgumentException("Hospital code already exists. Please use a unique hospital code.");
         }
         if (subdomain != null && hospitalRepository.existsBySubdomainAndDeletedFalse(subdomain)) {
-            throw new IllegalArgumentException("Hospital subdomain already exists: " + subdomain);
+            throw new IllegalArgumentException("Hospital subdomain already exists. Please use a unique subdomain.");
         }
         if (customDomain != null && hospitalRepository.existsByCustomDomainAndDeletedFalse(customDomain)) {
-            throw new IllegalArgumentException("Hospital custom domain already exists: " + customDomain);
+            throw new IllegalArgumentException("Hospital custom domain already exists. Please use a unique custom domain.");
         }
         Hospital h = new Hospital();
         h.setHospitalCode(code);
@@ -114,13 +114,13 @@ public class HospitalService {
         String subdomain = normalizeSubdomain(request.getSubdomain());
         String customDomain = normalizeCustomDomain(request.getCustomDomain());
         if (hospitalRepository.existsByHospitalCodeAndDeletedFalseAndIdNot(code, id)) {
-            throw new IllegalArgumentException("Hospital code already exists: " + code);
+            throw new IllegalArgumentException("Hospital code already exists. Please use a unique hospital code.");
         }
         if (subdomain != null && hospitalRepository.existsBySubdomainAndDeletedFalseAndIdNot(subdomain, id)) {
-            throw new IllegalArgumentException("Hospital subdomain already exists: " + subdomain);
+            throw new IllegalArgumentException("Hospital subdomain already exists. Please use a unique subdomain.");
         }
         if (customDomain != null && hospitalRepository.existsByCustomDomainAndDeletedFalseAndIdNot(customDomain, id)) {
-            throw new IllegalArgumentException("Hospital custom domain already exists: " + customDomain);
+            throw new IllegalArgumentException("Hospital custom domain already exists. Please use a unique custom domain.");
         }
         h.setHospitalCode(code);
         applyFields(h, request, false);

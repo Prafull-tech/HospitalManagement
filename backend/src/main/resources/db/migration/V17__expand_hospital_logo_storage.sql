@@ -1,0 +1,2 @@
+ALTER TABLE hospitals
+    MODIFY COLUMN logo_url LONGTEXT;

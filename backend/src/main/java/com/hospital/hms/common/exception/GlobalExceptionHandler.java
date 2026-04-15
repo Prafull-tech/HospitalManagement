@@ -186,13 +186,23 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException ex,
             HttpServletRequest request) {
         String msg = ex.getMessage();
+        String lowered = msg != null ? msg.toLowerCase() : "";
         String userMsg = "A record with this value already exists. Please use a unique code or name.";
-        if (msg != null && (msg.contains("unique") || msg.contains("duplicate") || msg.contains("Duplicate"))) {
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        if (lowered.contains("data too long") && lowered.contains("logo_url")) {
+            userMsg = "Logo exceeds storage limit. Upload limit is 300 KB (UI), backend max is 1,000,000 characters. If your file is small, run latest DB migration V17.";
+            status = HttpStatus.BAD_REQUEST;
+        } else if (lowered.contains("data too long")) {
+            userMsg = "One of the fields is too long. Please shorten the value and try again.";
+            status = HttpStatus.BAD_REQUEST;
+        } else if (lowered.contains("unique") || lowered.contains("duplicate")) {
             userMsg = "This code or value already exists. Please use a unique value.";
         }
+
         logError(request, "Data integrity violation: " + msg, ex);
-        ErrorBody body = new ErrorBody(HttpStatus.CONFLICT.value(), userMsg, Instant.now());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        ErrorBody body = new ErrorBody(status.value(), userMsg, Instant.now());
+        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(LazyInitializationException.class)

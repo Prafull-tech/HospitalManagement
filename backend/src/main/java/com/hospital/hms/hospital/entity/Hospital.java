@@ -75,8 +75,8 @@ public class Hospital extends BaseIdEntity {
     @Column(name = "last_certificate_error", length = 1000)
     private String lastCertificateError;
 
-    @Size(max = 255)
-    @Column(name = "logo_url", length = 255)
+    @Size(max = 1000000)
+    @Column(name = "logo_url", columnDefinition = "LONGTEXT")
     private String logoUrl;
 
     @Size(max = 255)

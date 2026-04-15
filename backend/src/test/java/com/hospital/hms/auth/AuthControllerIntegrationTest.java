@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,6 +37,9 @@ class AuthControllerIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setup() {
@@ -56,6 +62,8 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token", notNullValue()))
                 .andExpect(jsonPath("$.refreshToken", notNullValue()))
+                .andExpect(jsonPath("$.expiresAt", notNullValue()))
+                .andExpect(jsonPath("$.sessionExpiresAt", notNullValue()))
                 .andExpect(jsonPath("$.username").value("testadmin"))
                 .andExpect(jsonPath("$.role").value("ADMIN"));
     }
@@ -85,16 +93,17 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
-        String refreshToken = com.fasterxml.jackson.databind.ObjectMapper
-                .class.getDeclaredConstructor().newInstance()
-                .readTree(loginResponse).get("refreshToken").asText();
+        JsonNode loginJson = objectMapper.readTree(loginResponse);
+        String refreshToken = loginJson.get("refreshToken").asText();
+        String sessionExpiresAt = loginJson.get("sessionExpiresAt").asText();
 
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token", notNullValue()))
-                .andExpect(jsonPath("$.refreshToken", notNullValue()));
+            .andExpect(jsonPath("$.refreshToken", notNullValue()))
+            .andExpect(jsonPath("$.sessionExpiresAt").value(sessionExpiresAt));
     }
 
     @Test
@@ -105,4 +114,25 @@ class AuthControllerIntegrationTest {
                         .content("{\"refreshToken\":\"invalid-token\"}"))
                 .andExpect(status().isUnauthorized());
     }
+
+        @Test
+        @DisplayName("POST /auth/logout - invalidates existing access token")
+        void logoutInvalidatesExistingAccessToken() throws Exception {
+        String loginResponse = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"testadmin\",\"password\":\"Admin123!\"}"))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        JsonNode loginJson = objectMapper.readTree(loginResponse);
+        String accessToken = loginJson.get("token").asText();
+
+        mockMvc.perform(post("/api/auth/logout")
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/auth/me")
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isUnauthorized());
+        }
 }

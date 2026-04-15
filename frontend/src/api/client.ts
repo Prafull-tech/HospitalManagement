@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getAuthRedirect, getAuthClearCallback } from './authRedirect'
 import { getCurrentTenantHostAlias } from '../lib/tenantHostAlias'
+import { clearStoredAuth, getValidStoredAuth, saveStoredAuth } from '../lib/authStorage'
 
 const baseURL = '/api'
 
@@ -10,32 +11,6 @@ export const apiClient = axios.create({
   baseURL,
   timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
-})
-
-apiClient.interceptors.request.use((config) => {
-  if (config.data instanceof FormData) {
-    delete (config.headers as Record<string, unknown>)['Content-Type']
-  }
-
-  const tenantHostAlias = getCurrentTenantHostAlias()
-  if (tenantHostAlias) {
-    config.headers = config.headers ?? {}
-    config.headers['X-HMS-Tenant-Host'] = tenantHostAlias
-  }
-
-  const auth = localStorage.getItem('hms_auth')
-  if (auth) {
-    try {
-      const { token } = JSON.parse(auth)
-      if (token) {
-        config.headers = config.headers ?? {}
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return config
 })
 
 let isRefreshing = false
@@ -49,6 +24,36 @@ function processQueue(error: unknown, token: string | null) {
   failedQueue = []
 }
 
+function clearAuthAndRedirect() {
+  clearStoredAuth()
+  getAuthClearCallback()?.()
+  if (window.location.pathname !== '/login') {
+    const go = getAuthRedirect()
+    if (typeof go === 'function') go()
+    else window.location.href = '/login'
+  }
+}
+
+apiClient.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    delete (config.headers as Record<string, unknown>)['Content-Type']
+  }
+
+  const tenantHostAlias = getCurrentTenantHostAlias()
+  if (tenantHostAlias) {
+    config.headers = config.headers ?? {}
+    config.headers['X-HMS-Tenant-Host'] = tenantHostAlias
+  }
+
+  const auth = getValidStoredAuth()
+  if (auth?.token) {
+    config.headers = config.headers ?? {}
+    config.headers.Authorization = `Bearer ${auth.token}`
+  }
+
+  return config
+})
+
 apiClient.interceptors.response.use(
   (res) => res,
   async (err) => {
@@ -61,17 +66,15 @@ apiClient.interceptors.response.use(
     }
 
     if ((status === 401 || status === 403) && !originalRequest?._retry) {
-      const auth = localStorage.getItem('hms_auth')
-      let refreshToken: string | null = null
-      if (auth) {
-        try { refreshToken = JSON.parse(auth).refreshToken } catch { /* ignore */ }
-      }
+      const auth = getValidStoredAuth()
+      const refreshToken = auth?.refreshToken ?? null
 
       if (refreshToken && !originalRequest.url?.includes('/auth/login') && !originalRequest.url?.includes('/auth/refresh')) {
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject })
           }).then((token) => {
+            originalRequest.headers = originalRequest.headers ?? {}
             originalRequest.headers.Authorization = `Bearer ${token}`
             return apiClient(originalRequest)
           })
@@ -96,8 +99,11 @@ apiClient.interceptors.response.use(
             hospitalCode,
             hospitalName,
             tenantSlug,
+            expiresAt,
+            sessionExpiresAt,
           } = res.data
-          localStorage.setItem('hms_auth', JSON.stringify({
+
+          saveStoredAuth({
             username,
             role,
             fullName,
@@ -111,33 +117,26 @@ apiClient.interceptors.response.use(
             tenantSlug,
             token: newToken,
             refreshToken: newRefresh,
-          }))
+            expiresAt,
+            sessionExpiresAt,
+          })
+
+          originalRequest.headers = originalRequest.headers ?? {}
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           processQueue(null, newToken)
           return apiClient(originalRequest)
         } catch (refreshErr) {
           processQueue(refreshErr, null)
-          localStorage.removeItem('hms_auth')
-          getAuthClearCallback()?.()
-          if (window.location.pathname !== '/login') {
-            const go = getAuthRedirect()
-            if (typeof go === 'function') go()
-            else window.location.href = '/login'
-          }
+          clearAuthAndRedirect()
           return Promise.reject(refreshErr)
         } finally {
           isRefreshing = false
         }
       }
 
-      localStorage.removeItem('hms_auth')
-      getAuthClearCallback()?.()
-      if (window.location.pathname !== '/login') {
-        const go = getAuthRedirect()
-        if (typeof go === 'function') go()
-        else window.location.href = '/login'
-      }
+      clearAuthAndRedirect()
     }
+
     return Promise.reject(err)
   }
 )

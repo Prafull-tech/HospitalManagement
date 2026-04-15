@@ -1,6 +1,7 @@
 package com.hospital.hms.hospital.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -10,6 +11,10 @@ public class HospitalRequestDto {
 
     @NotBlank(message = "Hospital code is required")
     @Size(max = 50, message = "Hospital code must not exceed 50 characters")
+        @Pattern(
+            regexp = "^[A-Za-z0-9_-]{2,50}$",
+            message = "Hospital code may contain only letters, numbers, underscore, and hyphen (2-50 chars)."
+        )
     private String hospitalCode;
 
     @NotBlank(message = "Hospital name is required")
@@ -25,7 +30,7 @@ public class HospitalRequestDto {
     @Size(max = 255, message = "Custom domain must not exceed 255 characters")
     private String customDomain;
 
-    @Size(max = 255, message = "Logo URL must not exceed 255 characters")
+    @Size(max = 1000000, message = "Logo value is too large. Max supported size is 1,000,000 characters.")
     private String logoUrl;
 
     @Size(max = 255, message = "Website URL must not exceed 255 characters")

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useCompanyProfile } from '../hooks/useCompanyProfile'
+import { normalizeLogoSrc } from '../lib/logoImage'
 import styles from './BrandIdentity.module.css'
 
 interface BrandIdentityProps {
@@ -11,6 +13,13 @@ interface BrandIdentityProps {
 export function BrandIdentity({ to = '/home', compact = false, className = '' }: BrandIdentityProps) {
   const { profile } = useCompanyProfile()
   const wrapperClass = compact ? `${styles.staticBrand} ${styles.compact}` : styles.staticBrand
+  const logoSrc = normalizeLogoSrc(profile.logoUrl)
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false)
+
+  useEffect(() => {
+    setLogoLoadFailed(false)
+  }, [logoSrc])
+
   const initials = (profile.logoText || profile.brandName || profile.companyName)
     .split(/\s+/)
     .filter(Boolean)
@@ -22,8 +31,8 @@ export function BrandIdentity({ to = '/home', compact = false, className = '' }:
     <>
       <span className={styles.mark} aria-hidden>
         <span className={styles.markGlow} />
-        {profile.logoUrl ? (
-          <img src={profile.logoUrl} alt="" className={styles.markImage} />
+        {logoSrc && !logoLoadFailed ? (
+          <img src={logoSrc} alt="" className={styles.markImage} onError={() => setLogoLoadFailed(true)} />
         ) : (
           <span className={styles.markText}>{initials}</span>
         )}

@@ -1,6 +1,8 @@
 package com.hospital.hms.auth.jwt;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.hospital.hms.auth.entity.AppUser;
+import com.hospital.hms.auth.repository.AppUserRepository;
 import com.hospital.hms.common.logging.MdcKeys;
 import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.tenant.service.TenantResolutionService;
@@ -31,11 +33,14 @@ import java.util.Optional;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenService tokenService;
+    private final AppUserRepository userRepository;
     private final TenantResolutionService tenantResolutionService;
 
     public JwtAuthenticationFilter(JwtTokenService tokenService,
+                                   AppUserRepository userRepository,
                                    TenantResolutionService tenantResolutionService) {
         this.tokenService = tokenService;
+        this.userRepository = userRepository;
         this.tenantResolutionService = tenantResolutionService;
     }
 
@@ -49,9 +54,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 DecodedJWT jwt = tokenService.verify(token);
                 String username = jwt.getSubject();
-                String role = jwt.getClaim("role").asString();
-                if (username != null && role != null) {
-                    Long hospitalId = jwt.getClaim("hospitalId").isNull() ? null : jwt.getClaim("hospitalId").asLong();
+                Long tokenVersion = jwt.getClaim("tokenVersion").isNull() ? null : jwt.getClaim("tokenVersion").asLong();
+                AppUser user = username == null ? null : userRepository.findByUsernameIgnoreCase(username).orElse(null);
+                if (user != null && Boolean.TRUE.equals(user.getActive()) && tokenVersion != null && tokenVersion.equals(user.getTokenVersion())) {
+                    Long hospitalId = user.getHospital() != null ? user.getHospital().getId() : null;
                     Optional<Hospital> tenantHospital = tenantResolutionService.resolveTenantHospital(request);
                     if (tenantHospital.isPresent() && !tenantHospital.get().getId().equals(hospitalId)) {
                         SecurityContextHolder.clearContext();
@@ -60,11 +66,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         response.getWriter().write("{\"status\":403,\"message\":\"Tenant host does not match authenticated user\"}");
                         return;
                     }
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(authority));
-                    String hospitalCode = jwt.getClaim("hospitalCode").isNull() ? null : jwt.getClaim("hospitalCode").asString();
-                    String tenantSlug = jwt.getClaim("tenantSlug").isNull() ? null : jwt.getClaim("tenantSlug").asString();
+                    String hospitalCode = user.getHospital() != null ? user.getHospital().getHospitalCode() : null;
+                    String tenantSlug = user.getHospital() != null ? user.getHospital().getSubdomain() : null;
                     if (hospitalId != null || hospitalCode != null || tenantSlug != null) {
                         Map<String, Object> details = new LinkedHashMap<>();
                         details.put("hospitalId", hospitalId);

@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { getTenantContext, type TenantContextDto } from '../api/tenant'
 import { getTenantHostAliasFromPath, setTenantHostAlias } from '../lib/tenantHostAlias'
 
 const FailSafeMs = 2000
+const TenantRefreshMs = 15000
 
 interface AppBootstrapContextValue {
   setReady: () => void
@@ -25,6 +26,27 @@ export function AppBootstrap({ children }: { children: React.ReactNode }) {
 
   const setReady = () => setReadyState(true)
 
+  const applyTenant = useCallback((data: TenantContextDto | null) => {
+    setTenant(data)
+    if (!data) return
+    if (data.tenantResolved && data.hospitalName) {
+      document.title = `${data.hospitalName} | HMS`
+    } else if (data.platformHost) {
+      document.title = 'HMS Platform | Login'
+    }
+  }, [])
+
+  const refreshTenantContext = useCallback(async () => {
+    try {
+      const data = await getTenantContext()
+      applyTenant(data)
+    } catch {
+      applyTenant(null)
+    } finally {
+      setTenantLoading(false)
+    }
+  }, [applyTenant])
+
   useEffect(() => {
     let active = true
 
@@ -36,30 +58,34 @@ export function AppBootstrap({ children }: { children: React.ReactNode }) {
       setTenantHostAlias(tenantAlias)
     }
 
-    getTenantContext()
-      .then((data) => {
-        if (!active) return
-        setTenant(data)
-        if (data.tenantResolved && data.hospitalName) {
-          document.title = `${data.hospitalName} | HMS`
-        } else if (data.platformHost) {
-          document.title = 'HMS Platform | Login'
-        }
-      })
-      .catch(() => {
-        if (!active) return
-        setTenant(null)
-      })
-      .finally(() => {
-        if (active) {
-          setTenantLoading(false)
-        }
-      })
+    refreshTenantContext()
+
+    const intervalId = window.setInterval(() => {
+      if (!active) return
+      refreshTenantContext()
+    }, TenantRefreshMs)
+
+    const refreshOnFocus = () => {
+      if (!active) return
+      refreshTenantContext()
+    }
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshOnFocus()
+      }
+    }
+
+    window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', refreshOnVisible)
 
     return () => {
       active = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', refreshOnFocus)
+      document.removeEventListener('visibilitychange', refreshOnVisible)
     }
-  }, [])
+  }, [refreshTenantContext])
 
   useEffect(() => {
     const t = setTimeout(() => setStuck(true), FailSafeMs)

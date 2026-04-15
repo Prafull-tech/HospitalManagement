@@ -45,7 +45,13 @@ describe('AuthContext', () => {
   it('restores user from localStorage', () => {
     localStorage.setItem(
       'hms_auth',
-      JSON.stringify({ username: 'admin', role: 'ADMIN', fullName: 'Admin', token: 'tok' })
+      JSON.stringify({
+        username: 'admin',
+        role: 'ADMIN',
+        fullName: 'Admin',
+        token: 'tok',
+        sessionExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+      })
     )
     render(
       <BrowserRouter>
@@ -56,5 +62,29 @@ describe('AuthContext', () => {
     )
     expect(screen.getByTestId('auth').textContent).toBe('yes')
     expect(screen.getByTestId('user').textContent).toBe('admin')
+  })
+
+  it('clears expired stored auth during bootstrap', () => {
+    localStorage.setItem(
+      'hms_auth',
+      JSON.stringify({
+        username: 'admin',
+        role: 'ADMIN',
+        fullName: 'Admin',
+        token: 'tok',
+        sessionExpiresAt: new Date(Date.now() - 60_000).toISOString(),
+      })
+    )
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      </BrowserRouter>
+    )
+
+    expect(screen.getByTestId('auth').textContent).toBe('no')
+    expect(localStorage.getItem('hms_auth')).toBeNull()
   })
 })

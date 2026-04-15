@@ -1,0 +1,2 @@
+ALTER TABLE hms_users
+    ADD COLUMN IF NOT EXISTS token_version BIGINT NOT NULL DEFAULT 0;

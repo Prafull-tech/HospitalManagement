@@ -22,28 +22,32 @@ public class JwtTokenService {
 
     private final Algorithm algorithm;
     private final long expiryMinutes;
-    private final long refreshExpiryDays;
+    private final long refreshExpiryMinutes;
     private final RefreshTokenRepository refreshTokenRepository;
 
     public JwtTokenService(
             @Value("${hms.security.jwt.secret}") String secret,
             @Value("${hms.security.jwt.expiry-minutes:30}") long expiryMinutes,
-            @Value("${hms.security.jwt.refresh-expiry-days:7}") long refreshExpiryDays,
+            @Value("${hms.security.jwt.refresh-expiry-minutes:30}") long refreshExpiryMinutes,
             RefreshTokenRepository refreshTokenRepository) {
         this.algorithm = Algorithm.HMAC256(secret);
         this.expiryMinutes = expiryMinutes;
-        this.refreshExpiryDays = refreshExpiryDays;
+        this.refreshExpiryMinutes = refreshExpiryMinutes;
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public String generateToken(AppUser user) {
-        Instant now = Instant.now();
+        return generateToken(user, Instant.now());
+    }
+
+    public String generateToken(AppUser user, Instant issuedAt) {
         var builder = JWT.create()
                 .withSubject(user.getUsername())
                 .withClaim("role", user.getRole().name())
+                .withClaim("tokenVersion", user.getTokenVersion())
                 .withJWTId(UUID.randomUUID().toString())
-                .withIssuedAt(Date.from(now))
-                .withExpiresAt(Date.from(now.plus(expiryMinutes, ChronoUnit.MINUTES)));
+                .withIssuedAt(Date.from(issuedAt))
+                .withExpiresAt(Date.from(getAccessTokenExpiresAt(issuedAt)));
 
         if (user.getHospital() != null) {
             builder.withClaim("hospitalId", user.getHospital().getId())
@@ -58,15 +62,28 @@ public class JwtTokenService {
         return JWT.require(algorithm).build().verify(token);
     }
 
+    public Instant getAccessTokenExpiresAt(Instant issuedAt) {
+        return issuedAt.plus(expiryMinutes, ChronoUnit.MINUTES);
+    }
+
+    public Instant getSessionExpiresAt(Instant issuedAt) {
+        return issuedAt.plus(refreshExpiryMinutes, ChronoUnit.MINUTES);
+    }
+
     @Transactional
-    public String createRefreshToken(String username) {
+    public RefreshToken createRefreshToken(String username) {
+        return createRefreshToken(username, getSessionExpiresAt(Instant.now()));
+    }
+
+    @Transactional
+    public RefreshToken createRefreshToken(String username, Instant expiresAt) {
         String tokenValue = UUID.randomUUID().toString();
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setToken(tokenValue);
         refreshToken.setUsername(username);
-        refreshToken.setExpiresAt(Instant.now().plus(refreshExpiryDays, ChronoUnit.DAYS));
+        refreshToken.setExpiresAt(expiresAt);
         refreshTokenRepository.save(refreshToken);
-        return tokenValue;
+        return refreshToken;
     }
 
     @Transactional
@@ -77,10 +94,10 @@ public class JwtTokenService {
     }
 
     @Transactional
-    public String rotateRefreshToken(RefreshToken oldToken) {
+    public RefreshToken rotateRefreshToken(RefreshToken oldToken) {
         oldToken.setRevoked(true);
         refreshTokenRepository.save(oldToken);
-        return createRefreshToken(oldToken.getUsername());
+        return createRefreshToken(oldToken.getUsername(), oldToken.getExpiresAt());
     }
 
     @Transactional

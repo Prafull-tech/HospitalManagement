@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listHospitals, createHospital, toggleHospitalStatus, type HospitalDto, type HospitalInput } from '../../api/superAdmin'
+import { fileToLogoDataUrl, normalizeLogoSrc } from '../../lib/logoImage'
 import styles from './SuperAdmin.module.css'
 
 function getVisibleHospitalFormError(error: string, customDomain: string | null | undefined) {
@@ -123,11 +124,30 @@ function AddHospitalModal({ onClose, onCreated }: { onClose: () => void; onCreat
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const visibleError = getVisibleHospitalFormError(error, form.customDomain)
+  const logoPreviewSrc = normalizeLogoSrc(form.logoUrl)
 
   const updateForm = (patch: Partial<HospitalInput>) => {
     setError('')
     setForm((current) => ({ ...current, ...patch }))
+  }
+
+  const handleLogoFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0]
+    if (!selected) return
+
+    setUploadingLogo(true)
+    setError('')
+    try {
+      const dataUrl = await fileToLogoDataUrl(selected)
+      updateForm({ logoUrl: dataUrl })
+    } catch (e: any) {
+      setError(e?.message || 'Unable to upload logo image')
+    } finally {
+      setUploadingLogo(false)
+      event.target.value = ''
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,7 +216,32 @@ function AddHospitalModal({ onClose, onCreated }: { onClose: () => void; onCreat
           <div className={styles.formRow}>
             <label className={styles.label}>Logo URL</label>
             <input className={styles.input} value={form.logoUrl || ''}
-              onChange={(e) => updateForm({ logoUrl: e.target.value })} />
+              onChange={(e) => updateForm({ logoUrl: e.target.value })}
+              placeholder="https://.../logo.png"
+            />
+            <div className={styles.formActions}>
+              <label className={styles.secondaryBtn}>
+                {uploadingLogo ? 'Uploading…' : 'Upload image'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={handleLogoFileChange}
+                  style={{ display: 'none' }}
+                  disabled={uploadingLogo || saving}
+                />
+              </label>
+              {form.logoUrl ? (
+                <button
+                  type="button"
+                  className={styles.textBtn}
+                  onClick={() => updateForm({ logoUrl: '' })}
+                >
+                  Clear logo
+                </button>
+              ) : null}
+            </div>
+            <div className={styles.fieldHelp}>You can paste a logo URL or upload an image (max 300 KB).</div>
+            {logoPreviewSrc ? <img src={logoPreviewSrc} alt="Logo preview" className={styles.logoPreview} /> : null}
           </div>
           <div className={styles.formRow}>
             <label className={styles.label}>Contact Email</label>

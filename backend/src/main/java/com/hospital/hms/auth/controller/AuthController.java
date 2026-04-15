@@ -170,13 +170,19 @@ public class AuthController {
             if (tenantMismatch != null) {
                 return tenantMismatch;
             }
-            String accessToken = tokenService.generateToken(user);
-            String refreshToken = tokenService.createRefreshToken(user.getUsername());
+            Instant issuedAt = Instant.now();
+            String accessToken = tokenService.generateToken(user, issuedAt);
+            RefreshToken refreshToken = tokenService.createRefreshToken(
+                    user.getUsername(),
+                    tokenService.getSessionExpiresAt(issuedAt)
+            );
             log.info("Login success for user={}", user.getUsername());
             Map<String, Object> resp = new LinkedHashMap<>(buildProfileResponse(user));
             resp.put("token", accessToken);
-            resp.put("refreshToken", refreshToken);
-            resp.put("issuedAt", Instant.now().toString());
+            resp.put("refreshToken", refreshToken.getToken());
+            resp.put("issuedAt", issuedAt.toString());
+            resp.put("expiresAt", tokenService.getAccessTokenExpiresAt(issuedAt).toString());
+            resp.put("sessionExpiresAt", refreshToken.getExpiresAt().toString());
             return ResponseEntity.ok(resp);
         } catch (BadCredentialsException | UsernameNotFoundException ex) {
             log.warn("Login failed for user={}: {}", username, ex.getMessage());
@@ -200,12 +206,16 @@ public class AuthController {
         if (tenantMismatch != null) {
             return tenantMismatch;
         }
-        String newAccessToken = tokenService.generateToken(user);
-        String newRefreshToken = tokenService.rotateRefreshToken(existing);
+        Instant issuedAt = Instant.now();
+        String newAccessToken = tokenService.generateToken(user, issuedAt);
+        RefreshToken newRefreshToken = tokenService.rotateRefreshToken(existing);
         log.info("Token refreshed for user={}", user.getUsername());
         Map<String, Object> resp = new LinkedHashMap<>(buildProfileResponse(user));
         resp.put("token", newAccessToken);
-        resp.put("refreshToken", newRefreshToken);
+        resp.put("refreshToken", newRefreshToken.getToken());
+        resp.put("issuedAt", issuedAt.toString());
+        resp.put("expiresAt", tokenService.getAccessTokenExpiresAt(issuedAt).toString());
+        resp.put("sessionExpiresAt", newRefreshToken.getExpiresAt().toString());
         return ResponseEntity.ok(resp);
     }
 
@@ -214,6 +224,10 @@ public class AuthController {
     public ResponseEntity<?> logout() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()) {
+            userRepository.findByUsernameIgnoreCase(auth.getName()).ifPresent(user -> {
+                user.setTokenVersion(user.getTokenVersion() + 1);
+                userRepository.save(user);
+            });
             tokenService.revokeAllTokensForUser(auth.getName());
             log.info("Logout (all refresh tokens revoked) for user={}", auth.getName());
         }

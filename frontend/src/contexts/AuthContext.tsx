@@ -2,6 +2,7 @@
 import type { HMSRole } from '../config/sidebarMenu'
 import { apiClient } from '../api/client'
 import { setAuthClearCallback } from '../api/authRedirect'
+import { clearStoredAuth, getStoredAuth, getStoredAuthExpiryMs, getValidStoredAuth, saveStoredAuth } from '../lib/authStorage'
 
 export type Role = HMSRole
 
@@ -17,6 +18,8 @@ export interface User {
   hospitalCode?: string
   hospitalName?: string
   tenantSlug?: string
+  expiresAt?: string
+  sessionExpiresAt?: string
 }
 
 interface AuthState {
@@ -31,36 +34,34 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null)
 
 function getInitialUser(): User | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const auth = localStorage.getItem('hms_auth')
-    if (!auth) return null
-    const parsed = JSON.parse(auth) as {
-      username?: string; role?: string; fullName?: string
-      email?: string; phone?: string; active?: boolean; createdAt?: string
-      hospitalId?: number | null; hospitalCode?: string; hospitalName?: string; tenantSlug?: string
+  const parsed = getValidStoredAuth()
+  if (parsed?.username && parsed?.role) {
+    return {
+      username: parsed.username,
+      roles: [parsed.role as Role],
+      fullName: parsed.fullName,
+      email: parsed.email,
+      phone: parsed.phone,
+      active: parsed.active,
+      createdAt: parsed.createdAt,
+      hospitalId: parsed.hospitalId,
+      hospitalCode: parsed.hospitalCode,
+      hospitalName: parsed.hospitalName,
+      tenantSlug: parsed.tenantSlug,
+      expiresAt: parsed.expiresAt,
+      sessionExpiresAt: parsed.sessionExpiresAt,
     }
-    if (parsed?.username && parsed?.role) {
-      return {
-        username: parsed.username,
-        roles: [parsed.role as Role],
-        fullName: parsed.fullName,
-        email: parsed.email,
-        phone: parsed.phone,
-        active: parsed.active,
-        createdAt: parsed.createdAt,
-        hospitalId: parsed.hospitalId,
-        hospitalCode: parsed.hospitalCode,
-        hospitalName: parsed.hospitalName,
-        tenantSlug: parsed.tenantSlug,
-      }
-    }
-  } catch { /* ignore */ }
+  }
   return null
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(getInitialUser)
+
+  const clearAuthState = useCallback(() => {
+    setUser(null)
+    clearStoredAuth()
+  }, [])
 
   const login = useCallback(async (username: string, password: string) => {
     const res = await apiClient.post('/auth/login', { username, password })
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token: string; refreshToken: string; username: string; role: string
       fullName: string; email?: string; phone?: string; active?: boolean; createdAt?: string
       hospitalId?: number | null; hospitalCode?: string; hospitalName?: string; tenantSlug?: string
+      expiresAt?: string; sessionExpiresAt?: string
     }
     const u: User = {
       username: data.username,
@@ -81,9 +83,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hospitalCode: data.hospitalCode,
       hospitalName: data.hospitalName,
       tenantSlug: data.tenantSlug,
+      expiresAt: data.expiresAt,
+      sessionExpiresAt: data.sessionExpiresAt,
     }
     setUser(u)
-    localStorage.setItem('hms_auth', JSON.stringify({
+    saveStoredAuth({
       username: data.username,
       role: data.role,
       fullName: data.fullName,
@@ -97,31 +101,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       tenantSlug: data.tenantSlug,
       token: data.token,
       refreshToken: data.refreshToken,
-    }))
+      expiresAt: data.expiresAt,
+      sessionExpiresAt: data.sessionExpiresAt,
+    })
   }, [])
 
   const logout = useCallback(() => {
-    const auth = localStorage.getItem('hms_auth')
-    if (auth) {
-      try {
-        const { refreshToken } = JSON.parse(auth)
-        if (refreshToken) { apiClient.post('/auth/logout').catch(() => {}) }
-      } catch { /* ignore */ }
+    const auth = getStoredAuth()
+    if (auth?.refreshToken) {
+      apiClient.post('/auth/logout').catch(() => {})
     }
-    setUser(null)
-    localStorage.removeItem('hms_auth')
-  }, [])
+    clearAuthState()
+  }, [clearAuthState])
 
   const updateUser = useCallback((patch: Partial<User>) => {
     setUser((prev) => {
       if (!prev) return prev
       const updated = { ...prev, ...patch }
-      const stored = localStorage.getItem('hms_auth')
+      const stored = getStoredAuth()
       if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          localStorage.setItem('hms_auth', JSON.stringify({ ...parsed, ...patch, roles: undefined, role: parsed.role }))
-        } catch { /* ignore */ }
+        saveStoredAuth({ ...stored, ...patch, role: stored.role })
       }
       return updated
     })
@@ -131,6 +130,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthClearCallback(logout)
     return () => setAuthClearCallback(null)
   }, [logout])
+
+  useEffect(() => {
+    const expiryMs = getStoredAuthExpiryMs(getStoredAuth())
+    if (!user || expiryMs === null) return
+
+    const timeoutMs = expiryMs - Date.now()
+    if (timeoutMs <= 0) {
+      clearAuthState()
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      clearAuthState()
+    }, timeoutMs)
+
+    return () => window.clearTimeout(timer)
+  }, [clearAuthState, user])
 
   const hasRole = useCallback(
     (...roles: Role[]) => {
