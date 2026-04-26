@@ -21,6 +21,8 @@ public interface OPDVisitRepository extends JpaRepository<OPDVisit, Long> {
 
     Optional<OPDVisit> findByVisitNumber(String visitNumber);
 
+       Optional<OPDVisit> findByIdAndPatientHospitalId(Long id, Long hospitalId);
+
     List<OPDVisit> findByVisitDateAndDoctorIdOrderByTokenNumberAsc(LocalDate visitDate, Long doctorId);
 
     @Query("SELECT v FROM OPDVisit v WHERE v.patient.hospital.id = :hospitalId AND v.visitDate = :visitDate AND v.doctor.id = :doctorId ORDER BY v.tokenNumber ASC")
@@ -99,4 +101,10 @@ public interface OPDVisitRepository extends JpaRepository<OPDVisit, Long> {
 
     @Query("SELECT COUNT(v) FROM OPDVisit v WHERE v.patient.hospital.id = :hospitalId AND v.visitDate >= :start AND v.visitDate <= :end")
     long countByHospitalIdAndVisitDateBetween(@Param("hospitalId") Long hospitalId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+       @Query("SELECT COUNT(v) FROM OPDVisit v WHERE v.patient.hospital.id = :hospitalId AND v.visitDate = :visitDate AND v.doctor.id = :doctorId AND v.visitStatus = :status")
+       long countByHospitalIdAndVisitDateAndDoctorIdAndVisitStatus(@Param("hospitalId") Long hospitalId,
+                                                                                                                @Param("visitDate") LocalDate visitDate,
+                                                                                                                @Param("doctorId") Long doctorId,
+                                                                                                                @Param("status") VisitStatus status);
 }

@@ -39,6 +39,14 @@ public class Hospital extends BaseIdEntity {
     @Column(name = "subdomain", unique = true, length = 100)
     private String subdomain;
 
+    /**
+     * Tenant database name for this hospital (MySQL database/catalog).
+     * Example: hosp_city_general
+     */
+    @Size(max = 100)
+    @Column(name = "tenant_db_name", unique = true, length = 100)
+    private String tenantDbName;
+
     @Size(max = 255)
     @Column(name = "custom_domain", unique = true, length = 255)
     private String customDomain;
@@ -154,6 +162,14 @@ public class Hospital extends BaseIdEntity {
 
     public void setSubdomain(String subdomain) {
         this.subdomain = subdomain;
+    }
+
+    public String getTenantDbName() {
+        return tenantDbName;
+    }
+
+    public void setTenantDbName(String tenantDbName) {
+        this.tenantDbName = tenantDbName;
     }
 
     public String getCustomDomain() {

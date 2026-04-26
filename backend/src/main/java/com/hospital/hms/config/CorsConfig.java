@@ -10,8 +10,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -28,6 +30,9 @@ public class CorsConfig {
     @Value("${hms.tenant.base-domain:hms.com}")
     private String tenantBaseDomain;
 
+    @Value("${hms.tenant.alias-base-domains:}")
+    private String tenantAliasBaseDomains;
+
     public CorsConfig(Environment environment) {
         this.environment = environment;
     }
@@ -35,24 +40,35 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        String normalizedTenantBaseDomain = normalizeBaseDomain(tenantBaseDomain);
-        String tenantOriginPatterns = "http://*." + normalizedTenantBaseDomain + ":*,https://*." + normalizedTenantBaseDomain;
+        Set<String> tenantDomains = new LinkedHashSet<>();
+        tenantDomains.add(normalizeBaseDomain(tenantBaseDomain));
+        tenantDomains.addAll(parseAliasBaseDomains(tenantAliasBaseDomains));
+
+        List<String> tenantOriginPatterns = tenantDomains.stream()
+                .filter(StringUtils::hasText)
+                .flatMap(domain -> Arrays.stream(new String[] {
+                        "http://*." + domain + ":*",
+                        "https://*." + domain,
+                        "https://*." + domain + ":*"
+                }))
+                .collect(Collectors.toList());
 
         String patternsRaw = allowedOriginPatterns;
         if (!StringUtils.hasText(patternsRaw) && Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
             patternsRaw = "http://localhost:*,http://127.0.0.1:*,http://192.168.*:*";
         }
-        if (StringUtils.hasText(patternsRaw) && !patternsRaw.contains(normalizedTenantBaseDomain)) {
-            patternsRaw += "," + tenantOriginPatterns;
-        } else if (!StringUtils.hasText(patternsRaw)) {
-            patternsRaw = tenantOriginPatterns;
-        }
 
+        LinkedHashSet<String> mergedPatterns = new LinkedHashSet<>();
         if (StringUtils.hasText(patternsRaw)) {
-            List<String> patterns = Arrays.stream(patternsRaw.split(","))
+            mergedPatterns.addAll(Arrays.stream(patternsRaw.split(","))
                     .map(String::trim)
                     .filter(StringUtils::hasText)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()));
+        }
+        mergedPatterns.addAll(tenantOriginPatterns);
+
+        if (!mergedPatterns.isEmpty()) {
+            List<String> patterns = List.copyOf(mergedPatterns);
             configuration.setAllowedOriginPatterns(patterns);
         } else {
             List<String> origins = Arrays.stream(allowedOrigins.split(","))
@@ -77,5 +93,15 @@ public class CorsConfig {
             return "hms.com";
         }
         return domain.trim().toLowerCase(Locale.ROOT).replaceFirst("^\\.+", "");
+    }
+
+    private List<String> parseAliasBaseDomains(String rawAliasDomains) {
+        if (!StringUtils.hasText(rawAliasDomains)) {
+            return List.of();
+        }
+        return Arrays.stream(rawAliasDomains.split(","))
+                .map(this::normalizeBaseDomain)
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toList());
     }
 }

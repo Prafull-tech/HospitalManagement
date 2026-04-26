@@ -1,11 +1,14 @@
 package com.hospital.hms.auth.jwt;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.hospital.hms.auth.JwtUtil;
 import com.hospital.hms.auth.entity.AppUser;
 import com.hospital.hms.auth.repository.AppUserRepository;
 import com.hospital.hms.common.logging.MdcKeys;
 import com.hospital.hms.hospital.entity.Hospital;
 import com.hospital.hms.tenant.service.TenantResolutionService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,13 +38,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService tokenService;
     private final AppUserRepository userRepository;
     private final TenantResolutionService tenantResolutionService;
+    private final JwtUtil jwtUtil;
 
     public JwtAuthenticationFilter(JwtTokenService tokenService,
                                    AppUserRepository userRepository,
-                                   TenantResolutionService tenantResolutionService) {
+                                   TenantResolutionService tenantResolutionService,
+                                   JwtUtil jwtUtil) {
         this.tokenService = tokenService;
         this.userRepository = userRepository;
         this.tenantResolutionService = tenantResolutionService;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -82,8 +88,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     MDC.put(MdcKeys.USER_ID, username);
                 }
             } catch (Exception ex) {
-                // Invalid / expired token -> clear context; controller layer will return 401
-                SecurityContextHolder.clearContext();
+                // Fall back to the multi-tenant token format (JwtUtil) used by /auth/super-admin/login and /auth/hospital/login.
+                try {
+                    Jws<Claims> parsed = jwtUtil.parse(token);
+                    Claims claims = parsed.getBody();
+                    String role = claims.get("role", String.class);
+                    boolean isSuperAdmin = Boolean.TRUE.equals(claims.get("isSuperAdmin", Boolean.class))
+                            || (role != null && role.equalsIgnoreCase("SUPER_ADMIN"));
+                    String effectiveRole = (role != null && !role.isBlank())
+                            ? role
+                            : (isSuperAdmin ? "SUPER_ADMIN" : null);
+
+                    if (effectiveRole != null && !effectiveRole.isBlank()) {
+                        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + effectiveRole.toUpperCase());
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(claims.getSubject(), null, Collections.singletonList(authority));
+                        Map<String, Object> details = new LinkedHashMap<>();
+                        Object hospitalIdClaim = claims.get("hospitalId");
+                        if (hospitalIdClaim != null) details.put("hospitalId", hospitalIdClaim);
+                        String tenantSlug = claims.get("tenantSlug", String.class);
+                        if (tenantSlug != null) details.put("tenantSlug", tenantSlug);
+                        String schemaName = claims.get("schemaName", String.class);
+                        if (schemaName != null) details.put("schemaName", schemaName);
+                        if (!details.isEmpty()) {
+                            authentication.setDetails(details);
+                        }
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        MDC.put(MdcKeys.USER_ID, claims.getSubject());
+                    } else {
+                        SecurityContextHolder.clearContext();
+                    }
+                } catch (Exception ignored) {
+                    // Invalid / expired token -> clear context; controller layer will return 401
+                    SecurityContextHolder.clearContext();
+                }
             }
         }
 

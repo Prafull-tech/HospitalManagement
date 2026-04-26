@@ -40,7 +40,6 @@ public class TenantRequestContextFilter extends OncePerRequestFilter {
     }
 
     private TenantRequestContext buildContext(HttpServletRequest request) {
-        Optional<Hospital> resolvedHospital = tenantResolutionService.resolveTenantHospital(request);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         Long authHospitalId = extractDetail(authentication, "hospitalId", Long.class);
@@ -50,12 +49,20 @@ public class TenantRequestContextFilter extends OncePerRequestFilter {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_SUPER_ADMIN"::equals);
 
+        // Super-admin traffic must always stay on the platform (master) context, even if the request
+        // host (or X-HMS-Tenant-Host) points at a tenant domain from a previous session.
+        if (superAdmin) {
+            return new TenantRequestContext(null, null, null, null, true, false);
+        }
+
+        Optional<Hospital> resolvedHospital = tenantResolutionService.resolveTenantHospital(request);
         if (resolvedHospital.isPresent()) {
             Hospital hospital = resolvedHospital.get();
             return new TenantRequestContext(
                     hospital.getId(),
                     hospital.getHospitalCode(),
                     hospital.getSubdomain(),
+                    hospital.getTenantDbName(),
                     false,
                     true
             );
@@ -66,12 +73,13 @@ public class TenantRequestContextFilter extends OncePerRequestFilter {
                     authHospitalId,
                     authHospitalCode,
                     authTenantSlug,
+                    extractDetail(authentication, "schemaName", String.class),
                     tenantResolutionService.isPlatformHost(request),
                     false
             );
         }
 
-        return new TenantRequestContext(null, null, null, tenantResolutionService.isPlatformHost(request), false);
+        return new TenantRequestContext(null, null, null, null, tenantResolutionService.isPlatformHost(request), false);
     }
 
     @SuppressWarnings("unchecked")

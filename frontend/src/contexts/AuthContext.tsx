@@ -13,6 +13,7 @@ export interface User {
   email?: string
   phone?: string
   active?: boolean
+  mustChangePassword?: boolean
   createdAt?: string
   hospitalId?: number | null
   hospitalCode?: string
@@ -24,7 +25,7 @@ export interface User {
 
 interface AuthState {
   user: User | null
-  login: (username: string, password: string) => Promise<void>
+  login: (usernameOrEmail: string, password: string, hospitalSlug?: string | null) => Promise<User>
   logout: () => void
   updateUser: (patch: Partial<User>) => void
   hasRole: (...roles: Role[]) => boolean
@@ -43,6 +44,7 @@ function getInitialUser(): User | null {
       email: parsed.email,
       phone: parsed.phone,
       active: parsed.active,
+      mustChangePassword: parsed.mustChangePassword,
       createdAt: parsed.createdAt,
       hospitalId: parsed.hospitalId,
       hospitalCode: parsed.hospitalCode,
@@ -63,47 +65,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearStoredAuth()
   }, [])
 
-  const login = useCallback(async (username: string, password: string) => {
-    const res = await apiClient.post('/auth/login', { username, password })
-    const data = res.data as {
-      token: string; refreshToken: string; username: string; role: string
-      fullName: string; email?: string; phone?: string; active?: boolean; createdAt?: string
-      hospitalId?: number | null; hospitalCode?: string; hospitalName?: string; tenantSlug?: string
-      expiresAt?: string; sessionExpiresAt?: string
+  const login = useCallback(async (usernameOrEmail: string, password: string, hospitalSlug?: string | null) => {
+    if (hospitalSlug) {
+      const res = await apiClient.post('/auth/hospital/login', { email: usernameOrEmail, password, hospitalSlug })
+      const payload = res.data as { success: boolean; message: string; data?: any }
+      const data = payload.data as {
+        token: string
+        user: { id: string; name: string; email: string; role: string }
+        hospital: { id: number; name: string; slug: string; logoUrl?: string | null }
+      }
+      const u: User = {
+        username: data.user.email,
+        roles: [data.user.role.toUpperCase() as Role],
+        fullName: data.user.name,
+        email: data.user.email,
+        hospitalId: data.hospital?.id,
+        hospitalName: data.hospital?.name,
+        tenantSlug: data.hospital?.slug,
+      }
+      setUser(u)
+      saveStoredAuth({
+        username: u.username,
+        role: u.roles[0],
+        fullName: u.fullName,
+        email: u.email,
+        hospitalId: u.hospitalId,
+        hospitalName: u.hospitalName,
+        tenantSlug: u.tenantSlug,
+        token: data.token,
+      })
+      return u
+    }
+
+    const res = await apiClient.post('/auth/super-admin/login', { username: usernameOrEmail, password })
+    const payload = res.data as { success: boolean; message: string; data?: any }
+    const data = payload.data as {
+      token: string
+      user: { id: number; name: string; email?: string; role: string }
+      hospital: null
     }
     const u: User = {
-      username: data.username,
-      roles: [data.role as Role],
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
-      active: data.active,
-      createdAt: data.createdAt,
-      hospitalId: data.hospitalId,
-      hospitalCode: data.hospitalCode,
-      hospitalName: data.hospitalName,
-      tenantSlug: data.tenantSlug,
-      expiresAt: data.expiresAt,
-      sessionExpiresAt: data.sessionExpiresAt,
+      username: usernameOrEmail,
+      roles: [data.user.role as Role],
+      fullName: data.user.name,
+      email: data.user.email,
     }
     setUser(u)
     saveStoredAuth({
-      username: data.username,
-      role: data.role,
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
-      active: data.active,
-      createdAt: data.createdAt,
-      hospitalId: data.hospitalId,
-      hospitalCode: data.hospitalCode,
-      hospitalName: data.hospitalName,
-      tenantSlug: data.tenantSlug,
+      username: u.username,
+      role: u.roles[0],
+      fullName: u.fullName,
+      email: u.email,
       token: data.token,
-      refreshToken: data.refreshToken,
-      expiresAt: data.expiresAt,
-      sessionExpiresAt: data.sessionExpiresAt,
     })
+    return u
   }, [])
 
   const logout = useCallback(() => {

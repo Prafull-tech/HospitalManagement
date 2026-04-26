@@ -9,6 +9,7 @@ import { doctorsApi } from '../api/doctors'
 import { opdApi } from '../api/opd'
 import type { OPDVisitResponse, VisitStatus } from '../types/opd'
 import type { DoctorResponse } from '../types/doctor'
+import styles from './OPDQueuePage.module.css'
 
 const PAGE_SIZE = 500
 
@@ -24,18 +25,27 @@ const STATUS_OPTIONS: { value: VisitStatus | ''; label: string }[] = [
 function statusBadgeClass(s: VisitStatus): string {
   switch (s) {
     case 'REGISTERED':
-      return 'bg-primary bg-opacity-10 text-primary'
+      return `${styles.statusBadge} ${styles.statusRegistered}`
     case 'IN_CONSULTATION':
-      return 'bg-warning bg-opacity-10 text-warning'
+      return `${styles.statusBadge} ${styles.statusInConsultation}`
     case 'COMPLETED':
-      return 'bg-success bg-opacity-10 text-success'
+      return `${styles.statusBadge} ${styles.statusCompleted}`
     case 'REFERRED':
-      return 'bg-info bg-opacity-10 text-info'
+      return `${styles.statusBadge} ${styles.statusReferred}`
     case 'CANCELLED':
-      return 'bg-danger bg-opacity-10 text-danger'
+      return `${styles.statusBadge} ${styles.statusCancelled}`
     default:
-      return 'bg-secondary bg-opacity-10 text-secondary'
+      return styles.statusBadge
   }
+}
+
+function formatVisitDate(value?: string) {
+  if (!value) return '—'
+  return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 export function OPDQueuePage() {
@@ -115,9 +125,14 @@ export function OPDQueuePage() {
     loadVisits({})
   }
 
+  const registeredCount = visits.filter((visit) => visit.visitStatus === 'REGISTERED').length
+  const inConsultationCount = visits.filter((visit) => visit.visitStatus === 'IN_CONSULTATION').length
+  const completedCount = visits.filter((visit) => visit.visitStatus === 'COMPLETED').length
+  const filteredLabel = hasFilters ? `Filtered results (${visits.length})` : `All visits (${visits.length})`
+
   return (
-    <div className="d-flex flex-column gap-3">
-      <nav aria-label="Breadcrumb">
+    <div className={styles.page}>
+      <nav aria-label="Breadcrumb" className={styles.breadcrumbWrap}>
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item">
             <Link to="/opd">OPD</Link>
@@ -128,105 +143,168 @@ export function OPDQueuePage() {
         </ol>
       </nav>
 
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <h1 className="h4 mb-0">OPD Visits / Queue</h1>
-        <Link to="/opd/register" className="btn btn-outline-primary btn-sm">
-          Register visit
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="card border shadow-sm">
-        <div className="card-body">
-          <h6 className="card-title mb-3">Filter by details</h6>
-          <form onSubmit={handleApplyFilters} className="row g-2 g-md-3">
-            <div className="col-12 col-md-6 col-lg">
-              <label htmlFor="opd-filter-doctor" className="form-label small mb-1">
-                Doctor
-              </label>
-              <select
-                id="opd-filter-doctor"
-                className="form-select form-select-sm"
-                value={filterDoctorId || ''}
-                onChange={(e) => setFilterDoctorId(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">Any doctor</option>
-                {doctors.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.fullName} — {d.departmentName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-12 col-md-6 col-lg">
-              <label htmlFor="opd-filter-date" className="form-label small mb-1">
-                Visit date
-              </label>
-              <input
-                id="opd-filter-date"
-                type="date"
-                className="form-control form-control-sm"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg">
-              <label htmlFor="opd-filter-status" className="form-label small mb-1">
-                Status
-              </label>
-              <select
-                id="opd-filter-status"
-                className="form-select form-select-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus((e.target.value || '') as VisitStatus | '')}
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value || 'any'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-12 col-md-6 col-lg">
-              <label htmlFor="opd-filter-name" className="form-label small mb-1">
-                Patient name (partial)
-              </label>
-              <input
-                id="opd-filter-name"
-                type="text"
-                className="form-control form-control-sm"
-                placeholder="Name"
-                value={filterPatientName}
-                onChange={(e) => setFilterPatientName(e.target.value)}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg">
-              <label htmlFor="opd-filter-visitno" className="form-label small mb-1">
-                Visit number
-              </label>
-              <input
-                id="opd-filter-visitno"
-                type="text"
-                className="form-control form-control-sm"
-                placeholder="e.g. OPD-2025-00001"
-                value={filterVisitNumber}
-                onChange={(e) => setFilterVisitNumber(e.target.value)}
-              />
-            </div>
-            <div className="col-12 col-lg-auto d-flex align-items-end gap-2">
-              <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>
-                {loading ? 'Loading…' : 'Apply'}
-              </button>
-              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={handleClearFilters}>
-                Clear
-              </button>
-            </div>
-          </form>
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <span className={styles.heroEyebrow}>Outpatient Flow</span>
+          <h1 className={styles.heroTitle}>OPD Queue</h1>
+          <p className={styles.heroText}>
+            Monitor the live visit stream, isolate bottlenecks fast, and jump directly into consultation from a cleaner queue view.
+          </p>
+          <div className={styles.heroActions}>
+            <Link to="/opd/register" className="btn btn-light btn-sm">
+              Register visit
+            </Link>
+            <button
+              type="button"
+              className="btn btn-outline-light btn-sm"
+              onClick={() => loadVisits({
+                doctorId: filterDoctorId || undefined,
+                visitDate: filterDate || undefined,
+                status: filterStatus || undefined,
+                patientName: filterPatientName || undefined,
+                visitNumber: filterVisitNumber || undefined,
+              })}
+              disabled={loading}
+            >
+              {loading ? 'Loading…' : 'Refresh queue'}
+            </button>
+          </div>
         </div>
-      </div>
+
+        <div className={styles.heroMeta}>
+          <div className={styles.heroPill}>
+            <span className={styles.heroPillLabel}>Total visible visits</span>
+            <strong className={styles.heroPillValue}>{visits.length}</strong>
+          </div>
+          <div className={styles.heroPill}>
+            <span className={styles.heroPillLabel}>Doctors loaded</span>
+            <strong className={styles.heroPillValue}>{doctors.length}</strong>
+          </div>
+          <div className={styles.heroPillMuted}>
+            <span className={styles.heroPillLabel}>Queue mode</span>
+            <strong className={styles.heroPillValue}>{hasFilters ? 'Filtered' : 'Live board'}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.statsGrid}>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Registered</span>
+          <strong className={styles.statValue}>{registeredCount}</strong>
+          <span className={styles.statMeta}>Waiting to enter consultation</span>
+        </article>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>In Consultation</span>
+          <strong className={styles.statValue}>{inConsultationCount}</strong>
+          <span className={styles.statMeta}>Currently active doctor sessions</span>
+        </article>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Completed</span>
+          <strong className={styles.statValue}>{completedCount}</strong>
+          <span className={styles.statMeta}>Visits already closed</span>
+        </article>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Filters</span>
+          <strong className={styles.statValue}>{hasFilters ? 'On' : 'Off'}</strong>
+          <span className={styles.statMeta}>{hasFilters ? 'Focused queue view enabled' : 'Showing the full OPD board'}</span>
+        </article>
+      </section>
+
+      <section className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <div>
+            <h2 className={styles.panelTitle}>Queue filters</h2>
+            <p className={styles.panelText}>Narrow the queue by clinician, date, patient, status, or a specific visit number.</p>
+          </div>
+          {hasFilters ? <span className={styles.filterIndicator}>Custom filter view active</span> : null}
+        </div>
+        <form onSubmit={handleApplyFilters} className={styles.filterGrid}>
+          <div className={styles.field}>
+            <label htmlFor="opd-filter-doctor" className={styles.fieldLabel}>
+                Doctor
+            </label>
+            <select
+              id="opd-filter-doctor"
+              className="form-select"
+              value={filterDoctorId || ''}
+              onChange={(e) => setFilterDoctorId(e.target.value ? Number(e.target.value) : '')}
+            >
+              <option value="">Any doctor</option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.fullName} — {d.departmentName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="opd-filter-date" className={styles.fieldLabel}>
+                Visit date
+            </label>
+            <input
+              id="opd-filter-date"
+              type="date"
+              className="form-control"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="opd-filter-status" className={styles.fieldLabel}>
+                Status
+            </label>
+            <select
+              id="opd-filter-status"
+              className="form-select"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus((e.target.value || '') as VisitStatus | '')}
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value || 'any'} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="opd-filter-name" className={styles.fieldLabel}>
+                Patient name (partial)
+            </label>
+            <input
+              id="opd-filter-name"
+              type="text"
+              className="form-control"
+              placeholder="Search patient name"
+              value={filterPatientName}
+              onChange={(e) => setFilterPatientName(e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="opd-filter-visitno" className={styles.fieldLabel}>
+                Visit number
+            </label>
+            <input
+              id="opd-filter-visitno"
+              type="text"
+              className="form-control"
+              placeholder="e.g. OPD-2025-00001"
+              value={filterVisitNumber}
+              onChange={(e) => setFilterVisitNumber(e.target.value)}
+            />
+          </div>
+          <div className={styles.actions}>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Loading…' : 'Apply filters'}
+            </button>
+            <button type="button" className="btn btn-outline-secondary" onClick={handleClearFilters}>
+              Clear
+            </button>
+          </div>
+        </form>
+      </section>
 
       {error && (
-        <div className="alert alert-danger d-flex align-items-center justify-content-between flex-wrap gap-2" role="alert">
+        <div className={styles.errorBanner} role="alert">
           <span>{error}</span>
           <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setError(null)}>
             Dismiss
@@ -234,12 +312,12 @@ export function OPDQueuePage() {
         </div>
       )}
 
-      {/* Results table */}
-      <div className="card border shadow-sm">
-        <div className="card-header bg-light py-2 d-flex align-items-center justify-content-between">
-          <h6 className="mb-0">
-            {hasFilters ? `Filtered results (${visits.length})` : `All visits (${visits.length})`}
-          </h6>
+      <section className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <div>
+            <h2 className={styles.panelTitle}>{filteredLabel}</h2>
+            <p className={styles.panelText}>Open any visit directly from the board and keep the queue moving without leaving the page.</p>
+          </div>
           <button
             type="button"
             className="btn btn-outline-primary btn-sm"
@@ -256,17 +334,15 @@ export function OPDQueuePage() {
           </button>
         </div>
         {loading ? (
-          <div className="card-body">
-            <div className="placeholder-glow">
-              <span className="placeholder col-12" />
-              <span className="placeholder col-12" />
-              <span className="placeholder col-12" />
-            </div>
+          <div className={styles.loadingState}>
+            <div className={styles.loadingLine} />
+            <div className={styles.loadingLine} />
+            <div className={styles.loadingLine} />
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-striped mb-0">
-              <thead className="table-light">
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
                 <tr>
                   <th>Token</th>
                   <th>Visit No</th>
@@ -281,7 +357,7 @@ export function OPDQueuePage() {
               <tbody>
                 {visits.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center text-muted py-4">
+                    <td colSpan={8} className={styles.emptyRow}>
                       {hasFilters
                         ? 'No visits match the current filters. Try clearing filters.'
                         : 'No OPD visits yet.'}
@@ -289,19 +365,30 @@ export function OPDQueuePage() {
                   </tr>
                 ) : (
                   visits.map((v) => (
-                    <tr key={v.id}>
-                      <td className="fw-semibold">{v.tokenNumber ?? '—'}</td>
-                      <td>{v.visitNumber}</td>
-                      <td>{v.patientName}</td>
-                      <td className="text-muted small">{v.patientUhid}</td>
-                      <td>{v.visitDate ?? '—'}</td>
-                      <td>{v.doctorName ?? '—'}</td>
+                    <tr key={v.id} className={styles.tableRow}>
                       <td>
-                        <span className={`badge ${statusBadgeClass(v.visitStatus)}`}>
+                        <span className={styles.tokenBadge}>{v.tokenNumber ?? '—'}</span>
+                      </td>
+                      <td>
+                        <div className={styles.primaryCell}>{v.visitNumber}</div>
+                      </td>
+                      <td>
+                        <div className={styles.primaryCell}>{v.patientName}</div>
+                      </td>
+                      <td>
+                        <span className={styles.secondaryCell}>{v.patientUhid}</span>
+                      </td>
+                      <td>{formatVisitDate(v.visitDate)}</td>
+                      <td>
+                        <div className={styles.primaryCell}>{v.doctorName ?? '—'}</div>
+                        <span className={styles.secondaryCell}>{v.departmentName ?? '—'}</span>
+                      </td>
+                      <td>
+                        <span className={statusBadgeClass(v.visitStatus)}>
                           {v.visitStatus.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td className="text-end">
+                      <td className={styles.actionCell}>
                         <Link to={`/opd/visits/${v.id}`} className="btn btn-sm btn-outline-primary">
                           Open
                         </Link>
@@ -313,7 +400,7 @@ export function OPDQueuePage() {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

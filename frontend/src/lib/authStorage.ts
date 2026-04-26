@@ -7,6 +7,7 @@ export interface StoredAuth {
   email?: string
   phone?: string
   active?: boolean
+  mustChangePassword?: boolean
   createdAt?: string
   hospitalId?: number | null
   hospitalCode?: string

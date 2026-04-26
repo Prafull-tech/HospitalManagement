@@ -1,0 +1,339 @@
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
+  gap: 1.25rem;
+  padding: 1.6rem 1.7rem;
+  border-radius: 1.5rem;
+  color: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.22), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.22), transparent 24%),
+    linear-gradient(135deg, #0f172a 0%, #123055 48%, #0f766e 100%);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
+}
+
+.heroEyebrow {
+  display: inline-flex;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0.9rem 0 0.45rem;
+  font-family: var(--hms-heading-font);
+  font-size: clamp(1.8rem, 2.4vw, 2.5rem);
+  line-height: 1.04;
+}
+
+.heroText {
+  margin: 0;
+  max-width: 62ch;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+}
+
+.heroMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.heroPill {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  min-height: 92px;
+}
+
+.heroPillLabel {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heroPillValue {
+  font-family: var(--hms-heading-font);
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.heroPillText {
+  margin: 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.statCard,
+.panel,
+.placeholderCard {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  box-shadow: var(--hms-shadow-card);
+}
+
+.statCard {
+  padding: 1.15rem 1.25rem;
+}
+
+.statLabel {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--hms-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.statValue {
+  font-family: var(--hms-heading-font);
+  color: var(--hms-text);
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.statMeta {
+  margin-top: 0.35rem;
+  color: var(--hms-text-muted);
+  font-size: 0.92rem;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 1.25rem;
+}
+
+.panel {
+  padding: 1.25rem 1.35rem;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: var(--hms-heading-font);
+  font-size: 1.1rem;
+  color: var(--hms-text);
+}
+
+.panelText {
+  margin: 0.35rem 0 0;
+  color: var(--hms-text-muted);
+  line-height: 1.5;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.8rem 0.7rem;
+  border-bottom: 1px solid var(--hms-card-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: var(--hms-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.table td {
+  color: var(--hms-text);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.listItem {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+}
+
+.listTitle {
+  margin: 0;
+  font-weight: 700;
+  color: var(--hms-text);
+}
+
+.listMeta {
+  margin: 0.35rem 0 0;
+  color: var(--hms-text-muted);
+  font-size: 0.92rem;
+}
+
+.linkGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.linkCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+  text-decoration: none;
+  color: var(--hms-text);
+}
+
+.linkCard:hover {
+  border-color: var(--hms-accent);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.linkTitle {
+  font-weight: 800;
+}
+
+.linkHint {
+  color: var(--hms-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.26rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.statusRegistered {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.statusInConsultation {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.statusCompleted {
+  background: rgba(22, 163, 74, 0.14);
+  color: #15803d;
+}
+
+.statusMuted {
+  background: var(--hms-bg-elevated);
+  color: var(--hms-text-muted);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.toolbarGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.placeholderCard {
+  padding: 1.25rem 1.35rem;
+  color: var(--hms-text);
+}
+
+.placeholderText {
+  margin: 0.45rem 0 0;
+  color: var(--hms-text-muted);
+  line-height: 1.55;
+}
+
+.alert {
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.08);
+  color: #92400e;
+}
+
+.emptyState {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: var(--hms-bg-elevated);
+  border: 1px dashed var(--hms-border);
+  color: var(--hms-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .hero,
+  .contentGrid,
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 1.2rem;
+  }
+
+  .heroMeta,
+  .linkGrid {
+    grid-template-columns: 1fr;
+  }
+}

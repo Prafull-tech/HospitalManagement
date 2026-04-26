@@ -88,6 +88,7 @@ public class HospitalService {
         String code = request.getHospitalCode() != null ? request.getHospitalCode().trim() : "";
         String subdomain = normalizeSubdomain(request.getSubdomain());
         String customDomain = normalizeCustomDomain(request.getCustomDomain());
+        String requestedTenantDbName = normalizeTenantDbName(request.getTenantDbName());
         if (hospitalRepository.existsByHospitalCodeAndDeletedFalse(code)) {
             throw new IllegalArgumentException("Hospital code already exists. Please use a unique hospital code.");
         }
@@ -101,6 +102,7 @@ public class HospitalService {
         h.setHospitalCode(code);
         h.setHospitalName(request.getHospitalName() != null ? request.getHospitalName().trim() : "");
         applyFields(h, request, true);
+        h.setTenantDbName(deriveTenantDbName(requestedTenantDbName, subdomain, code));
         h.setIsActive(request.getActive() != null ? request.getActive() : true);
         h.setDeleted(false);
         h = hospitalRepository.save(h);
@@ -113,6 +115,7 @@ public class HospitalService {
         String code = request.getHospitalCode() != null ? request.getHospitalCode().trim() : "";
         String subdomain = normalizeSubdomain(request.getSubdomain());
         String customDomain = normalizeCustomDomain(request.getCustomDomain());
+        String requestedTenantDbName = normalizeTenantDbName(request.getTenantDbName());
         if (hospitalRepository.existsByHospitalCodeAndDeletedFalseAndIdNot(code, id)) {
             throw new IllegalArgumentException("Hospital code already exists. Please use a unique hospital code.");
         }
@@ -124,6 +127,7 @@ public class HospitalService {
         }
         h.setHospitalCode(code);
         applyFields(h, request, false);
+        h.setTenantDbName(deriveTenantDbName(requestedTenantDbName, h.getSubdomain(), code));
         h.setIsActive(request.getActive() != null ? request.getActive() : true);
         h = hospitalRepository.save(h);
         return toDto(h);
@@ -236,6 +240,7 @@ public class HospitalService {
         dto.setHospitalName(h.getHospitalName());
         dto.setLocation(h.getLocation());
         dto.setSubdomain(h.getSubdomain());
+        dto.setTenantDbName(h.getTenantDbName());
         dto.setCustomDomain(h.getCustomDomain());
         dto.setDomainVerificationToken(h.getDomainVerificationToken());
         dto.setDomainVerificationStatus(h.getDomainVerificationStatus());
@@ -297,6 +302,35 @@ public class HospitalService {
     private String normalizeSubdomain(String value) {
         String normalized = normalize(value);
         return normalized != null ? normalized.toLowerCase() : null;
+    }
+
+    private String normalizeTenantDbName(String value) {
+        String normalized = normalize(value);
+        if (normalized == null) {
+            return null;
+        }
+        String lowered = normalized.trim().toLowerCase(Locale.ROOT);
+        if (!lowered.matches("^[a-z0-9_]{3,100}$")) {
+            throw new IllegalArgumentException("tenantDbName must match ^[a-z0-9_]{3,100}$");
+        }
+        return lowered;
+    }
+
+    private String deriveTenantDbName(String requested, String subdomain, String hospitalCode) {
+        if (requested != null) {
+            return requested;
+        }
+        String source = subdomain != null ? subdomain : hospitalCode;
+        source = source != null ? source.trim().toLowerCase(Locale.ROOT) : "hospital";
+        source = source.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+        if (source.isBlank()) {
+            source = "hospital";
+        }
+        String db = "hosp_" + source;
+        if (db.length() > 100) {
+            db = db.substring(0, 100);
+        }
+        return db;
     }
 
     private String normalizeCustomDomain(String value) {

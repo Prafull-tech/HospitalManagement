@@ -1,13 +1,18 @@
 package com.hospital.hms.auth.controller;
 
 import com.hospital.hms.auth.entity.AppUser;
-import com.hospital.hms.auth.entity.RefreshToken;
 import com.hospital.hms.auth.entity.UserRole;
-import com.hospital.hms.auth.jwt.JwtTokenService;
+import com.hospital.hms.auth.JwtUtil;
 import com.hospital.hms.auth.repository.AppUserRepository;
+import com.hospital.hms.common.dto.ApiResponse;
+import com.hospital.hms.common.exception.TenantNotFoundException;
 import com.hospital.hms.common.logging.MdcKeys;
 import com.hospital.hms.hospital.entity.Hospital;
+import com.hospital.hms.hospital.repository.HospitalRepository;
 import com.hospital.hms.hospital.service.HospitalService;
+import com.hospital.hms.config.tenancy.TenantContext;
+import com.hospital.hms.tenant.entity.TenantUser;
+import com.hospital.hms.tenant.repository.TenantUserRepository;
 import com.hospital.hms.tenant.service.TenantResolutionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotBlank;
@@ -32,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -41,21 +47,27 @@ public class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthenticationManager authenticationManager;
-    private final JwtTokenService tokenService;
+    private final JwtUtil jwtUtil;
     private final AppUserRepository userRepository;
+    private final HospitalRepository hospitalRepository;
+    private final TenantUserRepository tenantUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final HospitalService hospitalService;
     private final TenantResolutionService tenantResolutionService;
 
     public AuthController(AuthenticationManager authenticationManager,
-                          JwtTokenService tokenService,
+                          JwtUtil jwtUtil,
                           AppUserRepository userRepository,
+                          HospitalRepository hospitalRepository,
+                          TenantUserRepository tenantUserRepository,
                           PasswordEncoder passwordEncoder,
                           HospitalService hospitalService,
                           TenantResolutionService tenantResolutionService) {
         this.authenticationManager = authenticationManager;
-        this.tokenService = tokenService;
+        this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
+        this.hospitalRepository = hospitalRepository;
+        this.tenantUserRepository = tenantUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.hospitalService = hospitalService;
         this.tenantResolutionService = tenantResolutionService;
@@ -90,11 +102,38 @@ public class AuthController {
         public void setPassword(String password) { this.password = password; }
     }
 
+    public static class SuperAdminLoginRequest {
+        @NotBlank private String username;
+        @NotBlank private String password;
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+    }
+
+    public static class HospitalLoginRequest {
+        @NotBlank private String email;
+        @NotBlank private String password;
+        private String hospitalSlug;
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+        public String getHospitalSlug() { return hospitalSlug; }
+        public void setHospitalSlug(String hospitalSlug) { this.hospitalSlug = hospitalSlug; }
+    }
+
     public static class ChangePasswordRequest {
         @NotBlank private String currentPassword;
         @NotBlank @Size(min = 8, max = 128) private String newPassword;
         public String getCurrentPassword() { return currentPassword; }
         public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+        public String getNewPassword() { return newPassword; }
+        public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+    }
+
+    public static class TemporaryPasswordChangeRequest {
+        @NotBlank @Size(min = 8, max = 128) private String newPassword;
         public String getNewPassword() { return newPassword; }
         public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
     }
@@ -145,6 +184,7 @@ public class AuthController {
         m.put("email", user.getEmail() != null ? user.getEmail() : "");
         m.put("phone", user.getPhone() != null ? user.getPhone() : "");
         m.put("active", user.getActive());
+        m.put("mustChangePassword", user.getMustChangePassword());
         m.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
         Hospital hospital = user.getHospital();
         m.put("hospitalId", hospital != null ? hospital.getId() : null);
@@ -171,18 +211,20 @@ public class AuthController {
                 return tenantMismatch;
             }
             Instant issuedAt = Instant.now();
-            String accessToken = tokenService.generateToken(user, issuedAt);
-            RefreshToken refreshToken = tokenService.createRefreshToken(
-                    user.getUsername(),
-                    tokenService.getSessionExpiresAt(issuedAt)
-            );
+            String accessToken = user.getHospital() == null
+                    ? jwtUtil.generateSuperAdminToken(user, issuedAt)
+                    : jwtUtil.generateHospitalUserToken(
+                            String.valueOf(user.getId()),
+                            user.getEmail(),
+                            user.getRole().name(),
+                            user.getHospital() != null ? user.getHospital().getId() : null,
+                            user.getHospital() != null ? user.getHospital().getTenantDbName() : null,
+                            issuedAt
+                    );
             log.info("Login success for user={}", user.getUsername());
             Map<String, Object> resp = new LinkedHashMap<>(buildProfileResponse(user));
             resp.put("token", accessToken);
-            resp.put("refreshToken", refreshToken.getToken());
             resp.put("issuedAt", issuedAt.toString());
-            resp.put("expiresAt", tokenService.getAccessTokenExpiresAt(issuedAt).toString());
-            resp.put("sessionExpiresAt", refreshToken.getExpiresAt().toString());
             return ResponseEntity.ok(resp);
         } catch (BadCredentialsException | UsernameNotFoundException ex) {
             log.warn("Login failed for user={}: {}", username, ex.getMessage());
@@ -193,44 +235,106 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody @Validated RefreshRequest request, HttpServletRequest httpRequest) {
-        RefreshToken existing = tokenService.validateRefreshToken(request.getRefreshToken());
-        if (existing == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("status", 401, "message", "Invalid or expired refresh token"));
-        }
-        AppUser user = userRepository.findByUsernameIgnoreCase(existing.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        ResponseEntity<?> tenantMismatch = validateTenantHost(user, httpRequest);
-        if (tenantMismatch != null) {
-            return tenantMismatch;
+    @PostMapping("/super-admin/login")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> superAdminLogin(
+            @RequestBody @Validated SuperAdminLoginRequest request) {
+        String username = request.getUsername();
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, request.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        AppUser user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        if (user.getRole() != UserRole.SUPER_ADMIN) {
+            throw new BadCredentialsException("Not a super admin");
         }
         Instant issuedAt = Instant.now();
-        String newAccessToken = tokenService.generateToken(user, issuedAt);
-        RefreshToken newRefreshToken = tokenService.rotateRefreshToken(existing);
-        log.info("Token refreshed for user={}", user.getUsername());
-        Map<String, Object> resp = new LinkedHashMap<>(buildProfileResponse(user));
-        resp.put("token", newAccessToken);
-        resp.put("refreshToken", newRefreshToken.getToken());
-        resp.put("issuedAt", issuedAt.toString());
-        resp.put("expiresAt", tokenService.getAccessTokenExpiresAt(issuedAt).toString());
-        resp.put("sessionExpiresAt", newRefreshToken.getExpiresAt().toString());
-        return ResponseEntity.ok(resp);
+        String token = jwtUtil.generateSuperAdminToken(user, issuedAt);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("token", token);
+        Map<String, Object> userMap = new LinkedHashMap<>();
+        userMap.put("id", user.getId());
+        userMap.put("name", user.getFullName());
+        userMap.put("email", user.getEmail());
+        userMap.put("role", user.getRole().name());
+        data.put("user", userMap);
+        data.put("hospital", null);
+        return ResponseEntity.ok(ApiResponse.success(data, "Login success"));
+    }
+
+    @PostMapping("/hospital/login")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> hospitalLogin(
+            @RequestBody @Validated HospitalLoginRequest request,
+            HttpServletRequest httpRequest) {
+        String slug = request.getHospitalSlug() != null ? request.getHospitalSlug().trim().toLowerCase() : "";
+        Hospital hospital;
+        if (!slug.isBlank()) {
+            hospital = hospitalRepository.findBySubdomainAndDeletedFalse(slug)
+                    .orElseThrow(() -> new TenantNotFoundException("Hospital not found"));
+        } else {
+            hospital = tenantResolutionService.resolveTenantHospital(httpRequest)
+                    .orElseThrow(() -> new TenantNotFoundException("Hospital slug is required for hospital login"));
+        }
+        if (!Boolean.TRUE.equals(hospital.getIsActive())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("This hospital domain is inactive", null));
+        }
+        String tenantDbName = hospital.getTenantDbName();
+        if (tenantDbName == null || tenantDbName.isBlank()) {
+            throw new IllegalStateException("Hospital is missing tenantDbName");
+        }
+
+        try {
+            TenantContext.setCurrentTenant(tenantDbName);
+            TenantUser user = tenantUserRepository.findByEmailIgnoreCase(request.getEmail().trim())
+                    .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+            if (!Boolean.TRUE.equals(user.getActive())) {
+                throw new BadCredentialsException("Invalid credentials");
+            }
+            if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                throw new BadCredentialsException("Invalid credentials");
+            }
+            if (user.getId() == null || user.getId().isBlank()) {
+                user.setId(UUID.randomUUID().toString());
+            }
+            Instant issuedAt = Instant.now();
+            String token = jwtUtil.generateHospitalUserToken(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getRole(),
+                    hospital.getId(),
+                    tenantDbName,
+                    issuedAt
+            );
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("token", token);
+            Map<String, Object> userMap = new LinkedHashMap<>();
+            userMap.put("id", user.getId());
+            userMap.put("name", user.getName());
+            userMap.put("email", user.getEmail());
+            userMap.put("role", user.getRole());
+            data.put("user", userMap);
+            Map<String, Object> hospitalMap = new LinkedHashMap<>();
+            hospitalMap.put("id", hospital.getId());
+            hospitalMap.put("name", hospital.getHospitalName());
+            hospitalMap.put("logoUrl", hospital.getLogoUrl());
+            hospitalMap.put("slug", hospital.getSubdomain());
+            data.put("hospital", hospitalMap);
+            return ResponseEntity.ok(ApiResponse.success(data, "Login success"));
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody @Validated RefreshRequest request, HttpServletRequest httpRequest) {
+        return ResponseEntity.status(HttpStatus.GONE)
+                .body(Map.of("status", 410, "message", "Refresh tokens are not supported in the multi-tenant auth flow"));
     }
 
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> logout() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()) {
-            userRepository.findByUsernameIgnoreCase(auth.getName()).ifPresent(user -> {
-                user.setTokenVersion(user.getTokenVersion() + 1);
-                userRepository.save(user);
-            });
-            tokenService.revokeAllTokensForUser(auth.getName());
-            log.info("Logout (all refresh tokens revoked) for user={}", auth.getName());
-        }
+        SecurityContextHolder.clearContext();
         return ResponseEntity.noContent().build();
     }
 
@@ -267,11 +371,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<?> register(@RequestBody @Validated RegisterRequest request) {
         if (userRepository.findByUsernameIgnoreCase(request.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("status", 409, "message", "Username already exists"));
+        }
+        if (request.getHospitalId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("status", 400, "message", "hospitalId is required"));
         }
         AppUser user = new AppUser();
         user.setUsername(request.getUsername().trim());
@@ -283,9 +391,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("status", 400, "message", "Invalid role: " + request.getRole()));
         }
-        if (request.getHospitalId() != null) {
-            user.setHospital(hospitalService.getEntityById(request.getHospitalId()));
-        }
+        user.setHospital(hospitalService.getEntityById(request.getHospitalId()));
         user.setActive(true);
         userRepository.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -331,9 +437,35 @@ public class AuthController {
                     .body(Map.of("status", 400, "message", "New password must differ from the current password"));
         }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
-        tokenService.revokeAllTokensForUser(username);
         log.info("Password changed for user={}", username);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/change-temporary-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> changeTemporaryPassword(@RequestBody @Validated TemporaryPasswordChangeRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("status", 401, "message", "Not authenticated"));
+        }
+        String username = auth.getName();
+        AppUser user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        if (!Boolean.TRUE.equals(user.getMustChangePassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("status", 400, "message", "Temporary password change is not required for this account"));
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("status", 400, "message", "New password must differ from the temporary password"));
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
+        userRepository.save(user);
+        log.info("Temporary password replaced for user={}", username);
         return ResponseEntity.noContent().build();
     }
 

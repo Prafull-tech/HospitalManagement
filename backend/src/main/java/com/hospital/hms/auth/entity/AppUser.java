@@ -63,6 +63,10 @@ public class AppUser extends BaseIdEntity {
     private Boolean active = true;
 
         @NotNull
+        @Column(name = "must_change_password", nullable = false)
+        private Boolean mustChangePassword = false;
+
+        @NotNull
         @Column(name = "token_version", nullable = false)
         private Long tokenVersion = 0L;
 
@@ -90,6 +94,9 @@ public class AppUser extends BaseIdEntity {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+        public Boolean getMustChangePassword() { return mustChangePassword; }
+        public void setMustChangePassword(Boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
 
         public Long getTokenVersion() { return tokenVersion; }
         public void setTokenVersion(Long tokenVersion) { this.tokenVersion = tokenVersion; }

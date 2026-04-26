@@ -140,6 +140,19 @@ export const MODULE_MENU_CONFIG: ModuleMenuConfig[] = [
  */
 export const ROUTE_PERMISSIONS: Record<string, HMSRole[]> = {
   '/dashboard': ['ADMIN', 'SUPER_ADMIN', 'FRONT_DESK', 'DOCTOR', 'NURSE', 'PHARMACIST', 'LAB_TECH', 'RADIOLOGY_TECH', 'BILLING', 'HOUSEKEEPING', 'HR_MANAGER', 'RECEPTIONIST'],
+  '/doctor': ['DOCTOR'],
+  '/doctor/dashboard': ['DOCTOR'],
+  '/doctor/appointments': ['DOCTOR'],
+  '/doctor/opd-queue': ['DOCTOR'],
+  '/doctor/consultations': ['DOCTOR'],
+  '/doctor/prescriptions': ['DOCTOR'],
+  '/doctor/lab': ['DOCTOR'],
+  '/doctor/ipd': ['DOCTOR'],
+  '/doctor/patients': ['DOCTOR'],
+  '/doctor/emr': ['DOCTOR'],
+  '/doctor/reports': ['DOCTOR'],
+  '/doctor/notifications': ['DOCTOR'],
+  '/doctor/settings': ['DOCTOR'],
   '/profile': ['ADMIN', 'SUPER_ADMIN', 'FRONT_DESK', 'DOCTOR', 'NURSE', 'PHARMACIST', 'LAB_TECH', 'RADIOLOGY_TECH', 'BILLING', 'HOUSEKEEPING', 'HR_MANAGER', 'RECEPTIONIST'],
   '/front-office': ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'BILLING'],
   '/appointments': ['ADMIN', 'FRONT_DESK', 'RECEPTIONIST', 'DOCTOR'],
@@ -220,7 +233,7 @@ export function filterModulesByRole(
 }
 
 /** Default dashboards in priority order for redirect (module-specific first, then reception, then front office). */
-const DEFAULT_DASHBOARD_ORDER = ['/pharmacy', '/lab', '/radiology', '/bloodbank', '/reception', '/front-office/register']
+const DEFAULT_DASHBOARD_ORDER = ['/doctor/dashboard', '/pharmacy', '/lab', '/radiology', '/bloodbank', '/reception', '/front-office/register']
 
 /**
  * Get the first dashboard route the user has access to.

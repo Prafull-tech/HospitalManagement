@@ -502,6 +502,22 @@
   box-shadow: 0 0 0 2px var(--hms-focus-ring);
 }
 
+.inputInvalid {
+  border-color: var(--hms-error, #dc2626);
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.12);
+}
+
+.inputInvalid:focus {
+  border-color: var(--hms-error, #dc2626);
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.16);
+}
+
+.fieldError {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--hms-error, #dc2626);
+}
+
 .priceRow {
   display: flex;
   align-items: center;

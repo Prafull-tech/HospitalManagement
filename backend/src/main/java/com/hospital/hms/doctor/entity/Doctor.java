@@ -76,6 +76,9 @@ public class Doctor extends BaseIdEntity {
     @Column(name = "qualifications", length = 500)
     private String qualifications;
 
+    @Column(name = "app_user_id", unique = true)
+    private Long appUserId;
+
     @Column(name = "on_call")
     private Boolean onCall = false;
 
@@ -160,6 +163,14 @@ public class Doctor extends BaseIdEntity {
 
     public void setQualifications(String qualifications) {
         this.qualifications = qualifications;
+    }
+
+    public Long getAppUserId() {
+        return appUserId;
+    }
+
+    public void setAppUserId(Long appUserId) {
+        this.appUserId = appUserId;
     }
 
     public Boolean getOnCall() {

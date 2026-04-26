@@ -7,6 +7,9 @@ spring:
     import: optional:file:./application-local.yml,optional:file:./backend/application-local.yml
   flyway:
     enabled: false
+  # Default tenant DB for Hibernate multi-tenancy when no tenant is set.
+  # This should point to the master/platform database.
+  # (Tenant requests will override via TenantContext.)
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:hms}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
     username: ${MYSQL_USER:root}
@@ -15,11 +18,12 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+        multiTenancy: SCHEMA
     open-in-view: false
 
 # Online Payment (Razorpay / Stripe)
@@ -61,6 +65,13 @@ pharmacy:
 
 # JWT
 hms:
+  flyway:
+    master:
+      locations: classpath:db/migration/master
+    tenant:
+      locations: classpath:db/migration/tenant
+  tenancy:
+    default-db: ${MYSQL_DATABASE:hms}
   security:
     jwt:
       secret: ${JWT_SECRET:${HMS_JWT_SECRET:dev-jwt-secret-change-me}}

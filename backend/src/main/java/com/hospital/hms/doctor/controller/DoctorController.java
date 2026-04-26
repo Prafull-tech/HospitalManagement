@@ -1,5 +1,6 @@
 package com.hospital.hms.doctor.controller;
 
+import com.hospital.hms.appointment.dto.AppointmentResponseDto;
 import com.hospital.hms.doctor.dto.*;
 import com.hospital.hms.doctor.entity.DoctorStatus;
 import com.hospital.hms.doctor.service.DoctorService;
@@ -7,8 +8,10 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -69,5 +72,30 @@ public class DoctorController {
     public ResponseEntity<List<DoctorAvailabilityResponseDto>> getAvailability(@PathVariable Long id) {
         List<DoctorAvailabilityResponseDto> list = doctorService.getAvailability(id);
         return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    public ResponseEntity<DoctorResponseDto> getCurrentDoctor() {
+        return ResponseEntity.ok(doctorService.getCurrentDoctor());
+    }
+
+    @PutMapping("/me/availability")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    public ResponseEntity<DoctorAvailabilityResponseDto> updateMyAvailability(@Valid @RequestBody DoctorAvailabilityRequestDto request) {
+        return ResponseEntity.ok(doctorService.updateMyAvailability(request));
+    }
+
+    @GetMapping("/me/availability")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    public ResponseEntity<List<DoctorAvailabilityResponseDto>> getMyAvailability() {
+        return ResponseEntity.ok(doctorService.getMyAvailability());
+    }
+
+    @GetMapping("/me/appointments")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    public ResponseEntity<List<AppointmentResponseDto>> getMyAppointments(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(doctorService.getMyAppointments(date));
     }
 }

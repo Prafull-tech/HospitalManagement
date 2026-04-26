@@ -139,13 +139,23 @@ public class SystemController {
 
     // ---------- Feature toggles ----------
     @GetMapping("/features")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<List<FeatureToggleResponseDto>> listFeatures() {
         return ResponseEntity.ok(featureToggleService.listAll());
     }
 
+    /**
+     * Newer UI calls /system/features/effective. For now it is equivalent to /system/features.
+     * (Effective toggles may be added later when multiple sources exist.)
+     */
+    @GetMapping("/features/effective")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<List<FeatureToggleResponseDto>> listEffectiveFeatures() {
+        return ResponseEntity.ok(featureToggleService.listAll());
+    }
+
     @PatchMapping("/features/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<FeatureToggleResponseDto> setFeatureEnabled(@PathVariable Long id,
                                                                       @RequestParam boolean enabled) {
         return ResponseEntity.ok(featureToggleService.setEnabled(id, enabled));

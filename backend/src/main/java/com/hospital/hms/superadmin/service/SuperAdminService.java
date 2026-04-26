@@ -163,6 +163,7 @@ public class SuperAdminService {
         user.setEmail(req.getEmail() != null ? req.getEmail().trim() : null);
         user.setPhone(req.getPhone() != null ? req.getPhone().trim() : null);
         user.setActive(true);
+        user.setMustChangePassword(true);
         user = appUserRepository.save(user);
         return toUserDto(user, hospital);
     }
@@ -472,6 +473,7 @@ public class SuperAdminService {
         dto.setEmail(u.getEmail());
         dto.setPhone(u.getPhone());
         dto.setActive(u.getActive());
+        dto.setMustChangePassword(u.getMustChangePassword());
         dto.setHospitalId(h.getId());
         dto.setHospitalName(h.getHospitalName());
         return dto;

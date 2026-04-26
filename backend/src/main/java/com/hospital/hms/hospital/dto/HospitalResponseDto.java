@@ -10,6 +10,7 @@ public class HospitalResponseDto {
     private String hospitalName;
     private String location;
     private String subdomain;
+    private String tenantDbName;
     private String customDomain;
     private String domainVerificationToken;
     private String domainVerificationStatus;
@@ -70,6 +71,14 @@ public class HospitalResponseDto {
 
     public void setSubdomain(String subdomain) {
         this.subdomain = subdomain;
+    }
+
+    public String getTenantDbName() {
+        return tenantDbName;
+    }
+
+    public void setTenantDbName(String tenantDbName) {
+        this.tenantDbName = tenantDbName;
     }
 
     public String getCustomDomain() {

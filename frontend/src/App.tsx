@@ -89,6 +89,11 @@ import { WalkinRegistrationForm } from './pages/walkin/WalkinRegistrationForm'
 import { MarketingLandingPage } from './pages/MarketingLandingPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { AdminUsersPage } from './pages/AdminUsersPage'
+import { AdminAuditLogsPage } from './pages/AdminAuditLogsPage'
+import { DoctorDashboardPage } from './pages/doctor/DoctorDashboardPage'
+import { DoctorAppointmentsPage } from './pages/doctor/DoctorAppointmentsPage'
+import { DoctorOPDQueuePage } from './pages/doctor/DoctorOPDQueuePage'
 import { PublicLayout } from './components/PublicLayout'
 import { SignupPage } from './pages/SignupPage'
 import { ContactPage } from './pages/ContactPage'
@@ -214,6 +219,22 @@ export default function App() {
         <Route path="dashboard" element={<DashboardRedirect />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/change-password" element={<ChangePasswordPage />} />
+        <Route path="admin/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>} />
+        <Route path="admin/audit" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminAuditLogsPage /></ProtectedRoute>} />
+        <Route path="doctor" element={<ProtectedRoute allowedRoles={['DOCTOR']}><Outlet /></ProtectedRoute>}>
+          <Route path="dashboard" element={<DoctorDashboardPage />} />
+          <Route path="appointments" element={<DoctorAppointmentsPage />} />
+          <Route path="opd-queue" element={<DoctorOPDQueuePage />} />
+          <Route path="consultations" element={<Navigate to="/opd/queue" replace />} />
+          <Route path="prescriptions" element={<PlaceholderPage title="Doctor Prescriptions" description="Prescription authoring is the next implementation slice. This doctor workspace entry point is now ready for the dedicated workflow." />} />
+          <Route path="lab" element={<Navigate to="/lab/view-reports" replace />} />
+          <Route path="ipd" element={<Navigate to="/ipd/admissions" replace />} />
+          <Route path="patients" element={<PatientSearchPage />} />
+          <Route path="emr" element={<PlaceholderPage title="Medical Records (EMR)" description="The aggregated doctor EMR timeline will be added after prescriptions and doctor-specific patient history APIs are in place." />} />
+          <Route path="reports" element={<PlaceholderPage title="Doctor Reports" description="Doctor-level reporting has been reserved in the new workspace and will be wired to consultation analytics in the next backend slice." />} />
+          <Route path="notifications" element={<PlaceholderPage title="Doctor Notifications" description="This page is reserved for appointment alerts, lab result readiness, and emergency updates once the notification service is added." />} />
+          <Route path="settings" element={<ProfilePage />} />
+        </Route>
         {/* Front Office – role: FRONT_DESK, RECEPTIONIST, BILLING, ADMIN */}
         <Route path="front-office" element={<ProtectedRoute allowedRoles={['FRONT_DESK', 'RECEPTIONIST', 'BILLING', 'ADMIN']}><Outlet /></ProtectedRoute>}>
           <Route path="register" element={<PatientRegisterPage />} />

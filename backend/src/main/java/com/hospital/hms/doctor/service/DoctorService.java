@@ -1,6 +1,12 @@
 package com.hospital.hms.doctor.service;
 
+import com.hospital.hms.auth.entity.AppUser;
+import com.hospital.hms.auth.repository.AppUserRepository;
+import com.hospital.hms.common.exception.OperationNotAllowedException;
 import com.hospital.hms.common.exception.ResourceNotFoundException;
+import com.hospital.hms.appointment.dto.AppointmentResponseDto;
+import com.hospital.hms.appointment.entity.Appointment;
+import com.hospital.hms.appointment.repository.AppointmentRepository;
 import com.hospital.hms.doctor.dto.*;
 import com.hospital.hms.doctor.entity.Doctor;
 import com.hospital.hms.doctor.entity.DoctorAvailability;
@@ -16,9 +22,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,15 +40,21 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final MedicalDepartmentRepository departmentRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
+    private final AppUserRepository appUserRepository;
+    private final AppointmentRepository appointmentRepository;
     private final TenantContextService tenantContextService;
 
     public DoctorService(DoctorRepository doctorRepository,
                          MedicalDepartmentRepository departmentRepository,
                          DoctorAvailabilityRepository availabilityRepository,
+                         AppUserRepository appUserRepository,
+                         AppointmentRepository appointmentRepository,
                          TenantContextService tenantContextService) {
         this.doctorRepository = doctorRepository;
         this.departmentRepository = departmentRepository;
         this.availabilityRepository = availabilityRepository;
+        this.appUserRepository = appUserRepository;
+        this.appointmentRepository = appointmentRepository;
         this.tenantContextService = tenantContextService;
     }
 
@@ -129,6 +144,50 @@ public class DoctorService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public DoctorResponseDto getCurrentDoctor() {
+        return toResponse(resolveCurrentDoctorEntity(), true);
+    }
+
+    @Transactional
+    public DoctorAvailabilityResponseDto updateMyAvailability(DoctorAvailabilityRequestDto request) {
+        Doctor doctor = resolveCurrentDoctorEntity();
+        return addAvailability(doctor.getId(), request);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DoctorAvailabilityResponseDto> getMyAvailability() {
+        Doctor doctor = resolveCurrentDoctorEntity();
+        return getAvailability(doctor.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponseDto> getMyAppointments(LocalDate date) {
+        Doctor doctor = resolveCurrentDoctorEntity();
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        LocalDate targetDate = date != null ? date : LocalDate.now();
+        return appointmentRepository.findQueueWithAssociations(hospitalId, targetDate, doctor.getId())
+                .stream()
+                .map(this::toAppointmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    private Doctor resolveCurrentDoctorEntity() {
+        Long hospitalId = tenantContextService.requireCurrentHospitalId();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equalsIgnoreCase(String.valueOf(authentication.getPrincipal()))) {
+            throw new OperationNotAllowedException("Authenticated user context is required");
+        }
+
+        AppUser currentUser = appUserRepository.findByUsernameIgnoreCase(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authentication.getName()));
+
+        return doctorRepository.findByAppUserIdAndHospitalId(currentUser.getId(), hospitalId)
+                .or(() -> currentUser.getEmail() == null ? java.util.Optional.empty() : doctorRepository.findByEmailIgnoreCaseAndHospitalId(currentUser.getEmail(), hospitalId))
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor profile is not linked to the current user"));
+    }
+
     private void mapRequestToEntity(DoctorRequestDto request, Doctor doctor, MedicalDepartment department) {
         doctor.setCode(request.getCode().trim());
         doctor.setFullName(request.getFullName().trim());
@@ -175,6 +234,31 @@ public class DoctorService {
         dto.setStartTime(a.getStartTime());
         dto.setEndTime(a.getEndTime());
         dto.setOnCall(a.getOnCall());
+        return dto;
+    }
+
+    private AppointmentResponseDto toAppointmentResponse(Appointment appointment) {
+        AppointmentResponseDto dto = new AppointmentResponseDto();
+        dto.setId(appointment.getId());
+        dto.setPatientId(appointment.getPatient().getId());
+        dto.setPatientUhid(appointment.getPatient().getUhid());
+        dto.setPatientName(appointment.getPatient().getFullName());
+        dto.setDoctorId(appointment.getDoctor().getId());
+        dto.setDoctorName(appointment.getDoctor().getFullName());
+        dto.setDoctorCode(appointment.getDoctor().getCode());
+        dto.setDepartmentId(appointment.getDepartment().getId());
+        dto.setDepartmentName(appointment.getDepartment().getName());
+        dto.setAppointmentDate(appointment.getAppointmentDate());
+        dto.setSlotTime(appointment.getSlotTime());
+        dto.setTokenNo(appointment.getTokenNo());
+        dto.setStatus(appointment.getStatus());
+        dto.setSource(appointment.getSource());
+        dto.setVisitType(appointment.getVisitType());
+        dto.setCreatedBy(appointment.getCreatedBy());
+        dto.setCancelReason(appointment.getCancelReason());
+        dto.setOpdVisitId(appointment.getOpdVisitId());
+        dto.setCreatedAt(appointment.getCreatedAt());
+        dto.setUpdatedAt(appointment.getUpdatedAt());
         return dto;
     }
 }

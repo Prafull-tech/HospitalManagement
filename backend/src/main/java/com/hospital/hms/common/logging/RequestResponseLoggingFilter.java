@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.http.HttpHeaders;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -43,11 +44,18 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
             long duration = System.currentTimeMillis() - startTime;
             int status = response.getStatus();
             String correlationId = MDC.get(MdcKeys.CORRELATION_ID);
+            boolean hasAuthHeader = false;
+            try {
+                String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
+                hasAuthHeader = auth != null && !auth.isBlank();
+            } catch (Exception ignored) {
+                // ignore header access issues
+            }
 
             if (status >= 500) {
-                log.error("{} {} -> {} ({}ms) correlationId={}", method, uri, status, duration, correlationId);
+                log.error("{} {} -> {} ({}ms) correlationId={} hasAuth={}", method, uri, status, duration, correlationId, hasAuthHeader);
             } else if (status >= 400) {
-                log.warn("{} {} -> {} ({}ms) correlationId={}", method, uri, status, duration, correlationId);
+                log.warn("{} {} -> {} ({}ms) correlationId={} hasAuth={}", method, uri, status, duration, correlationId, hasAuthHeader);
             } else if (duration > 2000) {
                 log.warn("SLOW {} {} -> {} ({}ms) correlationId={}", method, uri, status, duration, correlationId);
             } else {

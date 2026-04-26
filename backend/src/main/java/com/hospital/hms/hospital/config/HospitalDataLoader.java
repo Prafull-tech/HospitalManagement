@@ -43,6 +43,7 @@ public class HospitalDataLoader {
             h.setHospitalName("Main Hospital");
             h.setLocation("Central Campus");
             h.setSubdomain(defaultSubdomain);
+            h.setTenantDbName("hosp_" + defaultSubdomain);
             h.setIsActive(true);
             h.setDeleted(false);
             h = hospitalRepo.save(h);

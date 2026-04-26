@@ -3,11 +3,13 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { BrandIdentity } from '../components/BrandIdentity'
 import { useAppBootstrap } from '../components/AppBootstrap'
+import { buildTenantHostAlias, clearTenantHostAlias, setTenantHostAlias } from '../lib/tenantHostAlias'
 import styles from './LoginPage.module.css'
 
 export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [hospitalSlug, setHospitalSlug] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, isAuthenticated } = useAuth()
@@ -59,12 +61,30 @@ export function LoginPage() {
     e.preventDefault()
     setError('')
     if (!username.trim() || !password) {
-      setError('Username and password are required.')
+      setError('Username/email and password are required.')
+      return
+    }
+    if (!isTenantHost && !hospitalSlug.trim() && !tenant?.platformHost) {
+      // Platform users can sign in without a hospital slug.
+      setError('Hospital slug is required for hospital login.')
       return
     }
     try {
       setLoading(true)
-      await login(username.trim(), password)
+      const loggedInUser = await login(username.trim(), password, isTenantHost ? tenant?.tenantSlug ?? hospitalSlug.trim() : hospitalSlug.trim() || null)
+      const primaryRole = loggedInUser.roles[0]
+      if (primaryRole === 'SUPER_ADMIN') {
+        clearTenantHostAlias()
+      } else {
+        const tenantHostAlias = buildTenantHostAlias(loggedInUser.tenantSlug)
+        if (tenantHostAlias && (tenant?.platformHost || !tenant?.tenantResolved)) {
+          setTenantHostAlias(tenantHostAlias)
+        }
+      }
+      if (loggedInUser.mustChangePassword) {
+        navigate('/profile/change-password', { replace: true, state: { from: { pathname: from } } })
+        return
+      }
       navigate(from, { replace: true })
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Invalid username or password.'
@@ -113,15 +133,28 @@ export function LoginPage() {
               {error ? <div className={styles.error}>{error}</div> : null}
 
               <label className={styles.field}>
-                <span>Username</span>
+                <span>{isTenantHost ? 'Email' : 'Username / Email'}</span>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  placeholder="e.g. pharm, nurse"
+                  autoComplete={isTenantHost ? 'email' : 'username'}
+                  placeholder={isTenantHost ? 'e.g. admin@citygeneral.com' : 'e.g. superadmin'}
                 />
               </label>
+
+              {!isTenantHost && !tenant?.platformHost ? (
+                <label className={styles.field}>
+                  <span>Hospital slug</span>
+                  <input
+                    type="text"
+                    value={hospitalSlug}
+                    onChange={(e) => setHospitalSlug(e.target.value)}
+                    autoComplete="organization"
+                    placeholder="e.g. city-general"
+                  />
+                </label>
+              ) : null}
 
               <label className={styles.field}>
                 <span>Password</span>

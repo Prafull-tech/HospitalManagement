@@ -7,6 +7,7 @@ export interface UserProfile {
   email: string
   phone: string
   active: boolean
+  mustChangePassword?: boolean
   createdAt: string
   hospitalId?: number | null
   hospitalCode?: string
@@ -22,6 +23,10 @@ export interface UpdateProfileDto {
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await apiClient.post('/auth/change-password', { currentPassword, newPassword })
+}
+
+export async function changeTemporaryPassword(newPassword: string): Promise<void> {
+  await apiClient.post('/auth/change-temporary-password', { newPassword })
 }
 
 export async function getProfile(): Promise<UserProfile> {

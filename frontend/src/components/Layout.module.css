@@ -50,6 +50,7 @@
   gap: 0.8rem;
   text-decoration: none;
   color: #ffffff;
+  min-width: 0;
 }
 
 .logo:hover {
@@ -78,6 +79,7 @@
   flex-direction: column;
   gap: 0;
   line-height: 1;
+  min-width: 0;
 }
 
 .logoText {
@@ -86,6 +88,9 @@
   font-size: 1.28rem;
   letter-spacing: 0.04em;
   color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logoSub {
@@ -94,6 +99,9 @@
   text-transform: uppercase;
   letter-spacing: 0.18em;
   margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebarNav {

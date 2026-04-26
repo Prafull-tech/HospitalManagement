@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS pharmacy_items (
+  id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  name VARCHAR(255) NOT NULL,
+  generic_name VARCHAR(255),
+  category VARCHAR(100),
+  unit VARCHAR(50),
+  quantity INT DEFAULT 0,
+  reorder_level INT DEFAULT 10,
+  price DECIMAL(10,2),
+  expiry_date DATE,
+  supplier VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+

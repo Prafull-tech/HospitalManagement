@@ -8,6 +8,7 @@ public class HospitalUserDto {
     private String email;
     private String phone;
     private Boolean active;
+    private Boolean mustChangePassword;
     private Long hospitalId;
     private String hospitalName;
 
@@ -31,6 +32,9 @@ public class HospitalUserDto {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+    public Boolean getMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(Boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
 
     public Long getHospitalId() { return hospitalId; }
     public void setHospitalId(Long hospitalId) { this.hospitalId = hospitalId; }

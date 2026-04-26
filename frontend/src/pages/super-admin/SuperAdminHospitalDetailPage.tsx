@@ -20,6 +20,53 @@ function getVisibleHospitalFormError(error: string, customDomain: string | null 
   return error
 }
 
+type AddUserFormErrors = Partial<Record<'username' | 'fullName' | 'password' | 'confirmPassword' | 'email' | 'phone', string>>
+
+function validateAddHospitalUserForm(form: CreateHospitalUserInput, confirmPassword: string): AddUserFormErrors {
+  const errors: AddUserFormErrors = {}
+  const trimmedUsername = form.username.trim()
+  const trimmedFullName = form.fullName.trim()
+  const trimmedEmail = form.email?.trim() ?? ''
+  const trimmedPhone = form.phone?.trim() ?? ''
+  const digitOnlyPhone = trimmedPhone.replace(/\D/g, '')
+
+  if (!trimmedUsername) {
+    errors.username = 'Username is required.'
+  } else if (trimmedUsername.length < 3) {
+    errors.username = 'Username must be at least 3 characters.'
+  } else if (!/^[A-Za-z0-9._-]+$/.test(trimmedUsername)) {
+    errors.username = 'Username can contain only letters, numbers, dots, hyphens, and underscores.'
+  }
+
+  if (!trimmedFullName) {
+    errors.fullName = 'Full name is required.'
+  } else if (trimmedFullName.length < 3) {
+    errors.fullName = 'Full name must be at least 3 characters.'
+  }
+
+  if (!form.password) {
+    errors.password = 'Password is required.'
+  } else if (form.password.length < 8) {
+    errors.password = 'Password must be at least 8 characters.'
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = 'Please re-enter the password.'
+  } else if (confirmPassword !== form.password) {
+    errors.confirmPassword = 'Passwords do not match.'
+  }
+
+  if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    errors.email = 'Enter a valid email address.'
+  }
+
+  if (trimmedPhone && (digitOnlyPhone.length < 7 || digitOnlyPhone.length > 15)) {
+    errors.phone = 'Phone number must contain 7 to 15 digits.'
+  }
+
+  return errors
+}
+
 const HOSPITAL_ROLES = [
   'ADMIN', 'RECEPTIONIST', 'FRONT_DESK', 'DOCTOR', 'NURSE', 'BILLING',
   'IPD_MANAGER', 'IPD_PHARMACIST', 'PHARMACIST', 'PHARMACY_MANAGER',
@@ -792,18 +839,54 @@ function AddUserModal({ hospitalId, onClose, onCreated }: {
   const [form, setForm] = useState<CreateHospitalUserInput>({
     username: '', fullName: '', password: '', role: 'ADMIN', email: '', phone: '',
   })
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [validationErrors, setValidationErrors] = useState<AddUserFormErrors>({})
+
+  const updateValidationState = (nextForm: CreateHospitalUserInput, nextConfirmPassword: string) => {
+    setValidationErrors(validateAddHospitalUserForm(nextForm, nextConfirmPassword))
+  }
+
+  const handleFieldChange = <K extends keyof CreateHospitalUserInput>(key: K, value: CreateHospitalUserInput[K]) => {
+    const nextForm = { ...form, [key]: value }
+    setForm(nextForm)
+    setError('')
+    if (Object.keys(validationErrors).length > 0) {
+      updateValidationState(nextForm, confirmPassword)
+    }
+  }
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value)
+    setError('')
+    if (Object.keys(validationErrors).length > 0) {
+      updateValidationState(form, value)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const trimmedForm: CreateHospitalUserInput = {
+      ...form,
+      username: form.username.trim(),
+      fullName: form.fullName.trim(),
+      email: form.email?.trim() || '',
+      phone: form.phone?.trim() || '',
+    }
+    const nextErrors = validateAddHospitalUserForm(trimmedForm, confirmPassword)
+    setValidationErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) {
+      return
+    }
+
     setSaving(true)
     setError('')
     try {
       await createHospitalUser(hospitalId, {
-        ...form,
-        email: form.email || undefined,
-        phone: form.phone || undefined,
+        ...trimmedForm,
+        email: trimmedForm.email || undefined,
+        phone: trimmedForm.phone || undefined,
       })
       onCreated()
       onClose()
@@ -815,42 +898,86 @@ function AddUserModal({ hospitalId, onClose, onCreated }: {
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.modalTitle}>Add Hospital User</h2>
-        <form className={styles.form} onSubmit={handleSubmit}>
+    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="add-hospital-user-title">
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <h2 id="add-hospital-user-title" className={styles.modalTitle}>Add Hospital User</h2>
+          <button type="button" className={styles.modalCloseBtn} onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
           {error && <div className={styles.errorBanner}>{error}</div>}
           <div className={styles.formRow}>
             <label className={styles.label}>Username *</label>
-            <input className={styles.input} required value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })} />
+            <input
+              className={`${styles.input} ${validationErrors.username ? styles.inputInvalid : ''}`.trim()}
+              required
+              value={form.username}
+              onChange={(e) => handleFieldChange('username', e.target.value)}
+            />
+            {validationErrors.username && <div className={styles.fieldError}>{validationErrors.username}</div>}
           </div>
           <div className={styles.formRow}>
             <label className={styles.label}>Full Name *</label>
-            <input className={styles.input} required value={form.fullName}
-              onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+            <input
+              className={`${styles.input} ${validationErrors.fullName ? styles.inputInvalid : ''}`.trim()}
+              required
+              value={form.fullName}
+              onChange={(e) => handleFieldChange('fullName', e.target.value)}
+            />
+            {validationErrors.fullName && <div className={styles.fieldError}>{validationErrors.fullName}</div>}
           </div>
           <div className={styles.formRow}>
             <label className={styles.label}>Password *</label>
-            <input className={styles.input} type="password" required minLength={8} value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <input
+              className={`${styles.input} ${validationErrors.password ? styles.inputInvalid : ''}`.trim()}
+              type="password"
+              required
+              minLength={8}
+              value={form.password}
+              onChange={(e) => handleFieldChange('password', e.target.value)}
+            />
+            <div className={styles.fieldHelp}>Use at least 8 characters.</div>
+            {validationErrors.password && <div className={styles.fieldError}>{validationErrors.password}</div>}
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.label}>Re-enter Password *</label>
+            <input
+              className={`${styles.input} ${validationErrors.confirmPassword ? styles.inputInvalid : ''}`.trim()}
+              type="password"
+              required
+              minLength={8}
+              value={confirmPassword}
+              onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+            />
+            {validationErrors.confirmPassword && <div className={styles.fieldError}>{validationErrors.confirmPassword}</div>}
           </div>
           <div className={styles.formRow}>
             <label className={styles.label}>Role *</label>
             <select className={styles.select} required value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}>
+              onChange={(e) => handleFieldChange('role', e.target.value)}>
               {HOSPITAL_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div className={styles.formRow}>
             <label className={styles.label}>Email</label>
-            <input className={styles.input} type="email" value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <input
+              className={`${styles.input} ${validationErrors.email ? styles.inputInvalid : ''}`.trim()}
+              type="email"
+              value={form.email}
+              onChange={(e) => handleFieldChange('email', e.target.value)}
+            />
+            {validationErrors.email && <div className={styles.fieldError}>{validationErrors.email}</div>}
           </div>
           <div className={styles.formRow}>
             <label className={styles.label}>Phone</label>
-            <input className={styles.input} value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <input
+              className={`${styles.input} ${validationErrors.phone ? styles.inputInvalid : ''}`.trim()}
+              value={form.phone}
+              onChange={(e) => handleFieldChange('phone', e.target.value)}
+            />
+            {validationErrors.phone && <div className={styles.fieldError}>{validationErrors.phone}</div>}
           </div>
           <div className={styles.formActions}>
             <button type="button" className={styles.secondaryBtn} onClick={onClose}>Cancel</button>

@@ -73,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                         // Use MVC matchers so paths align with DispatcherServlet + server.servlet.context-path (/api).
                         .requestMatchers(mvc.pattern("/auth/login")).permitAll()
+                        .requestMatchers(mvc.pattern("/auth/super-admin/login")).permitAll()
+                        .requestMatchers(mvc.pattern("/auth/hospital/login")).permitAll()
                         .requestMatchers(mvc.pattern("/auth/refresh")).permitAll()
                         .requestMatchers(mvc.pattern("/auth/signup")).permitAll()
                         .requestMatchers(mvc.pattern("/public/**")).permitAll()

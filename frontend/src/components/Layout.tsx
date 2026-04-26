@@ -75,7 +75,12 @@ export function Layout() {
 
   return (
     <div className={`${styles.wrapper} ${sidebarCollapsed ? styles.wrapperSidebarCollapsed : ''}`}>
-      <Sidebar userRoles={userRoles} collapsed={sidebarCollapsed} username={user?.username} />
+      <Sidebar
+        userRoles={userRoles}
+        collapsed={sidebarCollapsed}
+        username={user?.username}
+        hospitalName={user?.hospitalName}
+      />
 
       <div className={styles.mainWrap}>
         <header className={styles.topbar}>

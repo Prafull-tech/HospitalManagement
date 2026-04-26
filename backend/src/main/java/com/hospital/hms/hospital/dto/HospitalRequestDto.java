@@ -27,6 +27,13 @@ public class HospitalRequestDto {
     @Size(max = 100, message = "Subdomain must not exceed 100 characters")
     private String subdomain;
 
+    /**
+     * Optional override for tenant DB name. When omitted, backend will derive it from subdomain/hospitalCode.
+     * Example: hosp_city_general
+     */
+    @Size(max = 100, message = "Tenant DB name must not exceed 100 characters")
+    private String tenantDbName;
+
     @Size(max = 255, message = "Custom domain must not exceed 255 characters")
     private String customDomain;
 
@@ -89,6 +96,14 @@ public class HospitalRequestDto {
 
     public void setSubdomain(String subdomain) {
         this.subdomain = subdomain;
+    }
+
+    public String getTenantDbName() {
+        return tenantDbName;
+    }
+
+    public void setTenantDbName(String tenantDbName) {
+        this.tenantDbName = tenantDbName;
     }
 
     public String getCustomDomain() {

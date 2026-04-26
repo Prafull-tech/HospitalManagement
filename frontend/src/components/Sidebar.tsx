@@ -140,9 +140,10 @@ interface SidebarProps {
   userRoles: HMSRole[]
   collapsed: boolean
   username?: string
+  hospitalName?: string
 }
 
-export function Sidebar({ userRoles, collapsed, username }: SidebarProps) {
+export function Sidebar({ userRoles, collapsed, username, hospitalName }: SidebarProps) {
   const location = useLocation()
   const perms = usePermissionsOptional()
   const featureFlags = useFeatureFlagsOptional()
@@ -179,17 +180,20 @@ export function Sidebar({ userRoles, collapsed, username }: SidebarProps) {
   const displayName = username ?? 'Admin User'
   const initials = getInitials(displayName)
   const role = roleLabel(userRoles)
+  const tenantBrandName = hospitalName?.trim() || 'HMS'
+  const tenantBrandSubtext = hospitalName?.trim() ? 'Hospital Workspace' : 'Software'
+  const tenantInitials = getInitials(tenantBrandName).slice(0, 2) || 'H'
 
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''}`} aria-label="Main navigation">
       {/* Header / Logo */}
       <div className={styles.sidebarHeader}>
-        <Link to="/" className={styles.logo} title={collapsed ? 'HMS – Home' : undefined}>
-          <span className={styles.logoIcon}>H</span>
+        <Link to="/" className={styles.logo} title={collapsed ? `${tenantBrandName} – Home` : undefined}>
+          <span className={styles.logoIcon}>{tenantInitials}</span>
           {!collapsed && (
             <span className={styles.logoMeta}>
-              <span className={styles.logoText}>HMS</span>
-              <span className={styles.logoSub}>Software</span>
+              <span className={styles.logoText}>{tenantBrandName}</span>
+              <span className={styles.logoSub}>{tenantBrandSubtext}</span>
             </span>
           )}
         </Link>

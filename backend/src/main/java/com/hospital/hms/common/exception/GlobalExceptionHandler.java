@@ -7,10 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.core.env.Environment;
 import org.slf4j.MDC;
 
@@ -21,6 +23,9 @@ import java.util.Map;
 import org.hibernate.LazyInitializationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.AuthenticationException;
 import com.hospital.hms.pharmacy.exception.DuplicateMedicineCodeException;
 import com.hospital.hms.pharmacy.exception.DuplicateRackCodeException;
 import com.hospital.hms.pharmacy.exception.InsufficientStockException;
@@ -234,6 +239,55 @@ public class GlobalExceptionHandler {
                 errors
         );
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorBody> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request) {
+        logError(request, "Method not supported: " + ex.getMessage(), null);
+        String supported = ex.getSupportedHttpMethods() == null
+                ? ""
+                : ex.getSupportedHttpMethods().toString();
+        String message = "HTTP method " + ex.getMethod() + " not allowed for this endpoint."
+                + (supported.isBlank() ? "" : " Allowed: " + supported);
+        ErrorBody body = new ErrorBody(HttpStatus.METHOD_NOT_ALLOWED.value(), message, Instant.now());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
+    }
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ErrorBody> handleNoHandler(
+            NoHandlerFoundException ex,
+            HttpServletRequest request) {
+        logError(request, "No handler: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(
+                HttpStatus.NOT_FOUND.value(),
+                "Endpoint not found: " + ex.getHttpMethod() + " " + ex.getRequestURL(),
+                Instant.now()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    @ExceptionHandler({AuthenticationCredentialsNotFoundException.class, AuthenticationException.class})
+    public ResponseEntity<ErrorBody> handleAuthentication(Exception ex, HttpServletRequest request) {
+        logError(request, "Authentication required: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Authentication required. Please sign in and retry.",
+                Instant.now()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorBody> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        logError(request, "Access denied: " + ex.getMessage(), null);
+        ErrorBody body = new ErrorBody(
+                HttpStatus.FORBIDDEN.value(),
+                "You do not have permission to perform this action.",
+                Instant.now()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     @ExceptionHandler(Exception.class)

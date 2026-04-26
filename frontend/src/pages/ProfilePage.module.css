@@ -397,6 +397,240 @@
   cursor: not-allowed;
 }
 
+/* ========== Change Password page ========== */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.passwordHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.passwordHeroCopy,
+.passwordHeroPanel,
+.passwordFormCard,
+.passwordSideCard {
+  background: var(--hms-card);
+  border: 1px solid var(--hms-card-border);
+  border-radius: var(--hms-radius-card);
+  box-shadow: var(--hms-shadow-card);
+}
+
+.passwordHeroCopy {
+  padding: 1.6rem 1.75rem;
+  background:
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.1), transparent 36%),
+    linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(22, 163, 74, 0.04)),
+    var(--hms-card);
+}
+
+.passwordEyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--hms-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.passwordHeroTitle {
+  margin: 0.9rem 0 0.5rem;
+  font-family: var(--hms-heading-font);
+  font-size: clamp(1.75rem, 2.2vw, 2.35rem);
+  line-height: 1.05;
+  color: var(--hms-text);
+}
+
+.passwordHeroText {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--hms-text-muted);
+  line-height: 1.6;
+}
+
+.passwordHeroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1.4rem;
+}
+
+.passwordHeroPill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 150px;
+  padding: 0.85rem 0.95rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.passwordHeroPillWarning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.passwordHeroLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hms-text-muted);
+}
+
+.passwordHeroPanel {
+  padding: 1.4rem 1.5rem;
+}
+
+.passwordHeroPanelTop {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.passwordHeroPanelIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 56px;
+  border-radius: 1rem;
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.passwordHeroPanelTitle,
+.passwordCardTitle,
+.passwordSideTitle {
+  margin: 0;
+  font-family: var(--hms-heading-font);
+  color: var(--hms-text);
+}
+
+.passwordHeroPanelText,
+.passwordCardText {
+  margin: 0.35rem 0 0;
+  color: var(--hms-text-muted);
+  line-height: 1.55;
+}
+
+.passwordLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.95fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.passwordFormCard,
+.passwordSideCard {
+  padding: 1.5rem 1.6rem;
+}
+
+.passwordCardHeader {
+  margin-bottom: 1.25rem;
+}
+
+.passwordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.passwordFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.passwordInlineNotice {
+  padding: 0.9rem 1rem;
+  border-radius: var(--hms-radius);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.16);
+  color: var(--hms-text);
+  line-height: 1.55;
+}
+
+.passwordRuleList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.passwordRuleItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--hms-text-muted);
+  font-size: 0.9rem;
+}
+
+.passwordRuleMet {
+  color: var(--hms-text);
+}
+
+.passwordRuleDot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.passwordRuleMet .passwordRuleDot {
+  background: rgba(22, 163, 74, 0.12);
+  border-color: rgba(22, 163, 74, 0.22);
+  color: #15803d;
+}
+
+.passwordTipList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.passwordTipItem {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: var(--hms-bg-elevated);
+  border: 1px solid var(--hms-border);
+}
+
+.passwordTipItem strong {
+  display: block;
+  color: var(--hms-text);
+  margin-bottom: 0.35rem;
+}
+
+.passwordTipItem p {
+  margin: 0;
+  color: var(--hms-text-muted);
+  line-height: 1.55;
+}
+
 /* ========== Mobile responsive ========== */
 @media (max-width: 640px) {
   .sectionCard {
@@ -417,5 +651,27 @@
 
   .infoRow {
     grid-template-columns: 120px 1fr;
+  }
+
+  .passwordHeroCopy,
+  .passwordHeroPanel,
+  .passwordFormCard,
+  .passwordSideCard {
+    padding: 1.1rem 1rem;
+  }
+
+  .passwordHeroMeta {
+    flex-direction: column;
+  }
+
+  .passwordHeroPill {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 960px) {
+  .passwordHero,
+  .passwordLayout {
+    grid-template-columns: 1fr;
   }
 }
